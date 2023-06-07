@@ -45,7 +45,7 @@ pub const Window = struct {
         _ = c.glfwSetWindowSizeCallback(handle, window_size_callback);
         _ = c.glfwSetKeyCallback(handle, key_callback);
 
-        print("[СОЗДАН]:Главное окно[Название:{s}|Ширина:{}|Высота{}]\n", .{ title, width, height });
+        print("[СОЗДАН]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ title, width, height });
         return Window{ .handle = handle, .title = title };
     }
 
@@ -71,7 +71,7 @@ pub const Window = struct {
     }
 
     pub fn destroy(self: Window) void {
-        print("[УНИЧНОЖЕНО]:Главное окно[Название:{s}|Ширина:{}|Высота{}]\n", .{ self.title, self.getSize().x, self.getSize().y });
+        print("[УНИЧНОЖЕНО]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ self.title, self.getSize().x, self.getSize().y });
         c.glfwDestroyWindow(self.handle);
     }
 };
