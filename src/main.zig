@@ -1,9 +1,8 @@
 const c = @import("c.zig");
 const std = @import("std");
-const panic = std.debug.panic;
 const linmath = @import("linmath.zig");
-const Vec4 = linmath.Vec4;
-const Mat4 = linmath.Mat4;
+const Vec = linmath.Vec;
+const Mat = linmath.Mat;
 const glfw = @import("glfw.zig");
 const mesh = @import("mesh.zig");
 const shader = @import("shader.zig");
@@ -39,12 +38,17 @@ pub fn main() !void {
     const uniform_view = program.getUniform("view");
     const uniform_proj = program.getUniform("proj");
     var angle: f32 = 0.0;
-    var model = linmath.rotz(angle);
-    const view = linmath.Mat4identity;
-    var proj = linmath.Mat4identity;
+    var model = linmath.MatIdentity;
+    const view = linmath.MatIdentity;
+    var proj = linmath.MatIdentity;
+
+    var last_time = @floatCast(f32, c.glfwGetTime());
 
     var run = true;
     while (run) {
+        const current_time = @floatCast(f32, c.glfwGetTime());
+        const dt = current_time - last_time;
+        last_time = current_time;
         run = !window.shouldClose();
         if (glfw.isJustPressed(256)) run = false;
         c.glClear(c.GL_COLOR_BUFFER_BIT);
@@ -52,12 +56,12 @@ pub fn main() !void {
         const window_size = window.getSize();
         const window_ratio = @intToFloat(f32, window_size.x) / @intToFloat(f32, window_size.y);
         proj[0][0] = 1.0 / window_ratio;
-        angle += 0.001;
-        model = linmath.rotz(angle);
-        shader.ShaderProgram.setUniform(Vec4, uniform_color, Vec4{ 0.6, 0.59, 0.1, 1.0 });
-        shader.ShaderProgram.setUniform(Mat4, uniform_model, model);
-        shader.ShaderProgram.setUniform(Mat4, uniform_view, view);
-        shader.ShaderProgram.setUniform(Mat4, uniform_proj, proj);
+        angle += dt * 5.0;
+        model = linmath.mul(linmath.rotZ(1.0), linmath.rotX(angle));
+        shader.ShaderProgram.setUniform(Vec, uniform_color, Vec{ 0.6, 0.59, 0.1, 1.0 });
+        shader.ShaderProgram.setUniform(Mat, uniform_model, model);
+        shader.ShaderProgram.setUniform(Mat, uniform_view, view);
+        shader.ShaderProgram.setUniform(Mat, uniform_proj, proj);
         rect_mesh.draw();
         window.swapBuffers();
         glfw.pollEvents();

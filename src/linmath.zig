@@ -1,9 +1,9 @@
 const math = @import("std").math;
 
 pub const F32x4 = @Vector(4, f32);
-pub const Vec4 = F32x4;
-pub const Mat4 = [4]F32x4;
-pub const Mat4identity = Mat4{
+pub const Vec = F32x4;
+pub const Mat = [4]F32x4;
+pub const MatIdentity = Mat{
     @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
     @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
     @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
@@ -11,29 +11,43 @@ pub const Mat4identity = Mat4{
 };
 pub const Quat = F32x4;
 
-pub fn rotz(angle: f32) Mat4 {
-    return Mat4{
-        @Vector(4, f32){ math.cos(angle), -math.sin(angle), 0.0, 0.0 },
-        @Vector(4, f32){ math.sin(angle), math.cos(angle), 0.0, 0.0 },
+pub fn rotX(f: f32) Mat {
+    return Mat{
+        @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
+        @Vector(4, f32){ 0.0, math.cos(f), -math.sin(f), 0.0 },
+        @Vector(4, f32){ 0.0, math.sin(f), math.cos(f), 0.0 },
+        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+    };
+}
+
+pub fn rotY(f: f32) Mat {
+    return Mat{
+        @Vector(4, f32){ math.cos(f), 0.0, math.sin(f), 0.0 },
+        @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
+        @Vector(4, f32){ -math.sin(f), 0.0, math.cos(f), 0.0 },
+        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+    };
+}
+
+pub fn rotZ(f: f32) Mat {
+    return Mat{
+        @Vector(4, f32){ math.cos(f), -math.sin(f), 0.0, 0.0 },
+        @Vector(4, f32){ math.sin(f), math.cos(f), 0.0, 0.0 },
         @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
         @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
     };
 }
 
-pub fn rotz(angle: f32) Mat4 {
-    return Mat4{
-        @Vector(4, f32){ math.cos(angle), -math.sin(angle), 0.0, 0.0 },
-        @Vector(4, f32){ math.sin(angle), math.cos(angle), 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
-    };
-}
-
-pub fn rotz(angle: f32) Mat4 {
-    return Mat4{
-        @Vector(4, f32){ math.cos(angle), -math.sin(angle), 0.0, 0.0 },
-        @Vector(4, f32){ math.sin(angle), math.cos(angle), 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
-    };
+pub fn mul(m0: Mat, m1: Mat) Mat {
+    var result: Mat = undefined;
+    comptime var i = 0;
+    inline while (i < 4) {
+        comptime var j = 0;
+        inline while (j < 4) {
+            result[i][j] = m0[i][0] * m1[0][j] + m0[i][1] * m1[1][j] + m0[i][2] * m1[2][j] + m0[i][3] * m1[3][j];
+            j += 1;
+        }
+        i += 1;
+    }
+    return result;
 }
