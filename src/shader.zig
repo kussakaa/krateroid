@@ -1,0 +1,112 @@
+// Модуль для работы с шейдерами OpenGL'а
+
+const c = @import("c.zig");
+const std = @import("std");
+const panic = std.debug.panic;
+const print = std.debug.print;
+const Allocator = std.mem.Allocator;
+
+pub const ShaderType = enum {
+    vertex,
+    fragment,
+};
+
+pub const Shader = struct {
+    id: u32, // индекс шейдера
+
+    pub fn create(allocator: Allocator, shader_source: []const u8, shader_type: ShaderType) !Shader {
+        const shader = switch (shader_type) {
+            ShaderType.vertex => c.glCreateShader(c.GL_VERTEX_SHADER),
+            ShaderType.fragment => c.glCreateShader(c.GL_FRAGMENT_SHADER),
+        };
+
+        const shader_source_ptr: ?[*]const u8 = shader_source.ptr;
+        c.glShaderSource(shader, 1, &shader_source_ptr, null);
+        c.glCompileShader(shader);
+
+        var succes: i32 = 1;
+        c.glGetShaderiv(shader, c.GL_COMPILE_STATUS, &succes);
+
+        // вывод ошибки если шейдер не скомпилировался
+        if (succes == 0) {
+            var info_log_len: i32 = 0;
+            c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
+            const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
+            panic("\n[ОШИБКА]:Сборка шейдера завершилась с ошибкой: {s}\n", .{info_log});
+        }
+
+        std.debug.print("[СОЗДАН]:Шейдер[ID:{}]\n", .{shader});
+        return Shader{
+            .id = shader,
+        };
+    }
+
+    pub fn delete(self: Shader) void {
+        c.glDeleteShader(self.id);
+        std.debug.print("[УДАЛЁН]:Шейдер[ID:{}]\n", .{self.id});
+    }
+};
+
+pub const ShaderProgram = struct {
+    id: u32, // индекс программы
+
+    pub fn create(allocator: Allocator, shaders: []const Shader) !ShaderProgram {
+        const program = c.glCreateProgram();
+        for (shaders) |shader| {
+            c.glAttachShader(program, shader.id);
+        }
+
+        //компоновка шейдерной программы
+        c.glLinkProgram(program);
+
+        var succes: i32 = 1;
+        c.glGetProgramiv(program, c.GL_LINK_STATUS, &succes);
+
+        // вывод ошибки если программа не скомпоновалась
+        if (succes == 0) {
+            var info_log_len: i32 = 0;
+            c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
+            const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
+            panic("\n[ОШИБКА]:Компоновка шейдерной программы завершилась с ошибкой: {s}\n", .{info_log});
+        }
+
+        std.debug.print("[СОЗДАН]:Шейдерная программа[ID:{}]\n", .{program});
+        return ShaderProgram{ .id = program };
+    }
+
+    pub fn use(self: ShaderProgram) void {
+        c.glUseProgram(self.id);
+    }
+
+    pub fn getUniform(self: ShaderProgram, name: [*c]const u8) i32 {
+        return @intCast(i32, c.glGetUniformLocation(self.id, name));
+    }
+
+    pub fn setUniform(comptime T: type, location: i32, value: T) void {
+        switch (T) {
+            f32 => c.glUniform1f(location, value),
+            i32 => c.glUniform1i(location, value),
+            @Vector(4, f32) => {
+                const array: [4]f32 = value;
+                c.glUniform4fv(location, 1, &array);
+            },
+            [4]@Vector(4, f32) => {
+                const array = [16]f32{
+                    value[0][0], value[0][1], value[0][2], value[0][3],
+                    value[1][0], value[1][1], value[1][2], value[1][3],
+                    value[2][0], value[2][1], value[2][2], value[2][3],
+                    value[3][0], value[3][1], value[3][2], value[3][3],
+                };
+                c.glUniformMatrix4fv(location, 1, c.GL_FALSE, &array);
+            },
+            else => @compileError("[ОШИБКА СБОРКИ]: Задан неправильный тип в setUniform"),
+        }
+    }
+
+    pub fn delete(self: ShaderProgram) void {
+        c.glDeleteProgram(self.id);
+        std.debug.print("[УДАЛЁН]:Шейдерная программа[ID:{}]\n", .{self.id});
+    }
+};
