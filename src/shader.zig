@@ -14,7 +14,7 @@ pub const ShaderType = enum {
 pub const Shader = struct {
     id: u32, // индекс шейдера
 
-    pub fn create(allocator: Allocator, shader_source: []const u8, shader_type: ShaderType) !Shader {
+    pub fn init(allocator: Allocator, shader_source: []const u8, shader_type: ShaderType) !Shader {
         const shader = switch (shader_type) {
             ShaderType.vertex => c.glCreateShader(c.GL_VERTEX_SHADER),
             ShaderType.fragment => c.glCreateShader(c.GL_FRAGMENT_SHADER),
@@ -36,22 +36,22 @@ pub const Shader = struct {
             panic("\n[ОШИБКА]:Сборка шейдера завершилась с ошибкой: {s}\n", .{info_log});
         }
 
-        std.debug.print("[СОЗДАН]:Шейдер[ID:{}]\n", .{shader});
+        std.debug.print("[СОЗДАНО]:Шейдер[ID:{}]\n", .{shader});
         return Shader{
             .id = shader,
         };
     }
 
-    pub fn delete(self: Shader) void {
+    pub fn destroy(self: Shader) void {
         c.glDeleteShader(self.id);
-        std.debug.print("[УДАЛЁН]:Шейдер[ID:{}]\n", .{self.id});
+        std.debug.print("[УНИЧНОЖЕНО]:Шейдер[ID:{}]\n", .{self.id});
     }
 };
 
 pub const ShaderProgram = struct {
     id: u32, // индекс программы
 
-    pub fn create(allocator: Allocator, shaders: []const Shader) !ShaderProgram {
+    pub fn init(allocator: Allocator, shaders: []const Shader) !ShaderProgram {
         const program = c.glCreateProgram();
         for (shaders) |shader| {
             c.glAttachShader(program, shader.id);
@@ -72,7 +72,7 @@ pub const ShaderProgram = struct {
             panic("\n[ОШИБКА]:Компоновка шейдерной программы завершилась с ошибкой: {s}\n", .{info_log});
         }
 
-        std.debug.print("[СОЗДАН]:Шейдерная программа[ID:{}]\n", .{program});
+        std.debug.print("[СОЗДАНО]:Шейдерная программа[ID:{}]\n", .{program});
         return ShaderProgram{ .id = program };
     }
 
@@ -105,8 +105,8 @@ pub const ShaderProgram = struct {
         }
     }
 
-    pub fn delete(self: ShaderProgram) void {
+    pub fn destroy(self: ShaderProgram) void {
         c.glDeleteProgram(self.id);
-        std.debug.print("[УДАЛЁН]:Шейдерная программа[ID:{}]\n", .{self.id});
+        std.debug.print("[УНИЧНОЖЕНО]:Шейдерная программа[ID:{}]\n", .{self.id});
     }
 };

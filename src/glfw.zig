@@ -45,7 +45,7 @@ pub const Window = struct {
         _ = c.glfwSetWindowSizeCallback(handle, window_size_callback);
         _ = c.glfwSetKeyCallback(handle, key_callback);
 
-        print("[СОЗДАН]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ title, width, height });
+        print("[СОЗДАНО]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ title, width, height });
         return Window{ .handle = handle, .title = title };
     }
 

@@ -6,7 +6,7 @@ pub const Mesh = struct {
     vao: u32, // Объект аттрибутов вершин
     len: usize, // Количество вершин
 
-    pub fn create(vertices: []const f32, attrs: []const u32) Mesh {
+    pub fn init(vertices: []const f32, attrs: []const u32) Mesh {
         var vertex_size: u32 = 0;
         for (attrs) |i| {
             vertex_size += i;
@@ -44,7 +44,7 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
         c.glBindVertexArray(0);
 
-        print("[СОЗДАН]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ vertices.len / vertex_size, vbo, vao });
+        print("[СОЗДАНО]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ vertices.len / vertex_size, vbo, vao });
         return Mesh{
             .vbo = vbo,
             .vao = vao,
@@ -58,9 +58,9 @@ pub const Mesh = struct {
         c.glBindVertexArray(0);
     }
 
-    pub fn delete(self: Mesh) void {
+    pub fn destroy(self: Mesh) void {
         c.glDeleteVertexArrays(1, &self.vao);
         c.glDeleteBuffers(1, &self.vbo);
-        print("[УДАЛЁН]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ self.len, self.vbo, self.vao });
+        print("[УНИЧНОЖЕНО]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ self.len, self.vbo, self.vao });
     }
 };

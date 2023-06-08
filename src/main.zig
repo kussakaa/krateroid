@@ -8,12 +8,16 @@ const mesh = @import("mesh.zig");
 const shader = @import("shader.zig");
 const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
+const Renderer = @import("renderer.zig").Renderer;
 
 pub fn main() !void {
     try glfw.init();
     defer glfw.terminate();
     const window = try glfw.Window.create(800, 600, "krateroid");
     defer window.destroy();
+
+    const renderer = try Renderer.init();
+    defer renderer.destroy();
 
     const rect_mesh_vertices = [_]f32{
         -0.5, -0.5, 1.0, 0.0, 0.0,
@@ -23,15 +27,15 @@ pub fn main() !void {
         -0.5, 0.5,  1.0, 1.0, 1.0,
         -0.5, -0.5, 1.0, 0.0, 0.0,
     };
-    const rect_mesh = mesh.Mesh.create(rect_mesh_vertices[0..], &[_]u32{ 2, 3 });
-    defer rect_mesh.delete();
+    const rect_mesh = mesh.Mesh.init(rect_mesh_vertices[0..], &[_]u32{ 2, 3 });
+    defer rect_mesh.destroy();
 
-    const shader_vertex = try shader.Shader.create(std.heap.page_allocator, shader_sources.main_vertex, shader.ShaderType.vertex);
-    const shader_fragment = try shader.Shader.create(std.heap.page_allocator, shader_sources.main_fragment, shader.ShaderType.fragment);
-    const program = try shader.ShaderProgram.create(std.heap.page_allocator, &[_]shader.Shader{ shader_vertex, shader_fragment });
-    defer program.delete();
-    shader_vertex.delete();
-    shader_fragment.delete();
+    const shader_vertex = try shader.Shader.init(std.heap.page_allocator, shader_sources.main_vertex, shader.ShaderType.vertex);
+    const shader_fragment = try shader.Shader.init(std.heap.page_allocator, shader_sources.main_fragment, shader.ShaderType.fragment);
+    const program = try shader.ShaderProgram.init(std.heap.page_allocator, &[_]shader.Shader{ shader_vertex, shader_fragment });
+    defer program.destroy();
+    shader_vertex.destroy();
+    shader_fragment.destroy();
     program.use();
     const uniform_color = program.getUniform("color");
     const uniform_model = program.getUniform("model");
