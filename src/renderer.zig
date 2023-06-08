@@ -4,28 +4,72 @@ const gui = @import("gui.zig");
 const Shader = @import("shader.zig").Shader;
 const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
+const Mesh = @import("mesh.zig").Mesh;
+
+const linmath = @import("linmath.zig");
+const Vec = linmath.Vec;
+const I32x4 = linmath.I32x4;
 
 pub const Renderer = struct {
+    viewport: linmath.I32x4,
     gui: struct {
         rect: struct {
-            shader: ShaderProgram,
+            shader: struct {
+                id: ShaderProgram,
+                uniforms: struct {
+                    color: i32,
+                    viewport: i32,
+                },
+            },
+            mesh: Mesh,
         },
     },
 
     pub fn init() !Renderer {
-        const gui_rect_vertex = try Shader.init(std.heap.page_allocator, shader_sources.main_vertex, ShaderType.vertex);
-        const gui_rect_fragment = try Shader.init(std.heap.page_allocator, shader_sources.main_fragment, ShaderType.fragment);
+        const gui_rect_vertex = try Shader.init(std.heap.page_allocator, shader_sources.rect_vertex, ShaderType.vertex);
+        const gui_rect_fragment = try Shader.init(std.heap.page_allocator, shader_sources.rect_fragment, ShaderType.fragment);
         const gui_rect_shader = try ShaderProgram.init(std.heap.page_allocator, &[_]Shader{ gui_rect_vertex, gui_rect_fragment });
+
+        gui_rect_vertex.destroy();
+        gui_rect_fragment.destroy();
+
+        const gui_rect_mesh_vertices = [_]f32{
+            -0.5, -0.5,
+            0.5,  -0.5,
+            0.5,  0.5,
+            0.5,  0.5,
+            -0.5, 0.5,
+            -0.5, -0.5,
+        };
+        const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{2});
         return Renderer{
+            .viewport = linmath.I32x4{ 0, 0, 800, 800 },
             .gui = .{
                 .rect = .{
-                    .shader = gui_rect_shader,
+                    .shader = .{
+                        .id = gui_rect_shader,
+                        .uniforms = .{
+                            .color = gui_rect_shader.getUniform("color"),
+                            .viewport = gui_rect_shader.getUniform("viewport"),
+                        },
+                    },
+                    .mesh = gui_rect_mesh,
                 },
             },
         };
     }
 
+    pub fn draw(self: Renderer, obj: anytype, color: Vec) void {
+        if (@TypeOf(obj) == gui.Rect) {
+            self.gui.rect.shader.id.use();
+            ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.viewport, self.viewport);
+            ShaderProgram.setUniform(Vec, self.gui.rect.shader.uniforms.color, color);
+            self.gui.rect.mesh.draw();
+        }
+    }
+
     pub fn destroy(self: Renderer) void {
-        _ = self;
+        self.gui.rect.shader.id.destroy();
+        self.gui.rect.mesh.destroy();
     }
 };

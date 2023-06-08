@@ -1,6 +1,7 @@
 const math = @import("std").math;
 
 pub const F32x4 = @Vector(4, f32);
+pub const I32x4 = @Vector(4, i32);
 pub const Vec = F32x4;
 pub const Mat = [4]F32x4;
 pub const MatIdentity = Mat{

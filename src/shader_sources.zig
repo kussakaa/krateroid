@@ -1,21 +1,18 @@
-pub const main_vertex =
+pub const rect_vertex =
     \\#version 330 core
-    \\uniform mat4 model;
-    \\uniform mat4 view;
-    \\uniform mat4 proj;
-    \\layout (location = 0) in vec3 aPos;
-    \\layout (location = 1) in vec3 aCol;
-    \\out vec3 vCol;
+    \\uniform ivec4 viewport;
+    \\layout (location = 0) in vec2 aPos;
     \\void main()
     \\{
-    \\   vCol = aCol;
-    \\   gl_Position = proj*view*model*vec4(aPos.x, aPos.y, aPos.z, 1.0);
+    \\   float width = viewport.z;
+    \\   float height = viewport.w;
+    \\   float ratio = width/height;
+    \\   gl_Position = vec4(aPos.x/ratio, aPos.y, 0.0, 1.0);
     \\};
 ;
 
-pub const main_fragment =
+pub const rect_fragment =
     \\#version 330 core
-    \\in vec3 vCol;
     \\uniform vec4 color;
     \\out vec4 FragColor;
     \\void main()
