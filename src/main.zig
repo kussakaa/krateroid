@@ -53,15 +53,38 @@ pub fn main() !void {
         renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
         renderer.gui.rect.alignment = gui.Alignment.left_bottom;
         renderer.draw(gui.Rect{ 20, 20, 180, 80 });
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+
+        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
         renderer.gui.rect.alignment = gui.Alignment.left_top;
         renderer.draw(gui.Rect{ 20, 20, 180, 80 });
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+
+        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
         renderer.gui.rect.alignment = gui.Alignment.right_bottom;
         renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+
         renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
         renderer.gui.rect.alignment = gui.Alignment.right_top;
         renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.center_bottom;
+        renderer.draw(gui.Rect{ -30, 20, 30, 50 });
+
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.right_center;
+        renderer.draw(gui.Rect{ 20, -30, 50, 30 });
+
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.center_top;
+        renderer.draw(gui.Rect{ -30, 20, 30, 50 });
+
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.left_center;
+        renderer.draw(gui.Rect{ 20, -30, 50, 30 });
+
+        renderer.color = Vec{ 0.8, 0.141, 0.113, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.center_center;
+        renderer.draw(gui.Rect{ -20, -20, 20, 20 });
 
         window.swapBuffers();
         glfw.pollEvents();

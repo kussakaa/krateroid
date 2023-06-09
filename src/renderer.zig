@@ -51,7 +51,7 @@ pub const Renderer = struct {
             .color = Vec{ 1.0, 1.0, 1.0, 1.0 },
             .gui = .{
                 .rect = .{
-                    .alignment = gui.Alignment.left_bottom,
+                    .alignment = gui.Alignment.left_top,
                     .shader = .{
                         .id = gui_rect_shader,
                         .uniforms = .{
@@ -71,12 +71,6 @@ pub const Renderer = struct {
             self.gui.rect.shader.id.use();
             switch (self.gui.rect.alignment) {
                 gui.Alignment.left_bottom => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, obj),
-                gui.Alignment.left_top => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
-                    obj[0],
-                    self.vpsize[1] - obj[3],
-                    obj[2],
-                    self.vpsize[1] - obj[1],
-                }),
                 gui.Alignment.right_bottom => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
                     self.vpsize[0] - obj[2],
                     obj[1],
@@ -88,6 +82,42 @@ pub const Renderer = struct {
                     self.vpsize[1] - obj[3],
                     self.vpsize[0] - obj[0],
                     self.vpsize[1] - obj[1],
+                }),
+                gui.Alignment.left_top => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    obj[0],
+                    self.vpsize[1] - obj[3],
+                    obj[2],
+                    self.vpsize[1] - obj[1],
+                }),
+                gui.Alignment.center_bottom => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    @divTrunc(self.vpsize[0], 2) + obj[0],
+                    obj[1],
+                    @divTrunc(self.vpsize[0], 2) + obj[2],
+                    obj[3],
+                }),
+                gui.Alignment.right_center => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    self.vpsize[0] - obj[2],
+                    @divTrunc(self.vpsize[1], 2) + obj[1],
+                    self.vpsize[0] - obj[0],
+                    @divTrunc(self.vpsize[1], 2) + obj[3],
+                }),
+                gui.Alignment.center_top => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    @divTrunc(self.vpsize[0], 2) + obj[0],
+                    self.vpsize[1] - obj[3],
+                    @divTrunc(self.vpsize[0], 2) + obj[2],
+                    self.vpsize[1] - obj[1],
+                }),
+                gui.Alignment.left_center => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    obj[0],
+                    @divTrunc(self.vpsize[1], 2) + obj[1],
+                    obj[2],
+                    @divTrunc(self.vpsize[1], 2) + obj[3],
+                }),
+                gui.Alignment.center_center => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    @divTrunc(self.vpsize[0], 2) + obj[0],
+                    @divTrunc(self.vpsize[1], 2) + obj[1],
+                    @divTrunc(self.vpsize[0], 2) + obj[2],
+                    @divTrunc(self.vpsize[1], 2) + obj[3],
                 }),
             }
             ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
