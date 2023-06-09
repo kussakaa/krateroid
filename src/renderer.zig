@@ -12,11 +12,13 @@ const I32x4 = linmath.I32x4;
 
 pub const Renderer = struct {
     viewport: linmath.I32x4,
+    color: Vec,
     gui: struct {
         rect: struct {
             shader: struct {
                 id: ShaderProgram,
                 uniforms: struct {
+                    rect: i32,
                     color: i32,
                     viewport: i32,
                 },
@@ -34,21 +36,23 @@ pub const Renderer = struct {
         gui_rect_fragment.destroy();
 
         const gui_rect_mesh_vertices = [_]f32{
-            -0.5, -0.5,
-            0.5,  -0.5,
-            0.5,  0.5,
-            0.5,  0.5,
-            -0.5, 0.5,
-            -0.5, -0.5,
+            0.0, 0.0,
+            1.0, 0.0,
+            1.0, 1.0,
+            1.0, 1.0,
+            0.0, 1.0,
+            0.0, 0.0,
         };
         const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{2});
         return Renderer{
             .viewport = linmath.I32x4{ 0, 0, 800, 800 },
+            .color = Vec{ 1.0, 1.0, 1.0, 1.0 },
             .gui = .{
                 .rect = .{
                     .shader = .{
                         .id = gui_rect_shader,
                         .uniforms = .{
+                            .rect = gui_rect_shader.getUniform("rect"),
                             .color = gui_rect_shader.getUniform("color"),
                             .viewport = gui_rect_shader.getUniform("viewport"),
                         },
@@ -59,11 +63,12 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn draw(self: Renderer, obj: anytype, color: Vec) void {
+    pub fn draw(self: Renderer, obj: anytype) void {
         if (@TypeOf(obj) == gui.Rect) {
             self.gui.rect.shader.id.use();
+            ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{ obj.min.x, obj.min.y, obj.max.x, obj.max.y });
             ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.viewport, self.viewport);
-            ShaderProgram.setUniform(Vec, self.gui.rect.shader.uniforms.color, color);
+            ShaderProgram.setUniform(Vec, self.gui.rect.shader.uniforms.color, self.color);
             self.gui.rect.mesh.draw();
         }
     }

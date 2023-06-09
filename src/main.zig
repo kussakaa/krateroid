@@ -37,10 +37,10 @@ pub fn main() !void {
         c.glClear(c.GL_COLOR_BUFFER_BIT);
         c.glClearColor(0.113, 0.125, 0.129, 1.0);
 
-        renderer.draw(gui.Rect{
-            .min = .{ .x = 0, .y = 0 },
-            .max = .{ .x = 20, .y = 20 },
-        }, Vec{ 0.6, 0.59, 0.1, 1.0 });
+        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
+        renderer.draw(gui.Rect.init(gui.Point.init(20, 20), gui.Point.init(200, 100)));
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.draw(gui.Rect.init(gui.Point.init(20, 140), gui.Point.init(200, 100)));
         window.swapBuffers();
         glfw.pollEvents();
     }

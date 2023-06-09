@@ -1,13 +1,15 @@
 pub const rect_vertex =
     \\#version 330 core
+    \\uniform ivec4 rect;
     \\uniform ivec4 viewport;
-    \\layout (location = 0) in vec2 aPos;
+    \\layout (location = 0) in vec2 a_pos;
     \\void main()
     \\{
-    \\   float width = viewport.z;
-    \\   float height = viewport.w;
-    \\   float ratio = width/height;
-    \\   gl_Position = vec4(aPos.x/ratio, aPos.y, 0.0, 1.0);
+    \\   float vpwidth = float(viewport.z-viewport.x);
+    \\   float vpheight = float(viewport.w-viewport.y);
+    \\   vec2 pos = vec2(-1.0+float(rect.x)/vpwidth*2.0, -1.0+float(rect.y)/vpheight*2.0);
+    \\   vec2 ratio = vec2(1.0/vpwidth*float(rect.z-rect.x)*2.0, 1.0/vpheight*float(rect.w-rect.y)*2.0);
+    \\   gl_Position = vec4(a_pos.x*ratio.x+pos.x, a_pos.y*ratio.y+pos.y, 0.0, 1.0);
     \\};
 ;
 

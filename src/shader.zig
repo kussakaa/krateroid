@@ -49,7 +49,7 @@ pub const Shader = struct {
 };
 
 pub const ShaderProgram = struct {
-    id: u32, // индекс программы
+    id: u32, // индекс шейдерной программы
 
     pub fn init(allocator: Allocator, shaders: []const Shader) !ShaderProgram {
         const program = c.glCreateProgram();
@@ -57,7 +57,7 @@ pub const ShaderProgram = struct {
             c.glAttachShader(program, shader.id);
         }
 
-        //компоновка шейдерной программы
+        // компоновка шейдерной программы
         c.glLinkProgram(program);
 
         var succes: i32 = 1;
