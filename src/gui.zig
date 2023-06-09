@@ -1,35 +1,12 @@
-pub const Point = struct {
-    x: i32,
-    y: i32,
+const linmath = @import("linmath.zig");
 
-    pub fn init(x: i32, y: i32) Point {
-        return Point{
-            .x = x,
-            .y = y,
-        };
-    }
-};
+pub const Point = linmath.I32x2;
+pub const Line = linmath.I32x2;
+pub const Rect = linmath.I32x4;
 
-pub const Line = struct {
-    p1: Point,
-    p2: Point,
-
-    pub fn init(p1: Point, p2: Point) Line {
-        return Line{
-            .p1 = p1,
-            .p2 = p2,
-        };
-    }
-};
-
-pub const Rect = struct {
-    min: Point,
-    max: Point,
-
-    pub fn init(pos: Point, size: Point) Rect {
-        return Rect{
-            .min = pos,
-            .max = .{ .x = pos.x + size.x, .y = pos.y + size.y },
-        };
-    }
+pub const Alignment = enum {
+    left_bottom, // стандарт
+    left_top,
+    right_bottom,
+    right_top,
 };

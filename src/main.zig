@@ -16,6 +16,15 @@ pub fn main() !void {
     const window = try glfw.Window.create(800, 600, "krateroid");
     defer window.destroy();
 
+    c.glEnable(c.GL_DEPTH_TEST);
+    c.glEnable(c.GL_CULL_FACE);
+    c.glCullFace(c.GL_FRONT);
+    c.glFrontFace(c.GL_CW);
+    c.glEnable(c.GL_BLEND);
+    c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+    c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
+    c.glClearColor(0.113, 0.125, 0.129, 1.0);
+
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
@@ -27,20 +36,33 @@ pub fn main() !void {
         if (glfw.isJustPressed(256)) run = false;
 
         const window_size = window.getSize();
-        const viewport = linmath.I32x4{ 0, 0, window_size.x, window_size.y };
-        renderer.viewport = viewport;
+        const vpsize = linmath.I32x2{ window_size.x, window_size.y };
+        renderer.vpsize = vpsize;
         const current_time = @floatCast(f32, c.glfwGetTime());
         const dt = current_time - last_time;
         last_time = current_time;
         _ = dt;
 
-        c.glClear(c.GL_COLOR_BUFFER_BIT);
+        c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.113, 0.125, 0.129, 1.0);
+        c.glEnable(c.GL_DEPTH_TEST);
+        // 3D
 
+        c.glDisable(c.GL_DEPTH_TEST);
+        // 2D
         renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
-        renderer.draw(gui.Rect.init(gui.Point.init(20, 20), gui.Point.init(200, 100)));
+        renderer.gui.rect.alignment = gui.Alignment.left_bottom;
+        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
         renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
-        renderer.draw(gui.Rect.init(gui.Point.init(20, 140), gui.Point.init(200, 100)));
+        renderer.gui.rect.alignment = gui.Alignment.left_top;
+        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.right_bottom;
+        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
+        renderer.gui.rect.alignment = gui.Alignment.right_top;
+        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+
         window.swapBuffers();
         glfw.pollEvents();
     }

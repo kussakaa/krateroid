@@ -9,18 +9,20 @@ const Mesh = @import("mesh.zig").Mesh;
 const linmath = @import("linmath.zig");
 const Vec = linmath.Vec;
 const I32x4 = linmath.I32x4;
+const I32x2 = linmath.I32x2;
 
 pub const Renderer = struct {
-    viewport: linmath.I32x4,
+    vpsize: linmath.I32x2,
     color: Vec,
     gui: struct {
         rect: struct {
+            alignment: gui.Alignment,
             shader: struct {
                 id: ShaderProgram,
                 uniforms: struct {
                     rect: i32,
                     color: i32,
-                    viewport: i32,
+                    vpsize: i32,
                 },
             },
             mesh: Mesh,
@@ -45,16 +47,17 @@ pub const Renderer = struct {
         };
         const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{2});
         return Renderer{
-            .viewport = linmath.I32x4{ 0, 0, 800, 800 },
+            .vpsize = linmath.I32x2{ 800, 800 },
             .color = Vec{ 1.0, 1.0, 1.0, 1.0 },
             .gui = .{
                 .rect = .{
+                    .alignment = gui.Alignment.left_bottom,
                     .shader = .{
                         .id = gui_rect_shader,
                         .uniforms = .{
                             .rect = gui_rect_shader.getUniform("rect"),
                             .color = gui_rect_shader.getUniform("color"),
-                            .viewport = gui_rect_shader.getUniform("viewport"),
+                            .vpsize = gui_rect_shader.getUniform("vpsize"),
                         },
                     },
                     .mesh = gui_rect_mesh,
@@ -66,8 +69,28 @@ pub const Renderer = struct {
     pub fn draw(self: Renderer, obj: anytype) void {
         if (@TypeOf(obj) == gui.Rect) {
             self.gui.rect.shader.id.use();
-            ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{ obj.min.x, obj.min.y, obj.max.x, obj.max.y });
-            ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.viewport, self.viewport);
+            switch (self.gui.rect.alignment) {
+                gui.Alignment.left_bottom => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, obj),
+                gui.Alignment.left_top => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    obj[0],
+                    self.vpsize[1] - obj[3],
+                    obj[2],
+                    self.vpsize[1] - obj[1],
+                }),
+                gui.Alignment.right_bottom => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    self.vpsize[0] - obj[2],
+                    obj[1],
+                    self.vpsize[0] - obj[0],
+                    obj[3],
+                }),
+                gui.Alignment.right_top => ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, I32x4{
+                    self.vpsize[0] - obj[2],
+                    self.vpsize[1] - obj[3],
+                    self.vpsize[0] - obj[0],
+                    self.vpsize[1] - obj[1],
+                }),
+            }
+            ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
             ShaderProgram.setUniform(Vec, self.gui.rect.shader.uniforms.color, self.color);
             self.gui.rect.mesh.draw();
         }
