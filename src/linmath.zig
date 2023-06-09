@@ -12,6 +12,7 @@ pub const MatIdentity = Mat{
 };
 pub const Quat = F32x4;
 
+// матрица поворота по оси X на градус f
 pub fn rotX(f: f32) Mat {
     return Mat{
         @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
@@ -21,6 +22,7 @@ pub fn rotX(f: f32) Mat {
     };
 }
 
+// матрица поворота по оси Y на градус f
 pub fn rotY(f: f32) Mat {
     return Mat{
         @Vector(4, f32){ math.cos(f), 0.0, math.sin(f), 0.0 },
@@ -30,6 +32,7 @@ pub fn rotY(f: f32) Mat {
     };
 }
 
+// матрица поворота по оси Z на градус f
 pub fn rotZ(f: f32) Mat {
     return Mat{
         @Vector(4, f32){ math.cos(f), -math.sin(f), 0.0, 0.0 },
@@ -39,6 +42,7 @@ pub fn rotZ(f: f32) Mat {
     };
 }
 
+// перемножение матриц
 pub fn mul(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
     comptime var i = 0;

@@ -44,7 +44,7 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
         c.glBindVertexArray(0);
 
-        print("[СОЗДАНО]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ vertices.len / vertex_size, vbo, vao });
+        print("[СЕТКА ПОЛИГОНОВ]:[Вершин:{}|VBO:{}|VAO:{}]:Cоздана\n", .{ vertices.len / vertex_size, vbo, vao });
         return Mesh{
             .vbo = vbo,
             .vao = vao,
@@ -61,6 +61,6 @@ pub const Mesh = struct {
     pub fn destroy(self: Mesh) void {
         c.glDeleteVertexArrays(1, &self.vao);
         c.glDeleteBuffers(1, &self.vbo);
-        print("[УНИЧНОЖЕНО]:Сетка полигонов[Вершин:{}|VBO:{}|VAO:{}]\n", .{ self.len, self.vbo, self.vao });
+        print("[СЕТКА ПОЛИГОНОВ]:[Вершин:{}|VBO:{}|VAO:{}]:Уничтожена\n", .{ self.len, self.vbo, self.vao });
     }
 };

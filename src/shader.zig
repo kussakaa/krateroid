@@ -33,10 +33,10 @@ pub const Shader = struct {
             c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
-            panic("\n[ОШИБКА]:Сборка шейдера завершилась с ошибкой: {s}\n", .{info_log});
+            panic("\n[ШЕЙДЕР]:[ID:{}]:Сборка завершилась с ошибкой: {s}\n", .{ shader, info_log });
         }
 
-        std.debug.print("[СОЗДАНО]:Шейдер[ID:{}]\n", .{shader});
+        std.debug.print("[ШЕЙДЕР]:[ID:{}]:Создан успешно\n", .{shader});
         return Shader{
             .id = shader,
         };
@@ -44,7 +44,7 @@ pub const Shader = struct {
 
     pub fn destroy(self: Shader) void {
         c.glDeleteShader(self.id);
-        std.debug.print("[УНИЧНОЖЕНО]:Шейдер[ID:{}]\n", .{self.id});
+        std.debug.print("[ШЕЙДЕР]:[ID:{}]:Уничтожен\n", .{self.id});
     }
 };
 
@@ -69,10 +69,10 @@ pub const ShaderProgram = struct {
             c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
-            panic("\n[ОШИБКА]:Компоновка шейдерной программы завершилась с ошибкой: {s}\n", .{info_log});
+            panic("\n[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Компоновка завершилась с ошибкой: {s}\n", .{ program, info_log });
         }
 
-        std.debug.print("[СОЗДАНО]:Шейдерная программа[ID:{}]\n", .{program});
+        std.debug.print("[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Компоновка завершилась успешно\n", .{program});
         return ShaderProgram{ .id = program };
     }
 
@@ -80,10 +80,12 @@ pub const ShaderProgram = struct {
         c.glUseProgram(self.id);
     }
 
+    // получение идентификатора юниформы
     pub fn getUniform(self: ShaderProgram, name: [*c]const u8) i32 {
         return @intCast(i32, c.glGetUniformLocation(self.id, name));
     }
 
+    // отправление значение в шейдер по идентификатору юниформы
     pub fn setUniform(comptime T: type, location: i32, value: T) void {
         switch (T) {
             f32 => c.glUniform1f(location, value),
@@ -105,12 +107,13 @@ pub const ShaderProgram = struct {
                 };
                 c.glUniformMatrix4fv(location, 1, c.GL_FALSE, &array);
             },
-            else => @compileError("[ОШИБКА СБОРКИ]: Задан неправильный тип в setUniform"),
+            else => @compileError("[СБОРКА]:[ОШИБКА]:Задан неправильный тип в setUniform"),
         }
     }
 
+    // уничтожение шейдерной программы
     pub fn destroy(self: ShaderProgram) void {
         c.glDeleteProgram(self.id);
-        std.debug.print("[УНИЧНОЖЕНО]:Шейдерная программа[ID:{}]\n", .{self.id});
+        std.debug.print("[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Уничножена\n", .{self.id});
     }
 };

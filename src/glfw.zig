@@ -6,9 +6,9 @@ const panic = std.debug.panic;
 pub fn init() !void {
     if (c.glfwInit() == 0) {
         c.glfwTerminate();
-        panic("[ОШИБКА]:Инициализация GLFW завершилось ошибкой!\n", .{});
+        panic("[GLFW]:Инициализация завершилась ошибкой!\n", .{});
     } else {
-        print("[УСПЕХ]:Инициализация GLFW завершилось успешно\n", .{});
+        print("[GLFW]:Инициализация завершилась успешно\n", .{});
     }
 }
 
@@ -32,12 +32,12 @@ pub const Window = struct {
         const handle = c.glfwCreateWindow(@intCast(c_int, width), @intCast(c_int, height), title, null, null);
         if (handle == null) {
             terminate();
-            panic("[ОШИБКА]:Создание окна завершилось ошибкой!\n", .{});
+            panic("[GLFW]:[ОКНО]:Создание завершилось ошибкой!\n", .{});
         }
         c.glfwMakeContextCurrent(handle);
         if (c.gladLoadGLLoader(@ptrCast(c.GLADloadproc, &c.glfwGetProcAddress)) == 0) {
             terminate();
-            panic("[ОШИБКА]:Инициализация GLAD завершилось ошибкой!\n", .{});
+            panic("[GLFW]:[КОНТЕКСТ GL]:Инициализация завершилась ошибкой!\n", .{});
         }
         c.glViewport(0, 0, 800, 600);
         c.glfwSwapInterval(0);
@@ -45,7 +45,7 @@ pub const Window = struct {
         _ = c.glfwSetWindowSizeCallback(handle, window_size_callback);
         _ = c.glfwSetKeyCallback(handle, key_callback);
 
-        print("[СОЗДАНО]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ title, width, height });
+        print("[GLFW]:[ОКНО]:[Название:{s}|Ширина:{}|Высота:{}]:Создание завершилось успешно\n", .{ title, width, height });
         return Window{ .handle = handle, .title = title };
     }
 
@@ -71,7 +71,7 @@ pub const Window = struct {
     }
 
     pub fn destroy(self: Window) void {
-        print("[УНИЧНОЖЕНО]:Главное окно[Название:{s}|Ширина:{}|Высота:{}]\n", .{ self.title, self.getSize().x, self.getSize().y });
+        print("[GLFW]:[ОКНО]:[Название:{s}|Ширина:{}|Высота:{}]:Уничтожено\n", .{ self.title, self.getSize().x, self.getSize().y });
         c.glfwDestroyWindow(self.handle);
     }
 };
