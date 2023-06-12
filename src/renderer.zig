@@ -8,13 +8,13 @@ const ShaderProgram = @import("shader.zig").ShaderProgram;
 const Mesh = @import("mesh.zig").Mesh;
 
 const linmath = @import("linmath.zig");
-const Vec = linmath.Vec;
+const Color = linmath.F32x4;
 const I32x4 = linmath.I32x4;
 const I32x2 = linmath.I32x2;
 
 pub const Renderer = struct {
     vpsize: linmath.I32x2,
-    color: Vec,
+    color: Color,
     gui: struct {
         rect: struct {
             alignment: gui.Alignment,
@@ -51,7 +51,7 @@ pub const Renderer = struct {
 
         return Renderer{
             .vpsize = linmath.I32x2{ 800, 800 },
-            .color = Vec{ 1.0, 1.0, 1.0, 1.0 },
+            .color = Color{ 1.0, 1.0, 1.0, 1.0 },
             .gui = .{
                 .rect = .{
                     .alignment = gui.Alignment.left_top,
@@ -69,13 +69,25 @@ pub const Renderer = struct {
         };
     }
 
-    pub fn draw(self: Renderer, obj: anytype) void {
-        if (@TypeOf(obj) == gui.Rect) {
-            self.gui.rect.shader.id.use();
-            ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, gui.alignRect(obj, self.gui.rect.alignment, self.vpsize));
-            ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
-            ShaderProgram.setUniform(Vec, self.gui.rect.shader.uniforms.color, self.color);
-            self.gui.rect.mesh.draw();
+    pub fn draw(self: *Renderer, obj: anytype) void {
+        switch (@TypeOf(obj)) {
+            gui.Rect => {
+                self.gui.rect.shader.id.use();
+                ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize));
+                ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
+                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.color, self.color);
+                self.gui.rect.mesh.draw();
+            },
+            gui.Button => {
+                switch (obj.state) {
+                    gui.Button.State.Disabled => self.color = Color{ 0.0, 0.0, 1.0, 1.0 },
+                    gui.Button.State.Focused => self.color = Color{ 0.0, 1.0, 0.0, 1.0 },
+                    gui.Button.State.Pushed => self.color = Color{ 1.0, 0.0, 0.0, 1.0 },
+                }
+                self.gui.rect.alignment = obj.alignment;
+                self.draw(obj.rect);
+            },
+            else => std.debug.panic("[ОТРИСОВЩИК]:[ОШИБКА]:Невозможно отрисовать объкт с данным типом!"),
         }
     }
 

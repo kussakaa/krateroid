@@ -1,13 +1,24 @@
+const std = @import("std");
 const linmath = @import("linmath.zig");
+const Event = @import("events.zig").Event;
+const EventTag = @import("events.zig").EventTag;
 
 pub const Point = linmath.I32x2;
 pub const Line = linmath.I32x2;
 pub const Rect = linmath.I32x4;
 pub const Button = struct {
     rect: Rect,
+    state: State,
+    alignment: Alignment,
+
+    pub const State = enum {
+        Disabled,
+        Focused,
+        Pushed,
+    };
 };
 
-pub fn alignRect(rect: Rect, alignment: Alignment, vpsize: linmath.I32x2) Rect {
+pub fn rectAlignOfVp(rect: Rect, alignment: Alignment, vpsize: linmath.I32x2) Rect {
     return switch (alignment) {
         Alignment.left_bottom => rect,
         Alignment.right_bottom => Rect{
@@ -61,6 +72,11 @@ pub fn alignRect(rect: Rect, alignment: Alignment, vpsize: linmath.I32x2) Rect {
     };
 }
 
+pub fn rectIsAround(rect: Rect, point: Point) bool {
+    if (point[0] > rect[0] and point[0] < rect[2] and point[1] > rect[1] and point[1] < rect[3]) return true;
+    return false;
+}
+
 pub const Alignment = enum {
     left_bottom, // стандарт
     right_bottom,
@@ -74,11 +90,52 @@ pub const Alignment = enum {
 };
 
 pub const Gui = struct {
-    buttons: @Vector(0, Button),
+    vpsize: linmath.I32x2,
+    buttons: std.ArrayList(Button),
 
-    pub fn addButton(self: Gui, button: Button) void {
-        self.buttons ++ button;
+    pub fn init() Gui {
+        return Gui{
+            .vpsize = linmath.I32x2{ 800, 600 },
+            .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
+        };
     }
 
-    //pub fn pushEvent(self: Gui) void {}
+    pub fn addButton(self: *Gui, button: Button) !void {
+        try self.buttons.append(button);
+    }
+
+    pub fn pushEvent(self: *Gui, event: Event) void {
+        switch (event) {
+            EventTag.press => |key| {
+                _ = key;
+            },
+            EventTag.unpress => |key| {
+                _ = key;
+            },
+            EventTag.click => |key| {
+                if (key == 0) {
+                    for (self.buttons.items) |*button| {
+                        if (button.state == Button.State.Focused) {
+                            button.state = Button.State.Pushed;
+                        }
+                    }
+                }
+            },
+            EventTag.unclick => |key| {
+                _ = key;
+            },
+            EventTag.size => |size| {
+                self.vpsize = size;
+            },
+            EventTag.pos => |pos| {
+                for (self.buttons.items) |*button| {
+                    if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
+                        button.state = Button.State.Focused;
+                    } else {
+                        button.state = Button.State.Disabled;
+                    }
+                }
+            },
+        }
+    }
 };

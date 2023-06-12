@@ -2,6 +2,7 @@ const c = @import("c.zig");
 const std = @import("std");
 const linmath = @import("linmath.zig");
 const Vec = linmath.Vec;
+const Color = linmath.F32x4;
 const Mat = linmath.Mat;
 const glfw = @import("glfw.zig");
 const mesh = @import("mesh.zig");
@@ -9,6 +10,7 @@ const shader = @import("shader.zig");
 const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
 const Renderer = @import("renderer.zig").Renderer;
+const Event = @import("events.zig").Event;
 
 pub fn main() !void {
     try glfw.init();
@@ -28,6 +30,23 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
+    var gui_state = gui.Gui.init();
+    try gui_state.addButton(gui.Button{
+        .rect = gui.Rect{ -80, 40, 80, 100 },
+        .state = gui.Button.State.Disabled,
+        .alignment = gui.Alignment.center_center,
+    });
+    try gui_state.addButton(gui.Button{
+        .rect = gui.Rect{ -80, -30, 80, 30 },
+        .state = gui.Button.State.Disabled,
+        .alignment = gui.Alignment.center_center,
+    });
+    try gui_state.addButton(gui.Button{
+        .rect = gui.Rect{ -80, -100, 80, -40 },
+        .state = gui.Button.State.Disabled,
+        .alignment = gui.Alignment.center_center,
+    });
+
     var last_time = @floatCast(f32, c.glfwGetTime());
 
     var run = true;
@@ -43,49 +62,27 @@ pub fn main() !void {
         last_time = current_time;
         _ = dt;
 
+        gui_state.pushEvent(Event{ .size = vpsize });
+        gui_state.pushEvent(Event{ .pos = glfw.cursorPos() });
+        if (glfw.isClicked(0)) {
+            gui_state.pushEvent(Event{ .click = 0 });
+        }
+
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.113, 0.125, 0.129, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
+        // ...
+
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D
-        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.left_bottom;
-        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
 
-        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.left_top;
-        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
+        renderer.color = Color{ 0.8, 0.141, 0.113, 1.0 };
+        renderer.draw(gui_state.buttons.items[0]);
+        renderer.draw(gui_state.buttons.items[1]);
+        renderer.draw(gui_state.buttons.items[2]);
 
-        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.right_bottom;
-        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
-
-        renderer.color = Vec{ 0.596, 0.592, 0.101, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.right_top;
-        renderer.draw(gui.Rect{ 20, 20, 180, 80 });
-
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.center_bottom;
-        renderer.draw(gui.Rect{ -30, 20, 30, 50 });
-
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.right_center;
-        renderer.draw(gui.Rect{ 20, -30, 50, 30 });
-
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.center_top;
-        renderer.draw(gui.Rect{ -30, 20, 30, 50 });
-        renderer.color = Vec{ 0.843, 0.6, 0.129, 1.0 };
-
-        renderer.gui.rect.alignment = gui.Alignment.left_center;
-        renderer.draw(gui.Rect{ 20, -30, 50, 30 });
-
-        renderer.color = Vec{ 0.8, 0.141, 0.113, 1.0 };
-        renderer.gui.rect.alignment = gui.Alignment.center_center;
-
-        renderer.draw(gui.Rect{ -20, -20, 20, 20 });
         window.swapBuffers();
         glfw.pollEvents();
     }

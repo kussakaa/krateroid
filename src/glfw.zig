@@ -2,6 +2,7 @@ const c = @import("c.zig");
 const std = @import("std");
 const print = std.debug.print;
 const panic = std.debug.panic;
+const I32x2 = @import("linmath.zig").I32x2;
 
 pub fn init() !void {
     if (c.glfwInit() == 0) {
@@ -44,6 +45,8 @@ pub const Window = struct {
 
         _ = c.glfwSetWindowSizeCallback(handle, window_size_callback);
         _ = c.glfwSetKeyCallback(handle, key_callback);
+        _ = c.glfwSetMouseButtonCallback(handle, button_callback);
+        _ = c.glfwSetCursorPosCallback(handle, pos_callback);
 
         print("[GLFW]:[ОКНО]:[Название:{s}|Ширина:{}|Высота:{}]:Создание завершилось успешно\n", .{ title, width, height });
         return Window{ .handle = handle, .title = title };
@@ -76,18 +79,37 @@ pub const Window = struct {
     }
 };
 
-var keys: [1032]bool = [_]bool{false} ** 1032;
-var frames: [1032]u32 = [_]u32{0} ** 1032;
+var keys: [349]bool = [_]bool{false} ** 349;
+var buttons: [8]bool = [_]bool{false} ** 8;
+const cursor = struct {
+    var pos = I32x2{ 0, 0 };
+};
+
+var frames: [357]u32 = [_]u32{0} ** 357;
 var current: u32 = 0;
 
 pub fn isPressed(keycode: i32) bool {
-    if (keycode < 0 or keycode >= 1024) return false;
+    if (keycode < 0 or keycode >= keys.len) return false;
     return keys[@intCast(usize, keycode)];
 }
 
 pub fn isJustPressed(keycode: i32) bool {
-    if (keycode < 0 or keycode >= 1024) return false;
+    if (keycode < 0 or keycode >= keys.len) return false;
     return keys[@intCast(usize, keycode)] and (frames[@intCast(usize, keycode)] == current);
+}
+
+pub fn isClicked(button: i32) bool {
+    if (button < 0 or button >= buttons.len) return false;
+    return buttons[@intCast(usize, button)];
+}
+
+pub fn isJustClicked(button: i32) bool {
+    if (button < 0 or button >= buttons.len) return false;
+    return buttons[@intCast(usize, button)] and (frames[keys.len + @intCast(usize, button)] == current);
+}
+
+pub fn cursorPos() I32x2 {
+    return cursor.pos;
 }
 
 pub fn pollEvents() void {
@@ -107,6 +129,24 @@ fn key_callback(handle: ?*c.GLFWwindow, key: c_int, scancode: c_int, action: c_i
         keys[@intCast(usize, key)] = false;
         frames[@intCast(usize, key)] = current;
     }
+}
+
+fn button_callback(handle: ?*c.GLFWwindow, button: c_int, action: c_int, mode: c_int) callconv(.C) void {
+    _ = handle;
+    _ = mode;
+    if (action == c.GLFW_PRESS) {
+        buttons[@intCast(usize, button)] = true;
+        frames[keys.len + @intCast(usize, button)] = current;
+    } else if (action == c.GLFW_RELEASE) {
+        buttons[@intCast(usize, button)] = false;
+        frames[keys.len + @intCast(usize, button)] = current;
+    }
+}
+
+fn pos_callback(handle: ?*c.GLFWwindow, x: f64, y: f64) callconv(.C) void {
+    var vpheight: i32 = 0;
+    c.glfwGetWindowSize(handle, null, &vpheight);
+    cursor.pos = I32x2{ @floatToInt(i32, x), vpheight - @floatToInt(i32, y) };
 }
 
 fn window_size_callback(handle: ?*c.GLFWwindow, width: c_int, height: c_int) callconv(.C) void {
