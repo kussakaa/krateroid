@@ -25,7 +25,7 @@ pub fn main() !void {
     c.glEnable(c.GL_BLEND);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
-    c.glClearColor(0.113, 0.125, 0.129, 1.0);
+    c.glClearColor(0.0, 0.0, 0.0, 1.0);
 
     var renderer = try Renderer.init();
     defer renderer.destroy();
@@ -69,7 +69,7 @@ pub fn main() !void {
         }
 
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
-        c.glClearColor(0.113, 0.125, 0.129, 1.0);
+        c.glClearColor(0.0, 0.0, 0.0, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
@@ -79,9 +79,7 @@ pub fn main() !void {
         // 2D
 
         renderer.color = Color{ 0.8, 0.141, 0.113, 1.0 };
-        renderer.draw(gui_state.buttons.items[0]);
-        renderer.draw(gui_state.buttons.items[1]);
-        renderer.draw(gui_state.buttons.items[2]);
+        renderer.draw(gui_state);
 
         window.swapBuffers();
         glfw.pollEvents();

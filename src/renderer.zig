@@ -80,12 +80,19 @@ pub const Renderer = struct {
             },
             gui.Button => {
                 switch (obj.state) {
-                    gui.Button.State.Disabled => self.color = Color{ 0.0, 0.0, 1.0, 1.0 },
-                    gui.Button.State.Focused => self.color = Color{ 0.0, 1.0, 0.0, 1.0 },
-                    gui.Button.State.Pushed => self.color = Color{ 1.0, 0.0, 0.0, 1.0 },
+                    gui.Button.State.Disabled => self.color = Color{ 0.113, 0.125, 0.129, 1.0 },
+                    gui.Button.State.Focused => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
+                    gui.Button.State.Pushed => self.color = Color{ 0.313, 0.286, 0.270, 1.0 },
                 }
+                const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
                 self.draw(obj.rect);
+                self.gui.rect.alignment = alignment;
+            },
+            gui.Gui => {
+                for (obj.buttons.items) |button| {
+                    self.draw(button);
+                }
             },
             else => std.debug.panic("[ОТРИСОВЩИК]:[ОШИБКА]:Невозможно отрисовать объкт с данным типом!"),
         }
