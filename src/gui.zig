@@ -106,13 +106,13 @@ pub const Gui = struct {
 
     pub fn pushEvent(self: *Gui, event: Event) void {
         switch (event) {
-            EventTag.press => |key| {
+            Event.press => |key| {
                 _ = key;
             },
-            EventTag.unpress => |key| {
+            Event.unpress => |key| {
                 _ = key;
             },
-            EventTag.click => |key| {
+            Event.click => |key| {
                 if (key == 0) {
                     for (self.buttons.items) |*button| {
                         if (button.state == Button.State.Focused) {
@@ -121,13 +121,13 @@ pub const Gui = struct {
                     }
                 }
             },
-            EventTag.unclick => |key| {
+            Event.unclick => |key| {
                 _ = key;
             },
-            EventTag.size => |size| {
+            Event.size => |size| {
                 self.vpsize = size;
             },
-            EventTag.pos => |pos| {
+            Event.pos => |pos| {
                 for (self.buttons.items) |*button| {
                     if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
                         button.state = Button.State.Focused;
