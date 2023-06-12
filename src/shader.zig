@@ -33,10 +33,10 @@ pub const Shader = struct {
             c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
-            panic("\n[ШЕЙДЕР]:[ID:{}]:Сборка завершилась с ошибкой: {s}\n", .{ shader, info_log });
+            panic("\n[!!!ERROR!!!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
         }
 
-        std.debug.print("[ШЕЙДЕР]:[ID:{}]:Создан успешно\n", .{shader});
+        std.debug.print("[*SUCCES*]:[SHADER]:[ID:{}]:Compiling\n", .{shader});
         return Shader{
             .id = shader,
         };
@@ -44,7 +44,7 @@ pub const Shader = struct {
 
     pub fn destroy(self: Shader) void {
         c.glDeleteShader(self.id);
-        std.debug.print("[ШЕЙДЕР]:[ID:{}]:Уничтожен\n", .{self.id});
+        std.debug.print("[*SUCCES*]:[SHADER]:[ID:{}]:Destroyed\n", .{self.id});
     }
 };
 
@@ -69,10 +69,10 @@ pub const ShaderProgram = struct {
             c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
-            panic("\n[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Компоновка завершилась с ошибкой: {s}\n", .{ program, info_log });
+            panic("\n[!!!ERROR!!!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
         }
 
-        std.debug.print("[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Компоновка завершилась успешно\n", .{program});
+        std.debug.print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Linking\n", .{program});
         return ShaderProgram{ .id = program };
     }
 
@@ -111,13 +111,13 @@ pub const ShaderProgram = struct {
                 };
                 c.glUniformMatrix4fv(location, 1, c.GL_FALSE, &array);
             },
-            else => @compileError("[СБОРКА]:[ОШИБКА]:Задан неправильный тип в setUniform"),
+            else => @compileError("[!!!ERROR!!!]:[COMPILING]:Incorrect type in setUniform"),
         }
     }
 
     // уничтожение шейдерной программы
     pub fn destroy(self: ShaderProgram) void {
         c.glDeleteProgram(self.id);
-        std.debug.print("[ШЕЙДЕРНАЯ ПРОГРАММА]:[ID:{}]:Уничножена\n", .{self.id});
+        std.debug.print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Destroyed\n", .{self.id});
     }
 };

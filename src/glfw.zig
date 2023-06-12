@@ -7,9 +7,9 @@ const I32x2 = @import("linmath.zig").I32x2;
 pub fn init() !void {
     if (c.glfwInit() == 0) {
         c.glfwTerminate();
-        panic("[GLFW]:Инициализация завершилась ошибкой!\n", .{});
+        panic("[!!!ERROR!!!]:[GLFW]:Initiased!\n", .{});
     } else {
-        print("[GLFW]:Инициализация завершилась успешно\n", .{});
+        print("[*SUCCES*]:[GLFW]:Initialised\n", .{});
     }
 }
 
@@ -33,12 +33,12 @@ pub const Window = struct {
         const handle = c.glfwCreateWindow(@intCast(c_int, width), @intCast(c_int, height), title, null, null);
         if (handle == null) {
             terminate();
-            panic("[GLFW]:[ОКНО]:Создание завершилось ошибкой!\n", .{});
+            panic("[!!!ERROR!!!]:[WINDOW]:initialised\n", .{});
         }
         c.glfwMakeContextCurrent(handle);
         if (c.gladLoadGLLoader(@ptrCast(c.GLADloadproc, &c.glfwGetProcAddress)) == 0) {
             terminate();
-            panic("[GLFW]:[КОНТЕКСТ GL]:Инициализация завершилась ошибкой!\n", .{});
+            panic("[!!!ERROR!!!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
         }
         c.glViewport(0, 0, 800, 600);
         c.glfwSwapInterval(0);
@@ -48,7 +48,7 @@ pub const Window = struct {
         _ = c.glfwSetMouseButtonCallback(handle, button_callback);
         _ = c.glfwSetCursorPosCallback(handle, pos_callback);
 
-        print("[GLFW]:[ОКНО]:[Название:{s}|Ширина:{}|Высота:{}]:Создание завершилось успешно\n", .{ title, width, height });
+        print("[*SUCCES*]:[WINDOW]:[Title:{s}|Width:{}|Height:{}]:Initialised\n", .{ title, width, height });
         return Window{ .handle = handle, .title = title };
     }
 
@@ -74,7 +74,7 @@ pub const Window = struct {
     }
 
     pub fn destroy(self: Window) void {
-        print("[GLFW]:[ОКНО]:[Название:{s}|Ширина:{}|Высота:{}]:Уничтожено\n", .{ self.title, self.getSize().x, self.getSize().y });
+        print("[*SUCCES*]:[WINDOW]:[Title:{s}|Width:{}|Height:{}]:Destroyed\n", .{ self.title, self.getSize().x, self.getSize().y });
         c.glfwDestroyWindow(self.handle);
     }
 };

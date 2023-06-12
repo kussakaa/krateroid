@@ -82,7 +82,7 @@ pub const Renderer = struct {
                 switch (obj.state) {
                     gui.Button.State.Disabled => self.color = Color{ 0.113, 0.125, 0.129, 1.0 },
                     gui.Button.State.Focused => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Pushed => self.color = Color{ 0.313, 0.286, 0.270, 1.0 },
+                    gui.Button.State.Pushed => self.color = Color{ 0.400, 0.360, 0.329, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
@@ -94,7 +94,7 @@ pub const Renderer = struct {
                     self.draw(button);
                 }
             },
-            else => std.debug.panic("[ОТРИСОВЩИК]:[ОШИБКА]:Невозможно отрисовать объкт с данным типом!"),
+            else => std.debug.panic("[RENDERER]:[ERROR]:Impossible to draw an object of this type!"),
         }
     }
 
