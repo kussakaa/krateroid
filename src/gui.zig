@@ -15,6 +15,7 @@ pub const Button = struct {
         Disabled,
         Focused,
         Pushed,
+        Unpushed,
     };
 };
 
@@ -90,11 +91,13 @@ pub const Alignment = enum {
 };
 
 pub const Gui = struct {
+    enable: bool,
     vpsize: linmath.I32x2,
     buttons: std.ArrayList(Button),
 
     pub fn init() Gui {
         return Gui{
+            .enable = true,
             .vpsize = linmath.I32x2{ 800, 600 },
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
         };
@@ -105,37 +108,45 @@ pub const Gui = struct {
     }
 
     pub fn pushEvent(self: *Gui, event: Event) void {
-        switch (event) {
-            Event.press => |key| {
-                _ = key;
-            },
-            Event.unpress => |key| {
-                _ = key;
-            },
-            Event.click => |key| {
-                if (key == 0) {
-                    for (self.buttons.items) |*button| {
-                        if (button.state == Button.State.Focused) {
-                            button.state = Button.State.Pushed;
+        if (self.enable) {
+            switch (event) {
+                Event.press => |key| {
+                    _ = key;
+                },
+                Event.unpress => |key| {
+                    _ = key;
+                },
+                Event.click => |key| {
+                    if (key == 0) {
+                        for (self.buttons.items) |*button| {
+                            if (button.state == Button.State.Focused) {
+                                button.state = Button.State.Pushed;
+                            }
                         }
                     }
-                }
-            },
-            Event.unclick => |key| {
-                _ = key;
-            },
-            Event.size => |size| {
-                self.vpsize = size;
-            },
-            Event.pos => |pos| {
-                for (self.buttons.items) |*button| {
-                    if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
-                        button.state = Button.State.Focused;
-                    } else {
-                        button.state = Button.State.Disabled;
+                },
+                Event.unclick => |key| {
+                    if (key == 0) {
+                        for (self.buttons.items) |*button| {
+                            if (button.state == Button.State.Focused) {
+                                button.state = Button.State.Unpushed;
+                            }
+                        }
                     }
-                }
-            },
+                },
+                Event.size => |size| {
+                    self.vpsize = size;
+                },
+                Event.pos => |pos| {
+                    for (self.buttons.items) |*button| {
+                        if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
+                            button.state = Button.State.Focused;
+                        } else {
+                            button.state = Button.State.Disabled;
+                        }
+                    }
+                },
+            }
         }
     }
 };

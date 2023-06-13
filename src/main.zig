@@ -30,18 +30,18 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
-    var gui_state = gui.Gui.init();
-    try gui_state.addButton(gui.Button{
+    var gui_main_menu = gui.Gui.init();
+    try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, 40, 80, 100 },
         .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
     });
-    try gui_state.addButton(gui.Button{
+    try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, -30, 80, 30 },
         .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
     });
-    try gui_state.addButton(gui.Button{
+    try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, -100, 80, -40 },
         .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
@@ -52,7 +52,7 @@ pub fn main() !void {
     var run = true;
     while (run) {
         run = !window.shouldClose();
-        if (glfw.isJustPressed(256)) run = false;
+        if (glfw.isJustPressed(256)) gui_main_menu.enable = !gui_main_menu.enable;
 
         const window_size = window.getSize();
         const vpsize = linmath.I32x2{ window_size.x, window_size.y };
@@ -62,12 +62,20 @@ pub fn main() !void {
         last_time = current_time;
         _ = dt;
 
-        gui_state.pushEvent(Event{ .size = vpsize });
-        gui_state.pushEvent(Event{ .pos = glfw.cursorPos() });
+        gui_main_menu.pushEvent(Event{ .size = vpsize });
+        gui_main_menu.pushEvent(Event{ .pos = glfw.cursorPos() });
         if (glfw.isClicked(0)) {
-            gui_state.pushEvent(Event{ .click = 0 });
+            gui_main_menu.pushEvent(Event{ .click = 0 });
+        }
+        if (glfw.isJustUnclicked(0)) {
+            gui_main_menu.pushEvent(Event{ .unclick = 0 });
         }
 
+        if (gui_main_menu.buttons.items[2].state == gui.Button.State.Unpushed) {
+            run = false;
+        }
+
+        // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.0, 0.0, 0.0, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
@@ -79,7 +87,8 @@ pub fn main() !void {
         // 2D
 
         renderer.color = Color{ 0.8, 0.141, 0.113, 1.0 };
-        renderer.draw(gui_state);
+
+        if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
         window.swapBuffers();
         glfw.pollEvents();

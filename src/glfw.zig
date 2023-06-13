@@ -108,6 +108,16 @@ pub fn isJustClicked(button: i32) bool {
     return buttons[@intCast(usize, button)] and (frames[keys.len + @intCast(usize, button)] == current);
 }
 
+pub fn isUnclicked(button: i32) bool {
+    if (button < 0 or button >= buttons.len) return true;
+    return !buttons[@intCast(usize, button)];
+}
+
+pub fn isJustUnclicked(button: i32) bool {
+    if (button < 0 or button >= buttons.len) return false;
+    return !buttons[@intCast(usize, button)] and ((frames[keys.len + @intCast(usize, button)] == current) and (current != 0));
+}
+
 pub fn cursorPos() I32x2 {
     return cursor.pos;
 }
