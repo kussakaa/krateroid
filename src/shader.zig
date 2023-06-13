@@ -94,13 +94,17 @@ pub const ShaderProgram = struct {
                 const array: [4]f32 = value;
                 c.glUniform4fv(location, 1, &array);
             },
-            @Vector(4, i32) => {
-                const array: [4]i32 = value;
-                c.glUniform4iv(location, 1, &array);
-            },
             @Vector(2, i32) => {
                 const array: [2]i32 = value;
                 c.glUniform2iv(location, 1, &array);
+            },
+            @Vector(3, i32) => {
+                const array: [2]i32 = value;
+                c.glUniform3iv(location, 1, &array);
+            },
+            @Vector(4, i32) => {
+                const array: [4]i32 = value;
+                c.glUniform4iv(location, 1, &array);
             },
             [4]@Vector(4, f32) => {
                 const array = [16]f32{

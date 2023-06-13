@@ -13,17 +13,23 @@ const I32x4 = linmath.I32x4;
 const I32x2 = linmath.I32x2;
 
 pub const Renderer = struct {
-    vpsize: linmath.I32x2,
-    color: Color,
+    vpsize: linmath.I32x2 = linmath.I32x2{ 800, 800 },
+    color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
     gui: struct {
         rect: struct {
-            alignment: gui.Alignment,
+            alignment: gui.Alignment = gui.Alignment.left_top,
+            borders: struct {
+                width: i32 = 0,
+                color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
+            },
             shader: struct {
                 id: ShaderProgram,
                 uniforms: struct {
                     rect: i32,
                     color: i32,
                     vpsize: i32,
+                    borders_color: i32,
+                    borders_width: i32,
                 },
             },
             mesh: Mesh,
@@ -50,17 +56,17 @@ pub const Renderer = struct {
         const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{2});
 
         return Renderer{
-            .vpsize = linmath.I32x2{ 800, 800 },
-            .color = Color{ 1.0, 1.0, 1.0, 1.0 },
             .gui = .{
                 .rect = .{
-                    .alignment = gui.Alignment.left_top,
+                    .borders = .{},
                     .shader = .{
                         .id = gui_rect_shader,
                         .uniforms = .{
                             .rect = gui_rect_shader.getUniform("rect"),
                             .color = gui_rect_shader.getUniform("color"),
                             .vpsize = gui_rect_shader.getUniform("vpsize"),
+                            .borders_width = gui_rect_shader.getUniform("borders_width"),
+                            .borders_color = gui_rect_shader.getUniform("borders_color"),
                         },
                     },
                     .mesh = gui_rect_mesh,
@@ -76,6 +82,8 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize));
                 ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
                 ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.color, self.color);
+                ShaderProgram.setUniform(i32, self.gui.rect.shader.uniforms.borders_width, 5);
+                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.borders_color, Color{ 0.400, 0.360, 0.329, 1.0 });
                 self.gui.rect.mesh.draw();
             },
             gui.Button => {
