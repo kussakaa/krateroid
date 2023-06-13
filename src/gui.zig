@@ -7,12 +7,12 @@ pub const Point = linmath.I32x2;
 pub const Line = linmath.I32x2;
 pub const Rect = linmath.I32x4;
 pub const Button = struct {
-    rect: Rect,
-    state: State,
-    alignment: Alignment,
+    rect: Rect = Rect{ 0, 0, 100, 50 },
+    state: State = State.Normal,
+    alignment: Alignment = Alignment.left_bottom,
 
     pub const State = enum {
-        Disabled,
+        Normal,
         Focused,
         Pushed,
         Unpushed,
@@ -93,12 +93,18 @@ pub const Alignment = enum {
 pub const Gui = struct {
     enable: bool,
     vpsize: linmath.I32x2,
+    cursor: struct {
+        click: bool,
+    },
     buttons: std.ArrayList(Button),
 
     pub fn init() Gui {
         return Gui{
             .enable = true,
             .vpsize = linmath.I32x2{ 800, 600 },
+            .cursor = .{
+                .click = false,
+            },
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
         };
     }
@@ -118,17 +124,14 @@ pub const Gui = struct {
                 },
                 Event.click => |key| {
                     if (key == 0) {
-                        for (self.buttons.items) |*button| {
-                            if (button.state == Button.State.Focused) {
-                                button.state = Button.State.Pushed;
-                            }
-                        }
+                        self.cursor.click = true;
                     }
                 },
                 Event.unclick => |key| {
                     if (key == 0) {
+                        self.cursor.click = false;
                         for (self.buttons.items) |*button| {
-                            if (button.state == Button.State.Focused) {
+                            if (button.state == Button.State.Pushed) {
                                 button.state = Button.State.Unpushed;
                             }
                         }
@@ -140,9 +143,11 @@ pub const Gui = struct {
                 Event.pos => |pos| {
                     for (self.buttons.items) |*button| {
                         if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
-                            button.state = Button.State.Focused;
+                            if (self.cursor.click) {
+                                button.state = Button.State.Pushed;
+                            } else button.state = Button.State.Focused;
                         } else {
-                            button.state = Button.State.Disabled;
+                            button.state = Button.State.Normal;
                         }
                     }
                 },

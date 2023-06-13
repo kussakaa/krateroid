@@ -33,17 +33,14 @@ pub fn main() !void {
     var gui_main_menu = gui.Gui.init();
     try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, 40, 80, 100 },
-        .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
     });
     try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, -30, 80, 30 },
-        .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
     });
     try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, -100, 80, -40 },
-        .state = gui.Button.State.Disabled,
         .alignment = gui.Alignment.center_center,
     });
 
@@ -55,6 +52,7 @@ pub fn main() !void {
         if (glfw.isJustPressed(256)) gui_main_menu.enable = !gui_main_menu.enable;
 
         const window_size = window.getSize();
+        const cursor_pos = glfw.cursorPos();
         const vpsize = linmath.I32x2{ window_size.x, window_size.y };
         renderer.vpsize = vpsize;
         const current_time = @floatCast(f32, c.glfwGetTime());
@@ -63,12 +61,12 @@ pub fn main() !void {
         _ = dt;
 
         gui_main_menu.pushEvent(Event{ .size = vpsize });
-        gui_main_menu.pushEvent(Event{ .pos = glfw.cursorPos() });
-        if (glfw.isClicked(0)) {
-            gui_main_menu.pushEvent(Event{ .click = 0 });
-        }
-        if (glfw.isJustUnclicked(0)) {
-            gui_main_menu.pushEvent(Event{ .unclick = 0 });
+        gui_main_menu.pushEvent(Event{ .pos = cursor_pos });
+        if (glfw.isJustClicked(0)) gui_main_menu.pushEvent(Event{ .click = 0 });
+        if (glfw.isJustUnclicked(0)) gui_main_menu.pushEvent(Event{ .unclick = 0 });
+
+        if (gui_main_menu.buttons.items[0].state == gui.Button.State.Unpushed) {
+            gui_main_menu.enable = false;
         }
 
         if (gui_main_menu.buttons.items[2].state == gui.Button.State.Unpushed) {
@@ -86,7 +84,7 @@ pub fn main() !void {
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D
 
-        renderer.color = Color{ 0.8, 0.141, 0.113, 1.0 };
+        renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
 
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 

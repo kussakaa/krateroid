@@ -80,9 +80,10 @@ pub const Renderer = struct {
             },
             gui.Button => {
                 switch (obj.state) {
-                    gui.Button.State.Disabled => self.color = Color{ 0.113, 0.125, 0.129, 1.0 },
+                    gui.Button.State.Normal => self.color = Color{ 0.113, 0.125, 0.129, 1.0 },
                     gui.Button.State.Focused => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Pushed, gui.Button.State.Unpushed => self.color = Color{ 0.400, 0.360, 0.329, 1.0 },
+                    gui.Button.State.Pushed => self.color = Color{ 0.400, 0.360, 0.329, 1.0 },
+                    gui.Button.State.Unpushed => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
