@@ -9,8 +9,8 @@ pub fn build(b: *Builder) void {
     const exe = b.addExecutable("krateroid", "src/main.zig");
     exe.linkSystemLibrary("c");
     exe.linkLibC();
-    exe.linkSystemLibrary("glfw3");
-    exe.linkSystemLibrary("freetype");
+    exe.linkSystemLibrary("SDL2");
+    exe.linkSystemLibrary("SDL2_ttf");
     exe.addIncludePath("deps/glad/include");
     exe.addCSourceFile("deps/glad/src/glad.c", &[_][]const u8{"-std=c99"});
     exe.setTarget(target);

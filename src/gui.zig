@@ -1,7 +1,6 @@
 const std = @import("std");
 const linmath = @import("linmath.zig");
 const Event = @import("events.zig").Event;
-const EventTag = @import("events.zig").EventTag;
 
 pub const Point = linmath.I32x2;
 pub const Line = linmath.I32x2;
@@ -93,8 +92,9 @@ pub const Alignment = enum {
 pub const Gui = struct {
     enable: bool,
     vpsize: linmath.I32x2,
-    cursor: struct {
-        click: bool,
+    mouse: struct {
+        pos: linmath.I32x2,
+        press: i32,
     },
     buttons: std.ArrayList(Button),
 
@@ -102,8 +102,9 @@ pub const Gui = struct {
         return Gui{
             .enable = true,
             .vpsize = linmath.I32x2{ 800, 600 },
-            .cursor = .{
-                .click = false,
+            .mouse = .{
+                .pos = linmath.I32x2{ 0, 0 },
+                .press = 0,
             },
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
         };
@@ -113,45 +114,57 @@ pub const Gui = struct {
         try self.buttons.append(button);
     }
 
-    pub fn pushEvent(self: *Gui, event: Event) void {
+    pub fn update(self: *Gui) void {
         if (self.enable) {
-            switch (event) {
-                Event.press => |key| {
-                    _ = key;
-                },
-                Event.unpress => |key| {
-                    _ = key;
-                },
-                Event.click => |key| {
-                    if (key == 0) {
-                        self.cursor.click = true;
+            for (self.buttons.items) |*button| {
+                if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
+                    switch (self.mouse.press) {
+                        0 => {
+                            button.state = Button.State.Focused;
+                        },
+                        1 => {
+                            button.state = Button.State.Pushed;
+                        },
+                        2 => {
+                            button.state = Button.State.Pushed;
+                            self.mouse.press = 1;
+                        },
+                        3 => {
+                            button.state = Button.State.Unpushed;
+                            self.mouse.press = 0;
+                        },
+                        else => {},
                     }
-                },
-                Event.unclick => |key| {
-                    if (key == 0) {
-                        self.cursor.click = false;
-                        for (self.buttons.items) |*button| {
-                            if (button.state == Button.State.Pushed) {
-                                button.state = Button.State.Unpushed;
-                            }
-                        }
-                    }
-                },
-                Event.size => |size| {
-                    self.vpsize = size;
-                },
-                Event.pos => |pos| {
-                    for (self.buttons.items) |*button| {
-                        if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), pos)) {
-                            if (self.cursor.click) {
-                                button.state = Button.State.Pushed;
-                            } else button.state = Button.State.Focused;
-                        } else {
-                            button.state = Button.State.Normal;
-                        }
-                    }
-                },
+                } else {
+                    button.state = Button.State.Normal;
+                }
             }
+        }
+    }
+
+    pub fn pushEvent(self: *Gui, event: Event) void {
+        switch (event) {
+            Event.mouse_motion => |pos| {
+                self.mouse.pos = pos;
+                self.update();
+            },
+            Event.mouse_button_down => |key| {
+                if (key == 0) {
+                    self.mouse.press = 2;
+                    self.update();
+                }
+            },
+            Event.mouse_button_up => |key| {
+                if (key == 0) {
+                    self.mouse.press = 3;
+                    self.update();
+                }
+            },
+            Event.window_size => |size| {
+                self.vpsize = size;
+                self.update();
+            },
+            else => {},
         }
     }
 };

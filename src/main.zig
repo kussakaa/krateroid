@@ -4,7 +4,7 @@ const linmath = @import("linmath.zig");
 const Vec = linmath.Vec;
 const Color = linmath.F32x4;
 const Mat = linmath.Mat;
-const glfw = @import("glfw.zig");
+const sdl = @import("sdl.zig");
 const mesh = @import("mesh.zig");
 const shader = @import("shader.zig");
 const shader_sources = @import("shader_sources.zig");
@@ -13,9 +13,10 @@ const Renderer = @import("renderer.zig").Renderer;
 const Event = @import("events.zig").Event;
 
 pub fn main() !void {
-    try glfw.init();
-    defer glfw.terminate();
-    const window = try glfw.Window.create(800, 600, "krateroid");
+    try sdl.init();
+    defer sdl.quit();
+
+    var window = try sdl.Window.init("krateroid", 800, 600);
     defer window.destroy();
 
     c.glEnable(c.GL_DEPTH_TEST);
@@ -44,28 +45,66 @@ pub fn main() !void {
         .alignment = gui.Alignment.center_center,
     });
 
-    var last_time = @floatCast(f32, c.glfwGetTime());
+    //var last_time = @floatCast(f32, c.glfwGetTime());
 
+    var event: c.SDL_Event = undefined;
     var run = true;
+
     while (run) {
-        run = !window.shouldClose();
-        if (glfw.isJustPressed(256)) gui_main_menu.enable = !gui_main_menu.enable;
 
-        const window_size = window.getSize();
-        const cursor_pos = glfw.cursorPos();
-        const vpsize = linmath.I32x2{ window_size.x, window_size.y };
+        //const current_time = @floatCast(f32, c.glfwGetTime());
+        //const dt = current_time - last_time;
+        //last_time = current_time;
+        //_ = dt;
+
+        while (c.SDL_PollEvent(&event) > 0) {
+            switch (event.type) {
+                c.SDL_QUIT => run = false,
+                c.SDL_KEYDOWN => {
+                    switch (event.key.keysym.sym) {
+                        c.SDLK_ESCAPE => {
+                            gui_main_menu.enable = !gui_main_menu.enable;
+                            gui_main_menu.update();
+                        },
+                        else => {},
+                    }
+                },
+                c.SDL_MOUSEMOTION => {
+                    const mouse_pos = linmath.I32x2{ event.motion.x, window.size[1] - event.motion.y };
+                    gui_main_menu.pushEvent(Event{ .mouse_motion = mouse_pos });
+                },
+                c.SDL_MOUSEBUTTONDOWN => {
+                    switch (event.button.button) {
+                        c.SDL_BUTTON_LEFT => {
+                            gui_main_menu.pushEvent(Event{ .mouse_button_down = 0 });
+                        },
+                        else => {},
+                    }
+                },
+                c.SDL_MOUSEBUTTONUP => {
+                    switch (event.button.button) {
+                        c.SDL_BUTTON_LEFT => {
+                            gui_main_menu.pushEvent(Event{ .mouse_button_up = 0 });
+                        },
+                        else => {},
+                    }
+                },
+                c.SDL_WINDOWEVENT => {
+                    if (event.window.event == c.SDL_WINDOWEVENT_SIZE_CHANGED) {
+                        window.size = linmath.I32x2{ event.window.data1, event.window.data2 };
+                        gui_main_menu.pushEvent(Event{ .window_size = window.size });
+                        c.glViewport(0, 0, event.window.data1, event.window.data2);
+                    }
+                },
+                else => {},
+            }
+        }
+
+        const vpsize = window.size;
         renderer.vpsize = vpsize;
-        const current_time = @floatCast(f32, c.glfwGetTime());
-        const dt = current_time - last_time;
-        last_time = current_time;
-        _ = dt;
-
-        gui_main_menu.pushEvent(Event{ .size = vpsize });
-        gui_main_menu.pushEvent(Event{ .pos = cursor_pos });
-        if (glfw.isJustClicked(0)) gui_main_menu.pushEvent(Event{ .click = 0 });
-        if (glfw.isJustUnclicked(0)) gui_main_menu.pushEvent(Event{ .unclick = 0 });
 
         if (gui_main_menu.buttons.items[0].state == gui.Button.State.Unpushed) {
+            gui_main_menu.update();
             gui_main_menu.enable = false;
         }
 
@@ -85,10 +124,8 @@ pub fn main() !void {
         // 2D
 
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
-
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
-        window.swapBuffers();
-        glfw.pollEvents();
+        window.swap();
     }
 }

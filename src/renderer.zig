@@ -82,16 +82,29 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize));
                 ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
                 ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.color, self.color);
-                ShaderProgram.setUniform(i32, self.gui.rect.shader.uniforms.borders_width, 5);
-                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.borders_color, Color{ 0.400, 0.360, 0.329, 1.0 });
+                ShaderProgram.setUniform(i32, self.gui.rect.shader.uniforms.borders_width, self.gui.rect.borders.width);
+                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.borders_color, self.gui.rect.borders.color);
                 self.gui.rect.mesh.draw();
             },
             gui.Button => {
+                self.gui.rect.borders.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => self.color = Color{ 0.113, 0.125, 0.129, 1.0 },
-                    gui.Button.State.Focused => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Pushed => self.color = Color{ 0.400, 0.360, 0.329, 1.0 },
-                    gui.Button.State.Unpushed => self.color = Color{ 0.235, 0.219, 0.211, 1.0 },
+                    gui.Button.State.Normal => {
+                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
+                    },
+                    gui.Button.State.Focused => {
+                        self.color = Color{ 0.313, 0.286, 0.270, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
+                    },
+                    gui.Button.State.Pushed => {
+                        self.color = Color{ 0.235, 0.219, 0.211, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.843, 0.6, 0.129, 1.0 };
+                    },
+                    gui.Button.State.Unpushed => {
+                        self.color = Color{ 0.313, 0.286, 0.270, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
+                    },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
