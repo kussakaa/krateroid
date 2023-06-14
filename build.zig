@@ -10,7 +10,7 @@ pub fn build(b: *Builder) void {
     exe.linkSystemLibrary("c");
     exe.linkLibC();
     exe.linkSystemLibrary("SDL2");
-    exe.linkSystemLibrary("SDL2_ttf");
+    exe.linkSystemLibrary("freetype");
     exe.addIncludePath("deps/glad/include");
     exe.addCSourceFile("deps/glad/src/glad.c", &[_][]const u8{"-std=c99"});
     exe.setTarget(target);

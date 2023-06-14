@@ -91,18 +91,18 @@ pub const Renderer = struct {
                 switch (obj.state) {
                     gui.Button.State.Normal => {
                         self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
-                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.156, 0.156, 0.156, 1.0 };
                     },
                     gui.Button.State.Focused => {
-                        self.color = Color{ 0.313, 0.286, 0.270, 1.0 };
+                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
                     },
                     gui.Button.State.Pushed => {
-                        self.color = Color{ 0.235, 0.219, 0.211, 1.0 };
-                        self.gui.rect.borders.color = Color{ 0.843, 0.6, 0.129, 1.0 };
+                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
+                        self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 };
                     },
                     gui.Button.State.Unpushed => {
-                        self.color = Color{ 0.313, 0.286, 0.270, 1.0 };
+                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
                     },
                 }
