@@ -57,14 +57,12 @@ pub fn main() !void {
         while (true) {
             const event = sdl.pollEvent();
             if (event == null) break;
-            gui_main_menu.pushEvent(event.?);
             switch (event.?) {
                 Event.quit => run = false,
                 Event.key_down => |key| {
                     switch (key) {
                         c.SDLK_ESCAPE => {
                             gui_main_menu.enable = !gui_main_menu.enable;
-                            gui_main_menu.update();
                         },
                         else => {},
                     }
@@ -75,19 +73,21 @@ pub fn main() !void {
                 },
                 else => {},
             }
+            const gui_event = gui_main_menu.pollEvent(event.?);
+            switch (gui_event) {
+                gui.GuiEvent.button_up => |id| {
+                    switch (id) {
+                        0 => gui_main_menu.enable = false,
+                        2 => run = false,
+                        else => {},
+                    }
+                },
+                else => {},
+            }
         }
 
         const vpsize = window.size;
         renderer.vpsize = vpsize;
-
-        if (gui_main_menu.buttons.items[0].state == gui.Button.State.Unpushed) {
-            gui_main_menu.update();
-            gui_main_menu.enable = false;
-        }
-
-        if (gui_main_menu.buttons.items[2].state == gui.Button.State.Unpushed) {
-            run = false;
-        }
 
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);

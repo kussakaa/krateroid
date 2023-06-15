@@ -103,9 +103,6 @@ pub const Renderer = struct {
                     gui.Button.State.Pushed => {
                         self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 };
                     },
-                    gui.Button.State.Unpushed => {
-                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
-                    },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;

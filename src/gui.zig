@@ -15,7 +15,6 @@ pub const Button = struct {
         Normal,
         Focused,
         Pushed,
-        Unpushed,
     };
 };
 
@@ -94,8 +93,8 @@ pub const Gui = struct {
     enable: bool,
     vpsize: I32x2,
     mouse: struct {
+        click: bool,
         pos: I32x2,
-        press: i32,
     },
     buttons: std.ArrayList(Button),
 
@@ -104,8 +103,8 @@ pub const Gui = struct {
             .enable = true,
             .vpsize = I32x2{ 800, 600 },
             .mouse = .{
+                .click = false,
                 .pos = I32x2{ 0, 0 },
-                .press = 0,
             },
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
         };
@@ -115,53 +114,58 @@ pub const Gui = struct {
         try self.buttons.append(button);
     }
 
-    pub fn update(self: *Gui) void {
+    pub fn pollEvent(self: *Gui, event: Event) GuiEvent {
         if (self.enable) {
-            for (self.buttons.items) |*button| {
-                if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
-                    switch (self.mouse.press) {
-                        0 => button.state = Button.State.Focused,
-                        1 => button.state = Button.State.Pushed,
-                        2 => {
-                            button.state = Button.State.Pushed;
-                            self.mouse.press = 1;
-                        },
-                        3 => {
-                            button.state = Button.State.Unpushed;
-                            self.mouse.press = 0;
-                        },
-                        else => {},
+            switch (event) {
+                Event.mouse_motion => |pos| {
+                    self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
+                    for (self.buttons.items) |*button| {
+                        if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
+                            if (self.mouse.click) {
+                                button.state = Button.State.Pushed;
+                            } else {
+                                button.state = Button.State.Focused;
+                            }
+                        } else {
+                            button.state = Button.State.Normal;
+                        }
                     }
-                } else {
-                    button.state = Button.State.Normal;
-                }
+                    return GuiEvent.none;
+                },
+                Event.mouse_button_down => |key| {
+                    if (key == 1) {
+                        self.mouse.click = true;
+                        for (self.buttons.items) |*button, i| {
+                            if (button.state == Button.State.Focused) {
+                                button.state = Button.State.Pushed;
+                                return GuiEvent{ .button_down = @intCast(i32, i) };
+                            }
+                        }
+                    }
+                },
+                Event.mouse_button_up => |key| {
+                    if (key == 1) {
+                        self.mouse.click = false;
+                        for (self.buttons.items) |*button, i| {
+                            if (button.state == Button.State.Pushed) {
+                                button.state = Button.State.Focused;
+                                return GuiEvent{ .button_up = @intCast(i32, i) };
+                            }
+                        }
+                    }
+                },
+                Event.window_size => |size| {
+                    self.vpsize = size;
+                },
+                else => {},
             }
         }
+        return GuiEvent.none;
     }
+};
 
-    pub fn pushEvent(self: *Gui, event: Event) void {
-        switch (event) {
-            Event.mouse_motion => |pos| {
-                self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
-                self.update();
-            },
-            Event.mouse_button_down => |key| {
-                if (key == 1) {
-                    self.mouse.press = 2;
-                    self.update();
-                }
-            },
-            Event.mouse_button_up => |key| {
-                if (key == 1) {
-                    self.mouse.press = 3;
-                    self.update();
-                }
-            },
-            Event.window_size => |size| {
-                self.vpsize = size;
-                self.update();
-            },
-            else => {},
-        }
-    }
+pub const GuiEvent = union(enum) {
+    button_down: i32,
+    button_up: i32,
+    none,
 };
