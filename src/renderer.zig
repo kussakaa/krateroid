@@ -79,7 +79,11 @@ pub const Renderer = struct {
         switch (@TypeOf(obj)) {
             gui.Rect => {
                 self.gui.rect.shader.id.use();
-                ShaderProgram.setUniform(I32x4, self.gui.rect.shader.uniforms.rect, gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize));
+                ShaderProgram.setUniform(
+                    I32x4,
+                    self.gui.rect.shader.uniforms.rect,
+                    gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize),
+                );
                 ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
                 ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.color, self.color);
                 ShaderProgram.setUniform(i32, self.gui.rect.shader.uniforms.borders_width, self.gui.rect.borders.width);
@@ -87,22 +91,19 @@ pub const Renderer = struct {
                 self.gui.rect.mesh.draw();
             },
             gui.Button => {
+                self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                 self.gui.rect.borders.width = 5;
                 switch (obj.state) {
                     gui.Button.State.Normal => {
-                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.156, 0.156, 0.156, 1.0 };
                     },
                     gui.Button.State.Focused => {
-                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
                     },
                     gui.Button.State.Pushed => {
-                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 };
                     },
                     gui.Button.State.Unpushed => {
-                        self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                         self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
                     },
                 }

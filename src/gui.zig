@@ -1,10 +1,11 @@
 const std = @import("std");
-const linmath = @import("linmath.zig");
 const Event = @import("events.zig").Event;
 
-pub const Point = linmath.I32x2;
-pub const Line = linmath.I32x2;
-pub const Rect = linmath.I32x4;
+pub const I32x2 = @import("linmath.zig").I32x2;
+pub const I32x4 = @import("linmath.zig").I32x4;
+pub const Point = I32x2;
+pub const Line = I32x2;
+pub const Rect = I32x4;
 pub const Button = struct {
     rect: Rect = Rect{ 0, 0, 100, 50 },
     state: State = State.Normal,
@@ -18,7 +19,7 @@ pub const Button = struct {
     };
 };
 
-pub fn rectAlignOfVp(rect: Rect, alignment: Alignment, vpsize: linmath.I32x2) Rect {
+pub fn rectAlignOfVp(rect: Rect, alignment: Alignment, vpsize: I32x2) Rect {
     return switch (alignment) {
         Alignment.left_bottom => rect,
         Alignment.right_bottom => Rect{
@@ -91,9 +92,9 @@ pub const Alignment = enum {
 
 pub const Gui = struct {
     enable: bool,
-    vpsize: linmath.I32x2,
+    vpsize: I32x2,
     mouse: struct {
-        pos: linmath.I32x2,
+        pos: I32x2,
         press: i32,
     },
     buttons: std.ArrayList(Button),
@@ -101,9 +102,9 @@ pub const Gui = struct {
     pub fn init() Gui {
         return Gui{
             .enable = true,
-            .vpsize = linmath.I32x2{ 800, 600 },
+            .vpsize = I32x2{ 800, 600 },
             .mouse = .{
-                .pos = linmath.I32x2{ 0, 0 },
+                .pos = I32x2{ 0, 0 },
                 .press = 0,
             },
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
@@ -119,12 +120,8 @@ pub const Gui = struct {
             for (self.buttons.items) |*button| {
                 if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
                     switch (self.mouse.press) {
-                        0 => {
-                            button.state = Button.State.Focused;
-                        },
-                        1 => {
-                            button.state = Button.State.Pushed;
-                        },
+                        0 => button.state = Button.State.Focused,
+                        1 => button.state = Button.State.Pushed,
                         2 => {
                             button.state = Button.State.Pushed;
                             self.mouse.press = 1;
@@ -145,17 +142,17 @@ pub const Gui = struct {
     pub fn pushEvent(self: *Gui, event: Event) void {
         switch (event) {
             Event.mouse_motion => |pos| {
-                self.mouse.pos = pos;
+                self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
                 self.update();
             },
             Event.mouse_button_down => |key| {
-                if (key == 0) {
+                if (key == 1) {
                     self.mouse.press = 2;
                     self.update();
                 }
             },
             Event.mouse_button_up => |key| {
-                if (key == 0) {
+                if (key == 1) {
                     self.mouse.press = 3;
                     self.update();
                 }

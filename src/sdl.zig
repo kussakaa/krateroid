@@ -3,7 +3,7 @@ const std = @import("std");
 const print = std.debug.print;
 const panic = std.debug.panic;
 const I32x2 = @import("linmath.zig").I32x2;
-const Event = @import("events").Event;
+const Event = @import("events.zig").Event;
 
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_EVERYTHING) < 0) {
@@ -61,3 +61,21 @@ pub const Window = struct {
         c.SDL_DestroyWindow(self.handle);
     }
 };
+
+pub fn pollEvent() ?Event {
+    var sdl_event: c.SDL_Event = undefined;
+    if (c.SDL_PollEvent(&sdl_event) <= 0) return null;
+    return switch (sdl_event.type) {
+        c.SDL_QUIT => Event.quit,
+        c.SDL_KEYDOWN => Event{ .key_down = sdl_event.key.keysym.sym },
+        c.SDL_KEYUP => Event{ .key_up = sdl_event.key.keysym.sym },
+        c.SDL_MOUSEMOTION => Event{ .mouse_motion = I32x2{ sdl_event.motion.x, sdl_event.motion.y } },
+        c.SDL_MOUSEBUTTONDOWN => Event{ .mouse_button_down = sdl_event.button.button },
+        c.SDL_MOUSEBUTTONUP => Event{ .mouse_button_up = sdl_event.button.button },
+        c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
+            c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window_size = I32x2{ sdl_event.window.data1, sdl_event.window.data2 } },
+            else => Event.none,
+        },
+        else => Event.none,
+    };
+}

@@ -45,23 +45,23 @@ pub fn main() !void {
         .alignment = gui.Alignment.center_center,
     });
 
-    //var last_time = @floatCast(f32, c.glfwGetTime());
-
-    var event: c.SDL_Event = undefined;
+    var last_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
     var run = true;
 
     while (run) {
+        const current_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
+        const dt: f32 = (current_time - last_time) / 1000.0;
+        _ = dt;
+        last_time = current_time;
 
-        //const current_time = @floatCast(f32, c.glfwGetTime());
-        //const dt = current_time - last_time;
-        //last_time = current_time;
-        //_ = dt;
-
-        while (c.SDL_PollEvent(&event) > 0) {
-            switch (event.type) {
-                c.SDL_QUIT => run = false,
-                c.SDL_KEYDOWN => {
-                    switch (event.key.keysym.sym) {
+        while (true) {
+            const event = sdl.pollEvent();
+            if (event == null) break;
+            gui_main_menu.pushEvent(event.?);
+            switch (event.?) {
+                Event.quit => run = false,
+                Event.key_down => |key| {
+                    switch (key) {
                         c.SDLK_ESCAPE => {
                             gui_main_menu.enable = !gui_main_menu.enable;
                             gui_main_menu.update();
@@ -69,32 +69,9 @@ pub fn main() !void {
                         else => {},
                     }
                 },
-                c.SDL_MOUSEMOTION => {
-                    const mouse_pos = linmath.I32x2{ event.motion.x, window.size[1] - event.motion.y };
-                    gui_main_menu.pushEvent(Event{ .mouse_motion = mouse_pos });
-                },
-                c.SDL_MOUSEBUTTONDOWN => {
-                    switch (event.button.button) {
-                        c.SDL_BUTTON_LEFT => {
-                            gui_main_menu.pushEvent(Event{ .mouse_button_down = 0 });
-                        },
-                        else => {},
-                    }
-                },
-                c.SDL_MOUSEBUTTONUP => {
-                    switch (event.button.button) {
-                        c.SDL_BUTTON_LEFT => {
-                            gui_main_menu.pushEvent(Event{ .mouse_button_up = 0 });
-                        },
-                        else => {},
-                    }
-                },
-                c.SDL_WINDOWEVENT => {
-                    if (event.window.event == c.SDL_WINDOWEVENT_SIZE_CHANGED) {
-                        window.size = linmath.I32x2{ event.window.data1, event.window.data2 };
-                        gui_main_menu.pushEvent(Event{ .window_size = window.size });
-                        c.glViewport(0, 0, event.window.data1, event.window.data2);
-                    }
+                Event.window_size => |size| {
+                    window.size = size;
+                    c.glViewport(0, 0, size[0], size[1]);
                 },
                 else => {},
             }
