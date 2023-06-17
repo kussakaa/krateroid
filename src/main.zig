@@ -34,19 +34,19 @@ pub fn main() !void {
     var gui_main_menu = gui.Gui.init();
 
     try gui_main_menu.addButton(gui.Button.init(
-        gui.Rect{ -80, 40, 80, 100 },
+        gui.Rect{ -90, 40, 90, 100 },
         gui.Alignment.center_center,
-        std.unicode.utf8ToUtf16LeStringLiteral("return"),
+        std.unicode.utf8ToUtf16LeStringLiteral("продолжить"),
     ));
     try gui_main_menu.addButton(gui.Button.init(
-        gui.Rect{ -80, -30, 80, 30 },
+        gui.Rect{ -90, -30, 90, 30 },
         gui.Alignment.center_center,
-        std.unicode.utf8ToUtf16LeStringLiteral("settings"),
+        std.unicode.utf8ToUtf16LeStringLiteral("настройки"),
     ));
     try gui_main_menu.addButton(gui.Button.init(
-        gui.Rect{ -80, -100, 80, -40 },
+        gui.Rect{ -90, -100, 90, -40 },
         gui.Alignment.center_center,
-        std.unicode.utf8ToUtf16LeStringLiteral("exit"),
+        std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ));
 
     var last_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
@@ -55,7 +55,7 @@ pub fn main() !void {
     while (run) {
         const current_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
         const dt: f32 = (current_time - last_time) / 1000.0;
-        _ = dt;
+        //_ = dt;
         last_time = current_time;
 
         while (true) {
@@ -107,7 +107,11 @@ pub fn main() !void {
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
-        //renderer.draw(gui.Label{ .str = std.fmt.bufPrint("{}", .{1000.0 / dt}), .pos = linmath.I32x2{ 2, 6 } });
+        _ = dt;
+        renderer.draw(gui.Label{
+            .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
+            .pos = linmath.I32x2{ 2, 6 },
+        });
 
         window.swap();
     }
