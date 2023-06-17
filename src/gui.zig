@@ -18,56 +18,51 @@ pub const Button = struct {
     };
 };
 
+pub const Label = struct {
+    str: []const u16,
+    pos: I32x2,
+    alignment: Alignment,
+};
+
+pub fn pointAlignOfVp(point: Point, alignment: Alignment, vpsize: I32x2) Point {
+    return switch (alignment) {
+        Alignment.left_bottom => point,
+        Alignment.right_bottom => point + Point{ vpsize[0], 0 },
+        Alignment.right_top => point + vpsize,
+        Alignment.left_top => point + Point{ 0, vpsize[1] },
+        Alignment.center_bottom => point + Point{ @divTrunc(vpsize[0], 2), 0 },
+        Alignment.right_center => point + Point{ vpsize[0], @divTrunc(vpsize[1], 2) },
+        Alignment.center_top => point + Point{ @divTrunc(vpsize[0], 2), vpsize[1] },
+        Alignment.left_center => point + Point{ 0, @divTrunc(vpsize[1], 2) },
+        Alignment.center_center => point + Point{ @divTrunc(vpsize[0], 2), @divTrunc(vpsize[1], 2) },
+    };
+}
+
 pub fn rectAlignOfVp(rect: Rect, alignment: Alignment, vpsize: I32x2) Rect {
     return switch (alignment) {
         Alignment.left_bottom => rect,
-        Alignment.right_bottom => Rect{
-            vpsize[0] - rect[2],
-            rect[1],
-            vpsize[0] - rect[0],
-            rect[3],
+        Alignment.right_bottom => rect + [4]i32{ vpsize[0], 0, vpsize[1], 0 },
+        Alignment.right_top => rect + [4]i32{ vpsize[0], vpsize[1], vpsize[0], vpsize[1] },
+        Alignment.left_top => rect + [4]i32{ 0, vpsize[1], 0, vpsize[1] },
+        Alignment.center_bottom => rect + [4]i32{ @divTrunc(vpsize[0], 2), 0, @divTrunc(vpsize[0], 2), 0 },
+        Alignment.right_center => rect + [4]i32{
+            vpsize[0],
+            @divTrunc(vpsize[1], 2),
+            vpsize[0],
+            @divTrunc(vpsize[1], 2),
         },
-        Alignment.right_top => Rect{
-            vpsize[0] - rect[2],
-            vpsize[1] - rect[3],
-            vpsize[0] - rect[0],
-            vpsize[1] - rect[1],
+        Alignment.center_top => rect + [4]i32{
+            @divTrunc(vpsize[0], 2),
+            vpsize[1],
+            @divTrunc(vpsize[0], 2),
+            vpsize[1],
         },
-        Alignment.left_top => Rect{
-            rect[0],
-            vpsize[1] - rect[3],
-            rect[2],
-            vpsize[1] - rect[1],
-        },
-        Alignment.center_bottom => Rect{
-            @divTrunc(vpsize[0], 2) + rect[0],
-            rect[1],
-            @divTrunc(vpsize[0], 2) + rect[2],
-            rect[3],
-        },
-        Alignment.right_center => Rect{
-            vpsize[0] - rect[2],
-            @divTrunc(vpsize[1], 2) + rect[1],
-            vpsize[0] - rect[0],
-            @divTrunc(vpsize[1], 2) + rect[3],
-        },
-        Alignment.center_top => Rect{
-            @divTrunc(vpsize[0], 2) + rect[0],
-            vpsize[1] - rect[3],
-            @divTrunc(vpsize[0], 2) + rect[2],
-            vpsize[1] - rect[1],
-        },
-        Alignment.left_center => Rect{
-            rect[0],
-            @divTrunc(vpsize[1], 2) + rect[1],
-            rect[2],
-            @divTrunc(vpsize[1], 2) + rect[3],
-        },
-        Alignment.center_center => Rect{
-            @divTrunc(vpsize[0], 2) + rect[0],
-            @divTrunc(vpsize[1], 2) + rect[1],
-            @divTrunc(vpsize[0], 2) + rect[2],
-            @divTrunc(vpsize[1], 2) + rect[3],
+        Alignment.left_center => rect + [4]i32{ 0, @divTrunc(vpsize[1], 2), 0, @divTrunc(vpsize[1], 2) },
+        Alignment.center_center => rect + [4]i32{
+            @divTrunc(vpsize[0], 2),
+            @divTrunc(vpsize[1], 2),
+            @divTrunc(vpsize[0], 2),
+            @divTrunc(vpsize[1], 2),
         },
     };
 }

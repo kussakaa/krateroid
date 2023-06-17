@@ -32,6 +32,7 @@ pub fn main() !void {
     defer renderer.destroy();
 
     var gui_main_menu = gui.Gui.init();
+
     try gui_main_menu.addButton(gui.Button{
         .rect = gui.Rect{ -80, 40, 80, 100 },
         .alignment = gui.Alignment.center_center,
@@ -102,6 +103,7 @@ pub fn main() !void {
 
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
+        renderer.draw(gui.Label{ .str = &[_]u16{ 's', 'e', 't', 't', 'i', 'n', 'g', 's' }, .pos = linmath.I32x2{ -52, -8 }, .alignment = gui.Alignment.center_center });
 
         window.swap();
     }

@@ -19,6 +19,7 @@ pub fn quit() void {
 
 pub const Window = struct {
     handle: ?*c.SDL_Window,
+    context: c.SDL_GLContext,
     title: [*c]const u8,
     size: I32x2,
 
@@ -49,7 +50,7 @@ pub const Window = struct {
         c.glViewport(0, 0, width, height);
 
         print("[*SUCCES*]:[WINDOW]:[Title:{s}|Width:{}|Height:{}]:Initialised\n", .{ title, width, height });
-        return Window{ .handle = handle, .title = title, .size = I32x2{ width, height } };
+        return Window{ .handle = handle, .context = context, .title = title, .size = I32x2{ width, height } };
     }
 
     pub fn swap(self: Window) void {
@@ -59,6 +60,7 @@ pub const Window = struct {
     pub fn destroy(self: Window) void {
         print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Destroyed\n", .{self.title});
         c.SDL_DestroyWindow(self.handle);
+        c.SDL_GL_DeleteContext(self.context);
     }
 };
 

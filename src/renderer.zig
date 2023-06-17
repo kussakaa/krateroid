@@ -7,13 +7,12 @@ const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
 const Mesh = @import("mesh.zig").Mesh;
 
-const linmath = @import("linmath.zig");
-const Color = linmath.F32x4;
-const I32x4 = linmath.I32x4;
-const I32x2 = linmath.I32x2;
+const Color = @import("linmath.zig").F32x4;
+const I32x4 = @import("linmath.zig").I32x4;
+const I32x2 = @import("linmath.zig").I32x2;
 
 pub const Renderer = struct {
-    vpsize: linmath.I32x2 = linmath.I32x2{ 800, 800 },
+    vpsize: I32x2 = I32x2{ 800, 800 },
     color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
     gui: struct {
         rect: struct {
@@ -22,7 +21,7 @@ pub const Renderer = struct {
                 width: i32 = 0,
                 color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
             },
-            shader: struct {
+            program: struct {
                 id: ShaderProgram,
                 uniforms: struct {
                     rect: i32,
@@ -34,42 +33,156 @@ pub const Renderer = struct {
             },
             mesh: Mesh,
         },
-        //font: struct {},
+        glyph: struct {
+            program: struct {
+                id: ShaderProgram,
+                uniforms: struct {
+                    rect: i32,
+                    vpsize: i32,
+                },
+            },
+            chars: [26]u16,
+            glyphs: [26]Glyph,
+        },
     },
 
+    const Glyph = struct {
+        texture: u32,
+        size: I32x2,
+        advance: i32,
+        bearing: I32x2,
+    };
+
     pub fn init() !Renderer {
-        const gui_rect_vertex = try Shader.init(std.heap.page_allocator, shader_sources.rect_vertex, ShaderType.vertex);
-        const gui_rect_fragment = try Shader.init(std.heap.page_allocator, shader_sources.rect_fragment, ShaderType.fragment);
-        const gui_rect_shader = try ShaderProgram.init(std.heap.page_allocator, &[_]Shader{ gui_rect_vertex, gui_rect_fragment });
+        const gui_rect_vertex = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.rect_vertex,
+            ShaderType.vertex,
+        );
+        const gui_rect_fragment = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.rect_fragment,
+            ShaderType.fragment,
+        );
+        const gui_rect_program = try ShaderProgram.init(
+            std.heap.page_allocator,
+            &[_]Shader{ gui_rect_vertex, gui_rect_fragment },
+        );
 
         gui_rect_vertex.destroy();
         gui_rect_fragment.destroy();
 
+        const gui_glyph_vertex = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.glyph_vertex,
+            ShaderType.vertex,
+        );
+        const gui_glyph_fragment = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.glyph_fragment,
+            ShaderType.fragment,
+        );
+        const gui_glyph_program = try ShaderProgram.init(
+            std.heap.page_allocator,
+            &[_]Shader{ gui_glyph_vertex, gui_glyph_fragment },
+        );
+
+        gui_glyph_vertex.destroy();
+        gui_glyph_fragment.destroy();
+
         const gui_rect_mesh_vertices = [_]f32{
-            0.0, 0.0,
-            1.0, 0.0,
-            1.0, 1.0,
-            1.0, 1.0,
-            0.0, 1.0,
-            0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+            1.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 0.0,
+            1.0, 1.0, 1.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
         };
-        const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{2});
+        const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{ 2, 2 });
+
+        var ft: c.FT_Library = undefined;
+        if (c.FT_Init_FreeType(&ft) != 0) {
+            std.debug.panic("[!!!ERROR!!!]:[FT]:Initialised", .{});
+        }
+
+        var face: c.FT_Face = undefined;
+        if (c.FT_New_Face(ft, "data/fonts/JetBrainsMono-Regular.ttf", 0, &face) != 0) {
+            std.debug.panic("[!!!ERROR!!!]:[FT]:Open font", .{});
+        }
+
+        _ = c.FT_Set_Pixel_Sizes(face, 0, 24);
+
+        const chars = [_]u16{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+        var glyphs: [chars.len]Glyph = undefined;
+
+        for (chars) |char, i| {
+            if (c.FT_Load_Char(face, char, c.FT_LOAD_RENDER) != 0) {
+                std.debug.panic("[!!!ERROR!!!]:[FT]:To load Glyph \"{}\"", .{char});
+            }
+
+            var texture: u32 = undefined;
+            c.glGenTextures(1, &texture);
+            c.glBindTexture(c.GL_TEXTURE_2D, texture);
+            c.glTexImage2D(
+                c.GL_TEXTURE_2D,
+                0,
+                c.GL_RED,
+                @intCast(c_int, face.*.glyph.*.bitmap.width),
+                @intCast(c_int, face.*.glyph.*.bitmap.rows),
+                0,
+                c.GL_RED,
+                c.GL_UNSIGNED_BYTE,
+                face.*.glyph.*.bitmap.buffer,
+            );
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_CLAMP_TO_EDGE);
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST);
+            c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
+            c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
+            c.glBindTexture(c.GL_TEXTURE_2D, 0);
+
+            glyphs[i] = Glyph{
+                .texture = texture,
+                .size = I32x2{
+                    @intCast(i32, face.*.glyph.*.bitmap.width),
+                    @intCast(i32, face.*.glyph.*.bitmap.rows),
+                },
+                .advance = @intCast(i32, face.*.glyph.*.advance.x) >> 6,
+                .bearing = I32x2{
+                    @intCast(i32, face.*.glyph.*.bitmap_left),
+                    @intCast(i32, face.*.glyph.*.bitmap_top),
+                },
+            };
+        }
+        _ = c.FT_Done_Face(face);
+        _ = c.FT_Done_FreeType(ft);
 
         return Renderer{
             .gui = .{
                 .rect = .{
                     .borders = .{},
-                    .shader = .{
-                        .id = gui_rect_shader,
+                    .program = .{
+                        .id = gui_rect_program,
                         .uniforms = .{
-                            .rect = gui_rect_shader.getUniform("rect"),
-                            .color = gui_rect_shader.getUniform("color"),
-                            .vpsize = gui_rect_shader.getUniform("vpsize"),
-                            .borders_width = gui_rect_shader.getUniform("borders_width"),
-                            .borders_color = gui_rect_shader.getUniform("borders_color"),
+                            .rect = gui_rect_program.getUniform("rect"),
+                            .color = gui_rect_program.getUniform("color"),
+                            .vpsize = gui_rect_program.getUniform("vpsize"),
+                            .borders_width = gui_rect_program.getUniform("borders_width"),
+                            .borders_color = gui_rect_program.getUniform("borders_color"),
                         },
                     },
                     .mesh = gui_rect_mesh,
+                },
+                .glyph = .{
+                    .program = .{
+                        .id = gui_glyph_program,
+                        .uniforms = .{
+                            .rect = gui_rect_program.getUniform("rect"),
+                            .vpsize = gui_rect_program.getUniform("vpsize"),
+                        },
+                    },
+                    .glyphs = glyphs,
+                    .chars = chars,
                 },
             },
         };
@@ -78,31 +191,60 @@ pub const Renderer = struct {
     pub fn draw(self: *Renderer, obj: anytype) void {
         switch (@TypeOf(obj)) {
             gui.Rect => {
-                self.gui.rect.shader.id.use();
+                self.gui.rect.program.id.use();
                 ShaderProgram.setUniform(
                     I32x4,
-                    self.gui.rect.shader.uniforms.rect,
+                    self.gui.rect.program.uniforms.rect,
                     gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize),
                 );
-                ShaderProgram.setUniform(I32x2, self.gui.rect.shader.uniforms.vpsize, self.vpsize);
-                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.color, self.color);
-                ShaderProgram.setUniform(i32, self.gui.rect.shader.uniforms.borders_width, self.gui.rect.borders.width);
-                ShaderProgram.setUniform(Color, self.gui.rect.shader.uniforms.borders_color, self.gui.rect.borders.color);
+                ShaderProgram.setUniform(I32x2, self.gui.rect.program.uniforms.vpsize, self.vpsize);
+                ShaderProgram.setUniform(Color, self.gui.rect.program.uniforms.color, self.color);
+                ShaderProgram.setUniform(i32, self.gui.rect.program.uniforms.borders_width, self.gui.rect.borders.width);
+                ShaderProgram.setUniform(Color, self.gui.rect.program.uniforms.borders_color, self.gui.rect.borders.color);
                 self.gui.rect.mesh.draw();
+            },
+            gui.Label => {
+                var advance: i32 = 0;
+                for (obj.str) |char| {
+                    if (char == ' ') {
+                        advance += 10;
+                        continue;
+                    }
+                    for (self.gui.glyph.chars) |char2, i| {
+                        if (char == char2) {
+                            self.gui.glyph.program.id.use();
+                            c.glBindTexture(c.GL_TEXTURE_2D, self.gui.glyph.glyphs[i].texture);
+                            const min = gui.pointAlignOfVp(
+                                obj.pos,
+                                obj.alignment,
+                                self.vpsize,
+                            );
+                            const max = gui.pointAlignOfVp(
+                                obj.pos + self.gui.glyph.glyphs[i].size,
+                                obj.alignment,
+                                self.vpsize,
+                            );
+                            ShaderProgram.setUniform(I32x4, self.gui.glyph.program.uniforms.rect, gui.Rect{
+                                min[0] + advance + self.gui.glyph.glyphs[i].bearing[0],
+                                min[1] - (max[1] - min[1] - self.gui.glyph.glyphs[i].bearing[1]),
+                                max[0] + advance + self.gui.glyph.glyphs[i].bearing[0],
+                                max[1] - (max[1] - min[1] - self.gui.glyph.glyphs[i].bearing[1]),
+                            });
+                            ShaderProgram.setUniform(I32x2, self.gui.glyph.program.uniforms.vpsize, self.vpsize);
+                            self.gui.rect.mesh.draw();
+                            advance += self.gui.glyph.glyphs[i].advance;
+                            break;
+                        }
+                    }
+                }
             },
             gui.Button => {
                 self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                 self.gui.rect.borders.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => {
-                        self.gui.rect.borders.color = Color{ 0.156, 0.156, 0.156, 1.0 };
-                    },
-                    gui.Button.State.Focused => {
-                        self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 };
-                    },
-                    gui.Button.State.Pushed => {
-                        self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 };
-                    },
+                    gui.Button.State.Normal => self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 },
+                    gui.Button.State.Focused => self.gui.rect.borders.color = Color{ 0.484, 0.435, 0.392, 1.0 },
+                    gui.Button.State.Pushed => self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
@@ -114,12 +256,13 @@ pub const Renderer = struct {
                     self.draw(button);
                 }
             },
-            else => std.debug.panic("[RENDERER]:[ERROR]:Impossible to draw an object of this type!"),
+            else => std.debug.panic("[!!!ERROR!!!]:[RENDERER]:Impossible to draw an object of this type!"),
         }
     }
 
     pub fn destroy(self: Renderer) void {
-        self.gui.rect.shader.id.destroy();
+        self.gui.rect.program.id.destroy();
         self.gui.rect.mesh.destroy();
+        self.gui.glyph.program.id.destroy();
     }
 };
