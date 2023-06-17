@@ -6,22 +6,38 @@ pub const I32x4 = @import("linmath.zig").I32x4;
 pub const Point = I32x2;
 pub const Line = I32x2;
 pub const Rect = I32x4;
+pub const Label = struct {
+    str: []const u16,
+    pos: I32x2 = I32x2{ 0, 0 },
+    alignment: Alignment = Alignment.left_bottom,
+};
+
 pub const Button = struct {
     rect: Rect = Rect{ 0, 0, 100, 50 },
     state: State = State.Normal,
     alignment: Alignment = Alignment.left_bottom,
+    label: Label,
 
     pub const State = enum {
         Normal,
         Focused,
         Pushed,
     };
-};
 
-pub const Label = struct {
-    str: []const u16,
-    pos: I32x2,
-    alignment: Alignment,
+    pub fn init(rect: Rect, alignment: Alignment, title: []const u16) Button {
+        return Button{
+            .rect = rect,
+            .alignment = alignment,
+            .label = Label{
+                .str = title,
+                .pos = I32x2{
+                    rect[0] + @divTrunc(rect[2] - rect[0], 2) - @intCast(i32, title.len) * 7,
+                    rect[1] + @divTrunc(rect[3] - rect[1], 2) - 8,
+                },
+                .alignment = alignment,
+            },
+        };
+    }
 };
 
 pub fn pointAlignOfVp(point: Point, alignment: Alignment, vpsize: I32x2) Point {

@@ -58,6 +58,6 @@ pub const glyph_fragment =
     \\out vec4 FragColor;
     \\void main()
     \\{
-    \\    FragColor = vec4(1.0, 1.0, 1.0, texture(u_texture0, v_tex).r);
+    \\    FragColor = vec4(0.921, 0.858, 0.698, texture(u_texture0, v_tex).r);
     \\};
 ;

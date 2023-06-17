@@ -41,8 +41,8 @@ pub const Renderer = struct {
                     vpsize: i32,
                 },
             },
-            chars: [26]u16,
-            glyphs: [26]Glyph,
+            chars: [37]u16,
+            glyphs: [37]Glyph,
         },
     },
 
@@ -112,7 +112,7 @@ pub const Renderer = struct {
 
         _ = c.FT_Set_Pixel_Sizes(face, 0, 24);
 
-        const chars = [_]u16{ 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
+        const chars = [_]u16{ '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
         var glyphs: [chars.len]Glyph = undefined;
 
         for (chars) |char, i| {
@@ -248,7 +248,11 @@ pub const Renderer = struct {
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
+
+                
+
                 self.draw(obj.rect);
+                self.draw(obj.label);
                 self.gui.rect.alignment = alignment;
             },
             gui.Gui => {

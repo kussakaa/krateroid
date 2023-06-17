@@ -33,18 +33,21 @@ pub fn main() !void {
 
     var gui_main_menu = gui.Gui.init();
 
-    try gui_main_menu.addButton(gui.Button{
-        .rect = gui.Rect{ -80, 40, 80, 100 },
-        .alignment = gui.Alignment.center_center,
-    });
-    try gui_main_menu.addButton(gui.Button{
-        .rect = gui.Rect{ -80, -30, 80, 30 },
-        .alignment = gui.Alignment.center_center,
-    });
-    try gui_main_menu.addButton(gui.Button{
-        .rect = gui.Rect{ -80, -100, 80, -40 },
-        .alignment = gui.Alignment.center_center,
-    });
+    try gui_main_menu.addButton(gui.Button.init(
+        gui.Rect{ -80, 40, 80, 100 },
+        gui.Alignment.center_center,
+        &[_]u16{ 'r', 'e', 't', 'u', 'r', 'n' },
+    ));
+    try gui_main_menu.addButton(gui.Button.init(
+        gui.Rect{ -80, -30, 80, 30 },
+        gui.Alignment.center_center,
+        &[_]u16{ 's', 'e', 't', 't', 'i', 'n', 'g', 's' },
+    ));
+    try gui_main_menu.addButton(gui.Button.init(
+        gui.Rect{ -80, -100, 80, -40 },
+        gui.Alignment.center_center,
+        &[_]u16{ 'e', 'x', 'i', 't' },
+    ));
 
     var last_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
     var run = true;
@@ -103,7 +106,8 @@ pub fn main() !void {
 
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
-        renderer.draw(gui.Label{ .str = &[_]u16{ 's', 'e', 't', 't', 'i', 'n', 'g', 's' }, .pos = linmath.I32x2{ -52, -8 }, .alignment = gui.Alignment.center_center });
+
+        renderer.draw(gui.Label{ .str = &[_]u16{ '0', '.', '0', '.', '2', ' ', 'a', 'l', 'p', 'h', 'a' }, .pos = linmath.I32x2{ 2, 6 } });
 
         window.swap();
     }
