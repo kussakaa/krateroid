@@ -36,17 +36,17 @@ pub fn main() !void {
     try gui_main_menu.addButton(gui.Button.init(
         gui.Rect{ -80, 40, 80, 100 },
         gui.Alignment.center_center,
-        &[_]u16{ 'r', 'e', 't', 'u', 'r', 'n' },
+        std.unicode.utf8ToUtf16LeStringLiteral("return"),
     ));
     try gui_main_menu.addButton(gui.Button.init(
         gui.Rect{ -80, -30, 80, 30 },
         gui.Alignment.center_center,
-        &[_]u16{ 's', 'e', 't', 't', 'i', 'n', 'g', 's' },
+        std.unicode.utf8ToUtf16LeStringLiteral("settings"),
     ));
     try gui_main_menu.addButton(gui.Button.init(
         gui.Rect{ -80, -100, 80, -40 },
         gui.Alignment.center_center,
-        &[_]u16{ 'e', 'x', 'i', 't' },
+        std.unicode.utf8ToUtf16LeStringLiteral("exit"),
     ));
 
     var last_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
@@ -107,7 +107,7 @@ pub fn main() !void {
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
-        renderer.draw(gui.Label{ .str = &[_]u16{ '0', '.', '0', '.', '2', ' ', 'a', 'l', 'p', 'h', 'a' }, .pos = linmath.I32x2{ 2, 6 } });
+        //renderer.draw(gui.Label{ .str = std.fmt.bufPrint("{}", .{1000.0 / dt}), .pos = linmath.I32x2{ 2, 6 } });
 
         window.swap();
     }

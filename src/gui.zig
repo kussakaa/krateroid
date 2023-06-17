@@ -7,7 +7,7 @@ pub const Point = I32x2;
 pub const Line = I32x2;
 pub const Rect = I32x4;
 pub const Label = struct {
-    str: []const u16,
+    data: []const u16,
     pos: I32x2 = I32x2{ 0, 0 },
     alignment: Alignment = Alignment.left_bottom,
 };
@@ -29,7 +29,7 @@ pub const Button = struct {
             .rect = rect,
             .alignment = alignment,
             .label = Label{
-                .str = title,
+                .data = title,
                 .pos = I32x2{
                     rect[0] + @divTrunc(rect[2] - rect[0], 2) - @intCast(i32, title.len) * 7,
                     rect[1] + @divTrunc(rect[3] - rect[1], 2) - 8,

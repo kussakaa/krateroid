@@ -106,7 +106,7 @@ pub const Renderer = struct {
         }
 
         var face: c.FT_Face = undefined;
-        if (c.FT_New_Face(ft, "data/fonts/JetBrainsMono-Regular.ttf", 0, &face) != 0) {
+        if (c.FT_New_Face(ft, "data/fonts/JetBrainsMono-Bold.ttf", 0, &face) != 0) {
             std.debug.panic("[!!!ERROR!!!]:[FT]:Open font", .{});
         }
 
@@ -205,7 +205,7 @@ pub const Renderer = struct {
             },
             gui.Label => {
                 var advance: i32 = 0;
-                for (obj.str) |char| {
+                for (obj.data) |char| {
                     if (char == ' ') {
                         advance += 10;
                         continue;
@@ -248,8 +248,6 @@ pub const Renderer = struct {
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
-
-                
 
                 self.draw(obj.rect);
                 self.draw(obj.label);
