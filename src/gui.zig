@@ -126,50 +126,47 @@ pub const Gui = struct {
     }
 
     pub fn pollEvent(self: *Gui, event: Event) GuiEvent {
-        if (self.enable) {
-            switch (event) {
-                Event.mouse_motion => |pos| {
-                    self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
-                    for (self.buttons.items) |*button| {
-                        if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
-                            if (self.mouse.click) {
-                                button.state = Button.State.Pushed;
-                            } else {
-                                button.state = Button.State.Focused;
-                            }
+        switch (event) {
+            Event.mouse_motion => |pos| {
+                self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
+                for (self.buttons.items) |*button| {
+                    if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
+                        if (self.mouse.click) {
+                            button.state = Button.State.Pushed;
                         } else {
-                            button.state = Button.State.Normal;
+                            button.state = Button.State.Focused;
+                        }
+                    } else {
+                        button.state = Button.State.Normal;
+                    }
+                }
+            },
+            Event.mouse_button_down => |key| {
+                if (self.enable and key == 1) {
+                    self.mouse.click = true;
+                    for (self.buttons.items) |*button, i| {
+                        if (button.state == Button.State.Focused) {
+                            button.state = Button.State.Pushed;
+                            return GuiEvent{ .button_down = @intCast(i32, i) };
                         }
                     }
-                    return GuiEvent.none;
-                },
-                Event.mouse_button_down => |key| {
-                    if (key == 1) {
-                        self.mouse.click = true;
-                        for (self.buttons.items) |*button, i| {
-                            if (button.state == Button.State.Focused) {
-                                button.state = Button.State.Pushed;
-                                return GuiEvent{ .button_down = @intCast(i32, i) };
-                            }
+                }
+            },
+            Event.mouse_button_up => |key| {
+                if (self.enable and key == 1) {
+                    self.mouse.click = false;
+                    for (self.buttons.items) |*button, i| {
+                        if (button.state == Button.State.Pushed) {
+                            button.state = Button.State.Focused;
+                            return GuiEvent{ .button_up = @intCast(i32, i) };
                         }
                     }
-                },
-                Event.mouse_button_up => |key| {
-                    if (key == 1) {
-                        self.mouse.click = false;
-                        for (self.buttons.items) |*button, i| {
-                            if (button.state == Button.State.Pushed) {
-                                button.state = Button.State.Focused;
-                                return GuiEvent{ .button_up = @intCast(i32, i) };
-                            }
-                        }
-                    }
-                },
-                Event.window_size => |size| {
-                    self.vpsize = size;
-                },
-                else => {},
-            }
+                }
+            },
+            Event.window_size => |size| {
+                self.vpsize = size;
+            },
+            else => {},
         }
         return GuiEvent.none;
     }
