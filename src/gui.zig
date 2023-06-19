@@ -6,7 +6,7 @@ pub const I32x4 = @import("linmath.zig").I32x4;
 pub const Point = I32x2;
 pub const Line = I32x2;
 pub const Rect = I32x4;
-pub const Label = struct {
+pub const Text = struct {
     data: []const u16,
     pos: I32x2 = I32x2{ 0, 0 },
     alignment: Alignment = Alignment.left_bottom,
@@ -16,7 +16,7 @@ pub const Button = struct {
     rect: Rect = Rect{ 0, 0, 100, 50 },
     state: State = State.Normal,
     alignment: Alignment = Alignment.left_bottom,
-    label: Label,
+    text: Text,
 
     pub const State = enum {
         Normal,
@@ -28,7 +28,7 @@ pub const Button = struct {
         return Button{
             .rect = rect,
             .alignment = alignment,
-            .label = Label{
+            .text = Text{
                 .data = title,
                 .pos = I32x2{
                     rect[0] + @divTrunc(rect[2] - rect[0], 2) - @intCast(i32, title.len) * 7,
@@ -112,7 +112,7 @@ pub const Gui = struct {
     pub fn init() Gui {
         return Gui{
             .enable = true,
-            .vpsize = I32x2{ 800, 600 },
+            .vpsize = I32x2{ 1200, 900 },
             .mouse = .{
                 .click = false,
                 .pos = I32x2{ 0, 0 },

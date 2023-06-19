@@ -33,7 +33,7 @@ pub const rect_fragment =
     \\};
 ;
 
-pub const glyph_vertex =
+pub const text_vertex =
     \\#version 330 core
     \\uniform ivec4 rect;
     \\uniform ivec2 vpsize;
@@ -51,13 +51,14 @@ pub const glyph_vertex =
     \\};
 ;
 
-pub const glyph_fragment =
+pub const text_fragment =
     \\#version 330  core
     \\uniform sampler2D u_texture0;
+    \\uniform vec4 color;
     \\in vec2 v_tex;
     \\out vec4 FragColor;
     \\void main()
     \\{
-    \\    FragColor = vec4(0.921, 0.858, 0.698, texture(u_texture0, v_tex).r);
+    \\    FragColor = vec4(color.x, color.y, color.z, color.w*texture(u_texture0, v_tex).r);
     \\};
 ;

@@ -12,10 +12,11 @@ const I32x4 = @import("linmath.zig").I32x4;
 const I32x2 = @import("linmath.zig").I32x2;
 
 pub const Renderer = struct {
-    vpsize: I32x2 = I32x2{ 800, 800 },
+    vpsize: I32x2 = I32x2{ 1200, 900 },
     color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
     gui: struct {
         rect: struct {
+            color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
             alignment: gui.Alignment = gui.Alignment.left_top,
             borders: struct {
                 width: i32 = 0,
@@ -33,12 +34,14 @@ pub const Renderer = struct {
             },
             mesh: Mesh,
         },
-        glyph: struct {
+        text: struct {
+            color: Color = Color{ 0.921, 0.858, 0.698, 1.0 },
             program: struct {
                 id: ShaderProgram,
                 uniforms: struct {
                     rect: i32,
                     vpsize: i32,
+                    color: i32,
                 },
             },
             chars: [70]u16,
@@ -59,36 +62,38 @@ pub const Renderer = struct {
             shader_sources.rect_vertex,
             ShaderType.vertex,
         );
+        defer gui_rect_vertex.destroy();
+
         const gui_rect_fragment = try Shader.init(
             std.heap.page_allocator,
             shader_sources.rect_fragment,
             ShaderType.fragment,
         );
+        defer gui_rect_fragment.destroy();
+
         const gui_rect_program = try ShaderProgram.init(
             std.heap.page_allocator,
             &[_]Shader{ gui_rect_vertex, gui_rect_fragment },
         );
 
-        gui_rect_vertex.destroy();
-        gui_rect_fragment.destroy();
-
-        const gui_glyph_vertex = try Shader.init(
+        const gui_text_vertex = try Shader.init(
             std.heap.page_allocator,
-            shader_sources.glyph_vertex,
+            shader_sources.text_vertex,
             ShaderType.vertex,
         );
-        const gui_glyph_fragment = try Shader.init(
+        defer gui_text_vertex.destroy();
+
+        const gui_text_fragment = try Shader.init(
             std.heap.page_allocator,
-            shader_sources.glyph_fragment,
+            shader_sources.text_fragment,
             ShaderType.fragment,
         );
-        const gui_glyph_program = try ShaderProgram.init(
-            std.heap.page_allocator,
-            &[_]Shader{ gui_glyph_vertex, gui_glyph_fragment },
-        );
+        defer gui_text_fragment.destroy();
 
-        gui_glyph_vertex.destroy();
-        gui_glyph_fragment.destroy();
+        const gui_text_program = try ShaderProgram.init(
+            std.heap.page_allocator,
+            &[_]Shader{ gui_text_vertex, gui_text_fragment },
+        );
 
         const gui_rect_mesh_vertices = [_]f32{
             0.0, 0.0, 0.0, 1.0,
@@ -173,12 +178,13 @@ pub const Renderer = struct {
                     },
                     .mesh = gui_rect_mesh,
                 },
-                .glyph = .{
+                .text = .{
                     .program = .{
-                        .id = gui_glyph_program,
+                        .id = gui_text_program,
                         .uniforms = .{
-                            .rect = gui_rect_program.getUniform("rect"),
-                            .vpsize = gui_rect_program.getUniform("vpsize"),
+                            .rect = gui_text_program.getUniform("rect"),
+                            .vpsize = gui_text_program.getUniform("vpsize"),
+                            .color = gui_text_program.getUniform("color"),
                         },
                     },
                     .glyphs = glyphs,
@@ -195,51 +201,72 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(
                     I32x4,
                     self.gui.rect.program.uniforms.rect,
-                    gui.rectAlignOfVp(obj, self.gui.rect.alignment, self.vpsize),
+                    gui.rectAlignOfVp(
+                        obj,
+                        self.gui.rect.alignment,
+                        self.vpsize,
+                    ),
                 );
-                ShaderProgram.setUniform(I32x2, self.gui.rect.program.uniforms.vpsize, self.vpsize);
-                ShaderProgram.setUniform(Color, self.gui.rect.program.uniforms.color, self.color);
-                ShaderProgram.setUniform(i32, self.gui.rect.program.uniforms.borders_width, self.gui.rect.borders.width);
-                ShaderProgram.setUniform(Color, self.gui.rect.program.uniforms.borders_color, self.gui.rect.borders.color);
+                ShaderProgram.setUniform(
+                    I32x2,
+                    self.gui.rect.program.uniforms.vpsize,
+                    self.vpsize,
+                );
+                ShaderProgram.setUniform(
+                    Color,
+                    self.gui.rect.program.uniforms.color,
+                    self.gui.rect.color,
+                );
+                ShaderProgram.setUniform(
+                    i32,
+                    self.gui.rect.program.uniforms.borders_width,
+                    self.gui.rect.borders.width,
+                );
+                ShaderProgram.setUniform(
+                    Color,
+                    self.gui.rect.program.uniforms.borders_color,
+                    self.gui.rect.borders.color,
+                );
                 self.gui.rect.mesh.draw();
             },
-            gui.Label => {
+            gui.Text => {
                 var advance: i32 = 0;
+                self.gui.text.program.id.use();
                 for (obj.data) |char| {
                     if (char == ' ') {
                         advance += 10;
                         continue;
                     }
-                    for (self.gui.glyph.chars) |char2, i| {
-                        if (char == char2) {
-                            self.gui.glyph.program.id.use();
-                            c.glBindTexture(c.GL_TEXTURE_2D, self.gui.glyph.glyphs[i].texture);
+                    for (self.gui.text.chars) |renderer_char, i| {
+                        if (char == renderer_char) {
+                            c.glBindTexture(c.GL_TEXTURE_2D, self.gui.text.glyphs[i].texture);
                             const min = gui.pointAlignOfVp(
                                 obj.pos,
                                 obj.alignment,
                                 self.vpsize,
                             );
                             const max = gui.pointAlignOfVp(
-                                obj.pos + self.gui.glyph.glyphs[i].size,
+                                obj.pos + self.gui.text.glyphs[i].size,
                                 obj.alignment,
                                 self.vpsize,
                             );
-                            ShaderProgram.setUniform(I32x4, self.gui.glyph.program.uniforms.rect, gui.Rect{
-                                min[0] + advance + self.gui.glyph.glyphs[i].bearing[0],
-                                min[1] - (max[1] - min[1] - self.gui.glyph.glyphs[i].bearing[1]),
-                                max[0] + advance + self.gui.glyph.glyphs[i].bearing[0],
-                                max[1] - (max[1] - min[1] - self.gui.glyph.glyphs[i].bearing[1]),
+                            ShaderProgram.setUniform(I32x4, self.gui.text.program.uniforms.rect, gui.Rect{
+                                min[0] + advance + self.gui.text.glyphs[i].bearing[0],
+                                min[1] - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
+                                max[0] + advance + self.gui.text.glyphs[i].bearing[0],
+                                max[1] - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
                             });
-                            ShaderProgram.setUniform(I32x2, self.gui.glyph.program.uniforms.vpsize, self.vpsize);
+                            ShaderProgram.setUniform(I32x2, self.gui.text.program.uniforms.vpsize, self.vpsize);
+                            ShaderProgram.setUniform(Color, self.gui.text.program.uniforms.color, self.gui.text.color);
                             self.gui.rect.mesh.draw();
-                            advance += self.gui.glyph.glyphs[i].advance;
+                            advance += self.gui.text.glyphs[i].advance;
                             break;
                         }
                     }
                 }
             },
             gui.Button => {
-                self.color = Color{ 0.400, 0.360, 0.329, 1.0 };
+                self.gui.rect.color = Color{ 0.400, 0.360, 0.329, 1.0 };
                 self.gui.rect.borders.width = 5;
                 switch (obj.state) {
                     gui.Button.State.Normal => self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 },
@@ -250,7 +277,7 @@ pub const Renderer = struct {
                 self.gui.rect.alignment = obj.alignment;
 
                 self.draw(obj.rect);
-                self.draw(obj.label);
+                self.draw(obj.text);
                 self.gui.rect.alignment = alignment;
             },
             gui.Gui => {
@@ -265,6 +292,6 @@ pub const Renderer = struct {
     pub fn destroy(self: Renderer) void {
         self.gui.rect.program.id.destroy();
         self.gui.rect.mesh.destroy();
-        self.gui.glyph.program.id.destroy();
+        self.gui.text.program.id.destroy();
     }
 };

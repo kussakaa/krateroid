@@ -16,7 +16,7 @@ pub fn main() !void {
     try sdl.init();
     defer sdl.quit();
 
-    var window = try sdl.Window.init("krateroid", 800, 600);
+    var window = try sdl.Window.init("krateroid", 1200, 900);
     defer window.destroy();
 
     c.glEnable(c.GL_DEPTH_TEST);
@@ -49,13 +49,12 @@ pub fn main() !void {
         std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ));
 
-    var last_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
+    var last_time = @intCast(i32, c.SDL_GetTicks());
     var run = true;
 
     while (run) {
-        const current_time: f32 = @intToFloat(f32, c.SDL_GetTicks());
-        const dt: f32 = (current_time - last_time) / 1000.0;
-        //_ = dt;
+        const current_time = @intCast(i32, c.SDL_GetTicks());
+        const dt: f32 = @intToFloat(f32, current_time - last_time);
         last_time = current_time;
 
         while (true) {
@@ -107,10 +106,19 @@ pub fn main() !void {
         renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
-        _ = dt;
-        renderer.draw(gui.Label{
+        renderer.draw(gui.Text{
             .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
             .pos = linmath.I32x2{ 2, 6 },
+        });
+
+        var buf: [20]u8 = [_]u8{0} ** 20;
+        if (dt != 0) {
+            _ = try std.fmt.bufPrint(&buf, "fps {}", .{@floatToInt(i32, 1000.0 / dt)});
+        }
+        renderer.draw(gui.Text{
+            .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
+            .pos = linmath.I32x2{ 2, -24 },
+            .alignment = gui.Alignment.left_top,
         });
 
         window.swap();

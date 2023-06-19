@@ -24,6 +24,7 @@ pub const Window = struct {
     size: I32x2,
 
     pub fn init(title: [*c]const u8, width: i32, height: i32) !Window {
+        _ = c.SDL_GL_SetAttribute(c.SDL_WINDOW_RESIZABLE, c.SDL_TRUE);
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_FLAGS, c.SDL_GL_CONTEXT_PROFILE_CORE);
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
