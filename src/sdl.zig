@@ -13,8 +13,9 @@ pub fn init() !void {
     }
 }
 
-pub fn quit() void {
+pub fn destroy() void {
     c.SDL_Quit();
+    print("[*SUCCES*]:[SDL2]:Destroyed\n", .{});
 }
 
 pub const Window = struct {
@@ -47,6 +48,8 @@ pub const Window = struct {
         if (c.gladLoadGLLoader(@ptrCast(c.GLADloadproc, &c.SDL_GL_GetProcAddress)) == 0) {
             panic("[!!!ERROR!!!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
         }
+
+        _ = c.SDL_GL_SetSwapInterval(1);
 
         c.glViewport(0, 0, width, height);
 

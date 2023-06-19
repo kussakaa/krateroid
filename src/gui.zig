@@ -170,6 +170,10 @@ pub const Gui = struct {
         }
         return GuiEvent.none;
     }
+
+    pub fn destroy(self: Gui) void {
+        _ = self;
+    }
 };
 
 pub const GuiEvent = union(enum) {

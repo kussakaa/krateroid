@@ -14,7 +14,7 @@ const Event = @import("events.zig").Event;
 
 pub fn main() !void {
     try sdl.init();
-    defer sdl.quit();
+    defer sdl.destroy();
 
     var window = try sdl.Window.init("krateroid", 1200, 900);
     defer window.destroy();
@@ -32,6 +32,7 @@ pub fn main() !void {
     defer renderer.destroy();
 
     var gui_main_menu = gui.Gui.init();
+    defer gui_main_menu.destroy();
 
     try gui_main_menu.addButton(gui.Button.init(
         gui.Rect{ -90, 40, 90, 100 },
@@ -112,14 +113,14 @@ pub fn main() !void {
         });
 
         var buf: [20]u8 = [_]u8{0} ** 20;
-        if (dt != 0) {
+        if (dt != 0.0) {
             _ = try std.fmt.bufPrint(&buf, "fps {}", .{@floatToInt(i32, 1000.0 / dt)});
+            renderer.draw(gui.Text{
+                .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
+                .pos = linmath.I32x2{ 2, -24 },
+                .alignment = gui.Alignment.left_top,
+            });
         }
-        renderer.draw(gui.Text{
-            .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
-            .pos = linmath.I32x2{ 2, -24 },
-            .alignment = gui.Alignment.left_top,
-        });
 
         window.swap();
     }

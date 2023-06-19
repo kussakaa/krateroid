@@ -44,8 +44,8 @@ pub const Renderer = struct {
                     color: i32,
                 },
             },
-            chars: [70]u16,
-            glyphs: [70]Glyph,
+            chars: [72]u16,
+            glyphs: [72]Glyph,
         },
     },
 
@@ -117,7 +117,7 @@ pub const Renderer = struct {
 
         _ = c.FT_Set_Pixel_Sizes(face, 0, 24);
 
-        const chars = [_]u16{ '.', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я' };
+        const chars = [_]u16{ '#', '.', ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я' };
         var glyphs: [chars.len]Glyph = undefined;
 
         for (chars) |char, i| {
@@ -126,6 +126,7 @@ pub const Renderer = struct {
             }
 
             var texture: u32 = undefined;
+            c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
             c.glGenTextures(1, &texture);
             c.glBindTexture(c.GL_TEXTURE_2D, texture);
             c.glTexImage2D(
@@ -143,7 +144,6 @@ pub const Renderer = struct {
             c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_T, c.GL_CLAMP_TO_EDGE);
             c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST);
             c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
-            c.glPixelStorei(c.GL_UNPACK_ALIGNMENT, 1);
             c.glBindTexture(c.GL_TEXTURE_2D, 0);
 
             glyphs[i] = Glyph{
@@ -232,10 +232,10 @@ pub const Renderer = struct {
             gui.Text => {
                 var advance: i32 = 0;
                 self.gui.text.program.id.use();
-                for (obj.data) |char| {
+                glyph: for (obj.data) |char| {
                     if (char == ' ') {
                         advance += 10;
-                        continue;
+                        continue :glyph;
                     }
                     for (self.gui.text.chars) |renderer_char, i| {
                         if (char == renderer_char) {
@@ -260,7 +260,7 @@ pub const Renderer = struct {
                             ShaderProgram.setUniform(Color, self.gui.text.program.uniforms.color, self.gui.text.color);
                             self.gui.rect.mesh.draw();
                             advance += self.gui.text.glyphs[i].advance;
-                            break;
+                            continue :glyph;
                         }
                     }
                 }
