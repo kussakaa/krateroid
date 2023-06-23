@@ -6,14 +6,17 @@ const Shader = @import("shader.zig").Shader;
 const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
 const Mesh = @import("mesh.zig").Mesh;
+const Camera = @import("camera.zig").Camera;
 
 const Color = @import("linmath.zig").F32x4;
 const I32x4 = @import("linmath.zig").I32x4;
 const I32x2 = @import("linmath.zig").I32x2;
+const Vec = @import("linmath.zig").Vec;
 
 pub const Renderer = struct {
     vpsize: I32x2 = I32x2{ 1200, 900 },
     color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
+    camera: Camera = Camera{},
     gui: struct {
         rect: struct {
             color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
