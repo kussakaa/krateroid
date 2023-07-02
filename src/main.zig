@@ -1,7 +1,7 @@
 const c = @import("c.zig");
 const std = @import("std");
 const linmath = @import("linmath.zig");
-const Vec = linmath.Vec;
+const Vec3 = linmath.F32x3;
 const Color = linmath.F32x4;
 const Mat = linmath.Mat;
 const sdl = @import("sdl.zig");
@@ -11,6 +11,8 @@ const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
 const Renderer = @import("renderer.zig").Renderer;
 const Event = @import("events.zig").Event;
+
+const shape = @import("shape.zig");
 
 pub fn main() !void {
     try sdl.init();
@@ -98,6 +100,8 @@ pub fn main() !void {
         c.glClearColor(0.0, 0.0, 0.0, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
+
+        renderer.draw(shape.Quad{ .pos = Vec3{ 0.5, 0.2, 0.0 }, .size = .{ 1.0, 1.0, 1.0 } });
 
         // ...
 

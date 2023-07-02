@@ -2,6 +2,7 @@ const std = @import("std");
 const c = @import("c.zig");
 const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
+const shape = @import("shape.zig");
 const Shader = @import("shader.zig").Shader;
 const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
@@ -9,9 +10,10 @@ const Mesh = @import("mesh.zig").Mesh;
 const Camera = @import("camera.zig").Camera;
 
 const Color = @import("linmath.zig").F32x4;
+const Vec4 = @import("linmath.zig").F32x4;
+const Vec3 = @import("linmath.zig").F32x3;
 const I32x4 = @import("linmath.zig").I32x4;
 const I32x2 = @import("linmath.zig").I32x2;
-const Vec = @import("linmath.zig").Vec;
 
 pub const Renderer = struct {
     vpsize: I32x2 = I32x2{ 1200, 900 },
@@ -51,6 +53,18 @@ pub const Renderer = struct {
             glyphs: [72]Glyph,
         },
     },
+    shape: struct {
+        quad: struct {
+            program: struct {
+                id: ShaderProgram,
+                uniforms: struct {
+                    pos: i32,
+                    size: i32,
+                },
+            },
+            mesh: Mesh,
+        },
+    },
 
     const Glyph = struct {
         texture: u32,
@@ -60,6 +74,11 @@ pub const Renderer = struct {
     };
 
     pub fn init() !Renderer {
+
+        //=============
+        // GUI RECT
+        //=============
+
         const gui_rect_vertex = try Shader.init(
             std.heap.page_allocator,
             shader_sources.rect_vertex,
@@ -79,6 +98,20 @@ pub const Renderer = struct {
             &[_]Shader{ gui_rect_vertex, gui_rect_fragment },
         );
 
+        const gui_rect_mesh_vertices = [_]f32{
+            0.0, 0.0, 0.0, 1.0,
+            1.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 0.0,
+            1.0, 1.0, 1.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
+        };
+        const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{ 2, 2 });
+
+        //=============
+        // GUI TEXT
+        //=============
+
         const gui_text_vertex = try Shader.init(
             std.heap.page_allocator,
             shader_sources.text_vertex,
@@ -97,16 +130,6 @@ pub const Renderer = struct {
             std.heap.page_allocator,
             &[_]Shader{ gui_text_vertex, gui_text_fragment },
         );
-
-        const gui_rect_mesh_vertices = [_]f32{
-            0.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 0.0,
-            1.0, 1.0, 1.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        };
-        const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{ 2, 2 });
 
         var ft: c.FT_Library = undefined;
         if (c.FT_Init_FreeType(&ft) != 0) {
@@ -165,6 +188,41 @@ pub const Renderer = struct {
         _ = c.FT_Done_Face(face);
         _ = c.FT_Done_FreeType(ft);
 
+        //=================
+        // SHAPE QUAD
+        //=================
+
+        const shape_quad_vertex = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.quad_vertex,
+            ShaderType.vertex,
+        );
+        defer shape_quad_vertex.destroy();
+
+        const shape_quad_fragment = try Shader.init(
+            std.heap.page_allocator,
+            shader_sources.quad_fragment,
+            ShaderType.fragment,
+        );
+        defer shape_quad_fragment.destroy();
+
+        const shape_quad_program = try ShaderProgram.init(
+            std.heap.page_allocator,
+            &[_]Shader{ shape_quad_vertex, shape_quad_fragment },
+        );
+
+        const shape_quad_mesh_vertices = [_]f32{
+            // +Z
+            -0.5, -0.5, 0.5,
+            0.5,  -0.5, 0.5,
+            0.5,  0.5,  0.5,
+            0.5,  0.5,  0.5,
+            -0.5, 0.5,  0.5,
+            -0.5, -0.5, 0.5,
+        };
+
+        const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &[_]u32{3});
+
         return Renderer{
             .gui = .{
                 .rect = .{
@@ -194,7 +252,27 @@ pub const Renderer = struct {
                     .chars = chars,
                 },
             },
+            .shape = .{
+                .quad = .{
+                    .program = .{
+                        .id = shape_quad_program,
+                        .uniforms = .{
+                            .pos = shape_quad_program.getUniform("pos"),
+                            .size = shape_quad_program.getUniform("size"),
+                        },
+                    },
+                    .mesh = shape_quad_mesh,
+                },
+            },
         };
+    }
+
+    pub fn destroy(self: Renderer) void {
+        self.gui.rect.program.id.destroy();
+        self.gui.rect.mesh.destroy();
+        self.gui.text.program.id.destroy();
+        self.shape.quad.program.id.destroy();
+        self.shape.quad.mesh.destroy();
     }
 
     pub fn draw(self: *Renderer, obj: anytype) void {
@@ -288,13 +366,21 @@ pub const Renderer = struct {
                     self.draw(button);
                 }
             },
+            shape.Quad => {
+                self.shape.quad.program.id.use();
+                ShaderProgram.setUniform(
+                    Vec3,
+                    self.shape.quad.program.uniforms.pos,
+                    obj.pos,
+                );
+                ShaderProgram.setUniform(
+                    Vec3,
+                    self.shape.quad.program.uniforms.size,
+                    obj.size,
+                );
+                self.shape.quad.mesh.draw();
+            },
             else => std.debug.panic("[!!!ERROR!!!]:[RENDERER]:Impossible to draw an object of this type!"),
         }
-    }
-
-    pub fn destroy(self: Renderer) void {
-        self.gui.rect.program.id.destroy();
-        self.gui.rect.mesh.destroy();
-        self.gui.text.program.id.destroy();
     }
 };

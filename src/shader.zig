@@ -33,7 +33,7 @@ pub const Shader = struct {
             c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
-            panic("\n[!!!ERROR!!!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
+            panic("\n[!FAILED!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
         }
 
         std.debug.print("[*SUCCES*]:[SHADER]:[ID:{}]:Compiling\n", .{shader});
@@ -69,7 +69,7 @@ pub const ShaderProgram = struct {
             c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
             c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
-            panic("\n[!!!ERROR!!!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
+            panic("\n[!FAILED!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
         }
 
         std.debug.print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Linking\n", .{program});
@@ -90,6 +90,10 @@ pub const ShaderProgram = struct {
         switch (T) {
             f32 => c.glUniform1f(location, value),
             i32 => c.glUniform1i(location, value),
+            @Vector(3, f32) => {
+                const array: [3]f32 = value;
+                c.glUniform3fv(location, 1, &array);
+            },
             @Vector(4, f32) => {
                 const array: [4]f32 = value;
                 c.glUniform4fv(location, 1, &array);
@@ -99,7 +103,7 @@ pub const ShaderProgram = struct {
                 c.glUniform2iv(location, 1, &array);
             },
             @Vector(3, i32) => {
-                const array: [2]i32 = value;
+                const array: [3]i32 = value;
                 c.glUniform3iv(location, 1, &array);
             },
             @Vector(4, i32) => {
@@ -115,7 +119,7 @@ pub const ShaderProgram = struct {
                 };
                 c.glUniformMatrix4fv(location, 1, c.GL_FALSE, &array);
             },
-            else => @compileError("[!!!ERROR!!!]:[COMPILING]:Incorrect type in setUniform"),
+            else => @compileError("[!FAILED!]:[COMPILING]:Incorrect type in setUniform"),
         }
     }
 

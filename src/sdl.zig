@@ -7,7 +7,7 @@ const Event = @import("events.zig").Event;
 
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_EVERYTHING) < 0) {
-        panic("[!!!ERROR!!!]:[SDL2]:Initiased! {s}\n", .{c.SDL_GetError()});
+        panic("[!FAILED!]:[SDL2]:Initiased! {s}\n", .{c.SDL_GetError()});
     } else {
         print("[*SUCCES*]:[SDL2]:Initialised\n", .{});
     }
@@ -40,13 +40,13 @@ pub const Window = struct {
         );
 
         if (handle == null) {
-            std.debug.panic("[!!!ERROR!!!]:[WINDOW]:Initialize: {s}", .{c.SDL_GetError()});
+            std.debug.panic("[!FAILED!]:[WINDOW]:Initialize: {s}", .{c.SDL_GetError()});
         }
 
         const context = c.SDL_GL_CreateContext(handle);
         _ = c.SDL_GL_MakeCurrent(handle, context);
         if (c.gladLoadGLLoader(@ptrCast(c.GLADloadproc, &c.SDL_GL_GetProcAddress)) == 0) {
-            panic("[!!!ERROR!!!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
+            panic("[!FAILED!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
         }
 
         _ = c.SDL_GL_SetSwapInterval(1);
