@@ -65,18 +65,19 @@ pub const text_fragment =
     \\};
 ;
 
-pub const quad_vertex =
+pub const shape_vertex =
     \\#version 330 core
-    \\uniform vec3 pos;
-    \\uniform vec3 size;
+    \\uniform mat4 model;
+    \\uniform mat4 view;
+    \\uniform mat4 proj;
     \\layout (location = 0) in vec3 a_pos;
     \\void main()
     \\{
-    \\    gl_Position = vec4(a_pos*size+pos, 1.0);
+    \\    gl_Position = proj*view*model*vec4(a_pos, 1.0);
     \\}
 ;
 
-pub const quad_fragment =
+pub const shape_fragment =
     \\#version 330 core
     \\out vec4 FragColor;
     \\void main()

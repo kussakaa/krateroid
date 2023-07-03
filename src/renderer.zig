@@ -9,16 +9,19 @@ const ShaderProgram = @import("shader.zig").ShaderProgram;
 const Mesh = @import("mesh.zig").Mesh;
 const Camera = @import("camera.zig").Camera;
 
-const Color = @import("linmath.zig").F32x4;
-const Vec4 = @import("linmath.zig").F32x4;
-const Vec3 = @import("linmath.zig").F32x3;
-const I32x4 = @import("linmath.zig").I32x4;
-const I32x2 = @import("linmath.zig").I32x2;
+const linmath = @import("linmath.zig");
+const Color = linmath.F32x4;
+const Vec4 = linmath.F32x4;
+const Vec3 = linmath.F32x3;
+const I32x4 = linmath.I32x4;
+const I32x2 = linmath.I32x2;
+const Mat = linmath.Mat;
+const MatIdentity = linmath.MatIdentity;
 
 pub const Renderer = struct {
     vpsize: I32x2 = I32x2{ 1200, 900 },
     color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
-    camera: Camera = Camera{},
+    camera: Camera = Camera{ .proj = linmath.Scale(Vec3{ 900.0 / 1200.0, 1.0, 0.01 }) },
     gui: struct {
         rect: struct {
             color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
@@ -54,14 +57,15 @@ pub const Renderer = struct {
         },
     },
     shape: struct {
-        quad: struct {
-            program: struct {
-                id: ShaderProgram,
-                uniforms: struct {
-                    pos: i32,
-                    size: i32,
-                },
+        program: struct {
+            id: ShaderProgram,
+            uniforms: struct {
+                model: i32,
+                view: i32,
+                proj: i32,
             },
+        },
+        quad: struct {
             mesh: Mesh,
         },
     },
@@ -192,26 +196,58 @@ pub const Renderer = struct {
         // SHAPE QUAD
         //=================
 
-        const shape_quad_vertex = try Shader.init(
+        const shape_vertex = try Shader.init(
             std.heap.page_allocator,
-            shader_sources.quad_vertex,
+            shader_sources.shape_vertex,
             ShaderType.vertex,
         );
-        defer shape_quad_vertex.destroy();
+        defer shape_vertex.destroy();
 
-        const shape_quad_fragment = try Shader.init(
+        const shape_fragment = try Shader.init(
             std.heap.page_allocator,
-            shader_sources.quad_fragment,
+            shader_sources.shape_fragment,
             ShaderType.fragment,
         );
-        defer shape_quad_fragment.destroy();
+        defer shape_fragment.destroy();
 
-        const shape_quad_program = try ShaderProgram.init(
+        const shape_program = try ShaderProgram.init(
             std.heap.page_allocator,
-            &[_]Shader{ shape_quad_vertex, shape_quad_fragment },
+            &[_]Shader{ shape_vertex, shape_fragment },
         );
 
         const shape_quad_mesh_vertices = [_]f32{
+            // +X
+            0.5,  -0.5, -0.5,
+            0.5,  0.5,  -0.5,
+            0.5,  0.5,  0.5,
+            0.5,  0.5,  0.5,
+            0.5,  -0.5, 0.5,
+            0.5,  -0.5, -0.5,
+
+            // -X
+            -0.5, 0.5,  -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, 0.5,  0.5,
+            -0.5, 0.5,  -0.5,
+
+            // +Y
+            0.5,  0.5,  -0.5,
+            -0.5, 0.5,  -0.5,
+            -0.5, 0.5,  0.5,
+            -0.5, 0.5,  0.5,
+            0.5,  0.5,  0.5,
+            0.5,  0.5,  -0.5,
+
+            // -Y
+            -0.5, -0.5, -0.5,
+            0.5,  -0.5, -0.5,
+            0.5,  -0.5, 0.5,
+            0.5,  -0.5, 0.5,
+            -0.5, -0.5, 0.5,
+            -0.5, -0.5, -0.5,
+
             // +Z
             -0.5, -0.5, 0.5,
             0.5,  -0.5, 0.5,
@@ -219,6 +255,14 @@ pub const Renderer = struct {
             0.5,  0.5,  0.5,
             -0.5, 0.5,  0.5,
             -0.5, -0.5, 0.5,
+
+            // -Z
+            -0.5, 0.5,  -0.5,
+            0.5,  0.5,  -0.5,
+            0.5,  -0.5, -0.5,
+            0.5,  -0.5, -0.5,
+            -0.5, -0.5, -0.5,
+            -0.5, 0.5,  -0.5,
         };
 
         const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &[_]u32{3});
@@ -253,14 +297,15 @@ pub const Renderer = struct {
                 },
             },
             .shape = .{
-                .quad = .{
-                    .program = .{
-                        .id = shape_quad_program,
-                        .uniforms = .{
-                            .pos = shape_quad_program.getUniform("pos"),
-                            .size = shape_quad_program.getUniform("size"),
-                        },
+                .program = .{
+                    .id = shape_program,
+                    .uniforms = .{
+                        .model = shape_program.getUniform("model"),
+                        .view = shape_program.getUniform("view"),
+                        .proj = shape_program.getUniform("proj"),
                     },
+                },
+                .quad = .{
                     .mesh = shape_quad_mesh,
                 },
             },
@@ -271,7 +316,7 @@ pub const Renderer = struct {
         self.gui.rect.program.id.destroy();
         self.gui.rect.mesh.destroy();
         self.gui.text.program.id.destroy();
-        self.shape.quad.program.id.destroy();
+        self.shape.program.id.destroy();
         self.shape.quad.mesh.destroy();
     }
 
@@ -367,20 +412,19 @@ pub const Renderer = struct {
                 }
             },
             shape.Quad => {
-                self.shape.quad.program.id.use();
-                ShaderProgram.setUniform(
-                    Vec3,
-                    self.shape.quad.program.uniforms.pos,
-                    obj.pos,
-                );
-                ShaderProgram.setUniform(
-                    Vec3,
-                    self.shape.quad.program.uniforms.size,
-                    obj.size,
-                );
+                self.shape.program.id.use();
+                const model = Mat{
+                    @Vector(4, f32){ obj.size[0], 0.0, 0.0, 0.0 },
+                    @Vector(4, f32){ 0.0, obj.size[1], 0.0, 0.0 },
+                    @Vector(4, f32){ 0.0, 0.0, obj.size[2], 0.0 },
+                    @Vector(4, f32){ obj.pos[0], obj.pos[1], obj.pos[2], 1.0 },
+                };
+                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.model, model);
+                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.view, self.camera.view);
+                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.proj, self.camera.proj);
                 self.shape.quad.mesh.draw();
             },
-            else => std.debug.panic("[!!!ERROR!!!]:[RENDERER]:Impossible to draw an object of this type!"),
+            else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw an object of this type!"),
         }
     }
 };

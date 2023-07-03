@@ -75,6 +75,7 @@ pub fn main() !void {
                 },
                 Event.window_size => |size| {
                     window.size = size;
+                    renderer.camera.proj = linmath.Scale(Vec3{ @intToFloat(f32, size[1]) / @intToFloat(f32, size[0]), 1.0, 0.01 });
                     c.glViewport(0, 0, size[0], size[1]);
                 },
                 else => {},
@@ -95,13 +96,19 @@ pub fn main() !void {
         const vpsize = window.size;
         renderer.vpsize = vpsize;
 
+        renderer.camera.rot[0] += 0.02;
+        renderer.camera.rot[1] += 0.05;
+        renderer.camera.rot[2] += 0.1;
+
+        renderer.camera.updateView();
+
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.0, 0.0, 0.0, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.draw(shape.Quad{ .pos = Vec3{ 0.5, 0.2, 0.0 }, .size = .{ 1.0, 1.0, 1.0 } });
+        renderer.draw(shape.Quad{ .pos = Vec3{ 0.0, 0.0, 0.0 }, .size = .{ 1.0, 1.0, 1.0 } });
 
         // ...
 
