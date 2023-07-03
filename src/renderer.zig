@@ -22,11 +22,16 @@ pub const Renderer = struct {
     vpsize: I32x2 = I32x2{ 1200, 900 },
     color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
     camera: Camera = Camera{ .proj = linmath.Scale(Vec3{ 900.0 / 1200.0, 1.0, 0.01 }) },
+    light: struct {
+        direction: Vec3 = Vec3{ 0.2, 0.3, 1.0 },
+        intensity: f32 = 0.5,
+        ambient: f32 = 0.3,
+    },
     gui: struct {
         rect: struct {
             color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
             alignment: gui.Alignment = gui.Alignment.left_top,
-            borders: struct {
+            border: struct {
                 width: i32 = 0,
                 color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
             },
@@ -63,6 +68,9 @@ pub const Renderer = struct {
                 model: i32,
                 view: i32,
                 proj: i32,
+                light_direction: i32,
+                light_intensity: i32,
+                light_ambient: i32,
             },
         },
         quad: struct {
@@ -217,60 +225,56 @@ pub const Renderer = struct {
 
         const shape_quad_mesh_vertices = [_]f32{
             // +X
-            0.5,  -0.5, -0.5,
-            0.5,  0.5,  -0.5,
-            0.5,  0.5,  0.5,
-            0.5,  0.5,  0.5,
-            0.5,  -0.5, 0.5,
-            0.5,  -0.5, -0.5,
-
+            0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
+            0.5,  0.5,  -0.5, 1.0,  0.0,  0.0,
+            0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+            0.5,  0.5,  0.5,  1.0,  0.0,  0.0,
+            0.5,  -0.5, 0.5,  1.0,  0.0,  0.0,
+            0.5,  -0.5, -0.5, 1.0,  0.0,  0.0,
             // -X
-            -0.5, 0.5,  -0.5,
-            -0.5, -0.5, -0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, 0.5,  0.5,
-            -0.5, 0.5,  -0.5,
-
+            -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,
+            -0.5, -0.5, -0.5, -1.0, 0.0,  0.0,
+            -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,
+            -0.5, -0.5, 0.5,  -1.0, 0.0,  0.0,
+            -0.5, 0.5,  0.5,  -1.0, 0.0,  0.0,
+            -0.5, 0.5,  -0.5, -1.0, 0.0,  0.0,
             // +Y
-            0.5,  0.5,  -0.5,
-            -0.5, 0.5,  -0.5,
-            -0.5, 0.5,  0.5,
-            -0.5, 0.5,  0.5,
-            0.5,  0.5,  0.5,
-            0.5,  0.5,  -0.5,
-
+            0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,
+            -0.5, 0.5,  -0.5, 0.0,  1.0,  0.0,
+            -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,
+            -0.5, 0.5,  0.5,  0.0,  1.0,  0.0,
+            0.5,  0.5,  0.5,  0.0,  1.0,  0.0,
+            0.5,  0.5,  -0.5, 0.0,  1.0,  0.0,
             // -Y
-            -0.5, -0.5, -0.5,
-            0.5,  -0.5, -0.5,
-            0.5,  -0.5, 0.5,
-            0.5,  -0.5, 0.5,
-            -0.5, -0.5, 0.5,
-            -0.5, -0.5, -0.5,
-
+            -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
+            0.5,  -0.5, -0.5, 0.0,  -1.0, 0.0,
+            0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
+            0.5,  -0.5, 0.5,  0.0,  -1.0, 0.0,
+            -0.5, -0.5, 0.5,  0.0,  -1.0, 0.0,
+            -0.5, -0.5, -0.5, 0.0,  -1.0, 0.0,
             // +Z
-            -0.5, -0.5, 0.5,
-            0.5,  -0.5, 0.5,
-            0.5,  0.5,  0.5,
-            0.5,  0.5,  0.5,
-            -0.5, 0.5,  0.5,
-            -0.5, -0.5, 0.5,
-
+            -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
+            0.5,  -0.5, 0.5,  0.0,  0.0,  1.0,
+            0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+            0.5,  0.5,  0.5,  0.0,  0.0,  1.0,
+            -0.5, 0.5,  0.5,  0.0,  0.0,  1.0,
+            -0.5, -0.5, 0.5,  0.0,  0.0,  1.0,
             // -Z
-            -0.5, 0.5,  -0.5,
-            0.5,  0.5,  -0.5,
-            0.5,  -0.5, -0.5,
-            0.5,  -0.5, -0.5,
-            -0.5, -0.5, -0.5,
-            -0.5, 0.5,  -0.5,
+            -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0,
+            0.5,  0.5,  -0.5, 0.0,  0.0,  -1.0,
+            0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0,
+            0.5,  -0.5, -0.5, 0.0,  0.0,  -1.0,
+            -0.5, -0.5, -0.5, 0.0,  0.0,  -1.0,
+            -0.5, 0.5,  -0.5, 0.0,  0.0,  -1.0,
         };
 
-        const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &[_]u32{3});
+        const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &[_]u32{ 3, 3 });
 
         return Renderer{
+            .light = .{},
             .gui = .{
                 .rect = .{
-                    .borders = .{},
+                    .border = .{},
                     .program = .{
                         .id = gui_rect_program,
                         .uniforms = .{
@@ -303,6 +307,9 @@ pub const Renderer = struct {
                         .model = shape_program.getUniform("model"),
                         .view = shape_program.getUniform("view"),
                         .proj = shape_program.getUniform("proj"),
+                        .light_direction = shape_program.getUniform("light_direction"),
+                        .light_intensity = shape_program.getUniform("light_intensity"),
+                        .light_ambient = shape_program.getUniform("light_ambient"),
                     },
                 },
                 .quad = .{
@@ -346,12 +353,12 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(
                     i32,
                     self.gui.rect.program.uniforms.borders_width,
-                    self.gui.rect.borders.width,
+                    self.gui.rect.border.width,
                 );
                 ShaderProgram.setUniform(
                     Color,
                     self.gui.rect.program.uniforms.borders_color,
-                    self.gui.rect.borders.color,
+                    self.gui.rect.border.color,
                 );
                 self.gui.rect.mesh.draw();
             },
@@ -393,11 +400,11 @@ pub const Renderer = struct {
             },
             gui.Button => {
                 self.gui.rect.color = Color{ 0.400, 0.360, 0.329, 1.0 };
-                self.gui.rect.borders.width = 5;
+                self.gui.rect.border.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => self.gui.rect.borders.color = Color{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Focused => self.gui.rect.borders.color = Color{ 0.484, 0.435, 0.392, 1.0 },
-                    gui.Button.State.Pushed => self.gui.rect.borders.color = Color{ 0.658, 0.6, 0.517, 1.0 },
+                    gui.Button.State.Normal => self.gui.rect.border.color = Color{ 0.235, 0.219, 0.211, 1.0 },
+                    gui.Button.State.Focused => self.gui.rect.border.color = Color{ 0.484, 0.435, 0.392, 1.0 },
+                    gui.Button.State.Pushed => self.gui.rect.border.color = Color{ 0.658, 0.6, 0.517, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
@@ -422,6 +429,9 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.model, model);
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.view, self.camera.view);
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.proj, self.camera.proj);
+                ShaderProgram.setUniform(Vec3, self.shape.program.uniforms.light_direction, self.light.direction);
+                ShaderProgram.setUniform(f32, self.shape.program.uniforms.light_intensity, self.light.intensity);
+                ShaderProgram.setUniform(f32, self.shape.program.uniforms.light_ambient, self.light.ambient);
                 self.shape.quad.mesh.draw();
             },
             else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw an object of this type!"),

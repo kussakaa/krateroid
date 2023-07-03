@@ -96,9 +96,9 @@ pub fn main() !void {
         const vpsize = window.size;
         renderer.vpsize = vpsize;
 
-        renderer.camera.rot[0] += 0.02;
-        renderer.camera.rot[1] += 0.05;
-        renderer.camera.rot[2] += 0.1;
+        renderer.camera.rot[0] += 0.01;
+        renderer.camera.rot[1] += 0.03;
+        renderer.camera.rot[2] += 0.02;
 
         renderer.camera.updateView();
 

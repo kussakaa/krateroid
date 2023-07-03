@@ -71,17 +71,28 @@ pub const shape_vertex =
     \\uniform mat4 view;
     \\uniform mat4 proj;
     \\layout (location = 0) in vec3 a_pos;
+    \\layout (location = 1) in vec3 a_nrm;
+    \\out vec3 normal;
     \\void main()
     \\{
+    \\    normal = normalize(a_nrm);
     \\    gl_Position = proj*view*model*vec4(a_pos, 1.0);
     \\}
 ;
 
 pub const shape_fragment =
     \\#version 330 core
+    \\uniform vec3 light_direction;
+    \\uniform float light_intensity;
+    \\uniform float light_ambient;
+    \\in vec3 normal;
     \\out vec4 FragColor;
     \\void main()
     \\{
-    \\    FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    \\    vec3 color = vec3(1.0, 1.0, 1.0);
+    \\    vec3 lightdir = normalize(light_direction);;
+    \\    float li = light_intensity;
+    \\    float la = 0.3;
+    \\    FragColor = vec4(color*(la+li*max(0.0, dot(normal, lightdir))), 1.0);
     \\}
 ;
