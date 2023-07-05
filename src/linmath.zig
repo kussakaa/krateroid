@@ -45,6 +45,15 @@ pub fn RotZ(f: f32) Mat {
     };
 }
 
+pub fn Pos(pos: F32x3) Mat {
+    return Mat{
+        @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
+        @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
+        @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
+        @Vector(4, f32){ pos[0], pos[1], pos[2], 1.0 },
+    };
+}
+
 pub fn Scale(scale: F32x3) Mat {
     return Mat{
         @Vector(4, f32){ scale[0], 0.0, 0.0, 0.0 },

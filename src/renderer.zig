@@ -19,21 +19,21 @@ const Mat = linmath.Mat;
 const MatIdentity = linmath.MatIdentity;
 
 pub const Renderer = struct {
-    vpsize: I32x2 = I32x2{ 1200, 900 },
-    color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
-    camera: Camera = Camera{ .proj = linmath.Scale(Vec3{ 900.0 / 1200.0, 1.0, 0.01 }) },
+    vpsize: I32x2 = .{ 1200, 900 },
+    color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
+    camera: Camera = .{ .proj = linmath.Scale(Vec3{ 900.0 / 1200.0, 1.0, 0.01 }) },
     light: struct {
-        direction: Vec3 = Vec3{ 0.2, 0.3, 1.0 },
+        direction: Vec3 = .{ 0.2, 0.3, 1.0 },
         intensity: f32 = 0.5,
         ambient: f32 = 0.3,
     },
     gui: struct {
         rect: struct {
-            color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
+            color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
             alignment: gui.Alignment = gui.Alignment.left_top,
             border: struct {
                 width: i32 = 0,
-                color: Color = Color{ 1.0, 1.0, 1.0, 1.0 },
+                color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
             },
             program: struct {
                 id: ShaderProgram,
@@ -48,7 +48,7 @@ pub const Renderer = struct {
             mesh: Mesh,
         },
         text: struct {
-            color: Color = Color{ 0.921, 0.858, 0.698, 1.0 },
+            color: Color = .{ 0.921, 0.858, 0.698, 1.0 },
             program: struct {
                 id: ShaderProgram,
                 uniforms: struct {
@@ -57,8 +57,8 @@ pub const Renderer = struct {
                     color: i32,
                 },
             },
-            chars: [72]u16,
-            glyphs: [72]Glyph,
+            chars: [100]u16,
+            glyphs: [100]Glyph,
         },
     },
     shape: struct {
@@ -155,7 +155,7 @@ pub const Renderer = struct {
 
         _ = c.FT_Set_Pixel_Sizes(face, 0, 24);
 
-        const chars = [_]u16{ '#', '.', ',', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я' };
+        const chars = [_]u16{ '#', '.', ',', '-', '|', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я' };
         var glyphs: [chars.len]Glyph = undefined;
 
         for (chars) |char, i| {
@@ -364,10 +364,16 @@ pub const Renderer = struct {
             },
             gui.Text => {
                 var advance: i32 = 0;
+                var height: i32 = 0;
                 self.gui.text.program.id.use();
                 glyph: for (obj.data) |char| {
                     if (char == ' ') {
                         advance += 10;
+                        continue :glyph;
+                    }
+                    if (char == '\n') {
+                        height -= 24;
+                        advance = 0;
                         continue :glyph;
                     }
                     for (self.gui.text.chars) |renderer_char, i| {
@@ -383,11 +389,11 @@ pub const Renderer = struct {
                                 obj.alignment,
                                 self.vpsize,
                             );
-                            ShaderProgram.setUniform(I32x4, self.gui.text.program.uniforms.rect, gui.Rect{
+                            ShaderProgram.setUniform(I32x4, self.gui.text.program.uniforms.rect, .{
                                 min[0] + advance + self.gui.text.glyphs[i].bearing[0],
-                                min[1] - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
+                                min[1] + height - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
                                 max[0] + advance + self.gui.text.glyphs[i].bearing[0],
-                                max[1] - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
+                                max[1] + height - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
                             });
                             ShaderProgram.setUniform(I32x2, self.gui.text.program.uniforms.vpsize, self.vpsize);
                             ShaderProgram.setUniform(Color, self.gui.text.program.uniforms.color, self.gui.text.color);
@@ -399,12 +405,12 @@ pub const Renderer = struct {
                 }
             },
             gui.Button => {
-                self.gui.rect.color = Color{ 0.400, 0.360, 0.329, 1.0 };
+                self.gui.rect.color = .{ 0.400, 0.360, 0.329, 1.0 };
                 self.gui.rect.border.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => self.gui.rect.border.color = Color{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Focused => self.gui.rect.border.color = Color{ 0.484, 0.435, 0.392, 1.0 },
-                    gui.Button.State.Pushed => self.gui.rect.border.color = Color{ 0.658, 0.6, 0.517, 1.0 },
+                    gui.Button.State.Normal => self.gui.rect.border.color = .{ 0.235, 0.219, 0.211, 1.0 },
+                    gui.Button.State.Focused => self.gui.rect.border.color = .{ 0.484, 0.435, 0.392, 1.0 },
+                    gui.Button.State.Pushed => self.gui.rect.border.color = .{ 0.658, 0.6, 0.517, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
@@ -420,12 +426,7 @@ pub const Renderer = struct {
             },
             shape.Quad => {
                 self.shape.program.id.use();
-                const model = Mat{
-                    @Vector(4, f32){ obj.size[0], 0.0, 0.0, 0.0 },
-                    @Vector(4, f32){ 0.0, obj.size[1], 0.0, 0.0 },
-                    @Vector(4, f32){ 0.0, 0.0, obj.size[2], 0.0 },
-                    @Vector(4, f32){ obj.pos[0], obj.pos[1], obj.pos[2], 1.0 },
-                };
+                const model = linmath.mul(linmath.Scale(obj.size), linmath.Pos(obj.pos));
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.model, model);
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.view, self.camera.view);
                 ShaderProgram.setUniform(Mat, self.shape.program.uniforms.proj, self.camera.proj);

@@ -2,7 +2,6 @@ const c = @import("c.zig");
 const std = @import("std");
 const linmath = @import("linmath.zig");
 const Vec3 = linmath.F32x3;
-const Color = linmath.F32x4;
 const Mat = linmath.Mat;
 const sdl = @import("sdl.zig");
 const mesh = @import("mesh.zig");
@@ -33,6 +32,8 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
+    renderer.camera.rot[0] = std.math.pi / 4.0;
+
     var gui_main_menu = gui.Gui.init();
     defer gui_main_menu.destroy();
 
@@ -52,6 +53,25 @@ pub fn main() !void {
         std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ));
 
+    const Control = struct {
+        move: struct {
+            up: bool = false,
+            left: bool = false,
+            down: bool = false,
+            right: bool = false,
+        },
+        rotate: struct {
+            right: bool = false,
+            left: bool = false,
+        },
+    };
+
+    var control = Control{ .move = .{}, .rotate = .{} };
+
+    const camera_speed = 0.003;
+
+    var is_show_f3 = false;
+
     var last_time = @intCast(i32, c.SDL_GetTicks());
     var run = true;
 
@@ -67,9 +87,25 @@ pub fn main() !void {
                 Event.quit => run = false,
                 Event.key_down => |key| {
                     switch (key) {
-                        c.SDLK_ESCAPE => {
-                            gui_main_menu.enable = !gui_main_menu.enable;
-                        },
+                        c.SDLK_ESCAPE => gui_main_menu.enable = !gui_main_menu.enable,
+                        c.SDLK_F3 => is_show_f3 = !is_show_f3,
+                        c.SDLK_w => control.move.up = true,
+                        c.SDLK_a => control.move.left = true,
+                        c.SDLK_s => control.move.down = true,
+                        c.SDLK_d => control.move.right = true,
+                        c.SDLK_q => control.rotate.left = true,
+                        c.SDLK_e => control.rotate.right = true,
+                        else => {},
+                    }
+                },
+                Event.key_up => |key| {
+                    switch (key) {
+                        c.SDLK_w => control.move.up = false,
+                        c.SDLK_a => control.move.left = false,
+                        c.SDLK_s => control.move.down = false,
+                        c.SDLK_d => control.move.right = false,
+                        c.SDLK_q => control.rotate.left = false,
+                        c.SDLK_e => control.rotate.right = false,
                         else => {},
                     }
                 },
@@ -96,11 +132,29 @@ pub fn main() !void {
         const vpsize = window.size;
         renderer.vpsize = vpsize;
 
-        renderer.camera.rot[0] += 0.01;
-        renderer.camera.rot[1] += 0.03;
-        renderer.camera.rot[2] += 0.02;
-
-        renderer.camera.updateView();
+        if (control.move.up) {
+            renderer.camera.pos[0] -= @sin(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[1] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
+        }
+        if (control.move.left) {
+            renderer.camera.pos[0] -= @cos(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[1] -= @sin(renderer.camera.rot[2]) * camera_speed * dt;
+        }
+        if (control.move.down) {
+            renderer.camera.pos[0] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[1] -= @cos(renderer.camera.rot[2]) * camera_speed * dt;
+        }
+        if (control.move.right) {
+            renderer.camera.pos[0] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[1] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
+        }
+        if (control.rotate.right) renderer.camera.rot[2] += camera_speed * dt;
+        if (control.rotate.left) renderer.camera.rot[2] -= camera_speed * dt;
+        renderer.camera.view = linmath.MatIdentity;
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Pos(-renderer.camera.pos));
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotZ(renderer.camera.rot[2]));
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotX(renderer.camera.rot[0]));
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotY(renderer.camera.rot[1]));
 
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
@@ -108,29 +162,35 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.draw(shape.Quad{ .pos = Vec3{ 0.0, 0.0, 0.0 }, .size = .{ 1.0, 1.0, 1.0 } });
+        renderer.draw(shape.Quad{});
 
         // ...
 
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D
 
-        renderer.color = Color{ 1.0, 1.0, 1.0, 1.0 };
+        renderer.color = .{ 1.0, 1.0, 1.0, 1.0 };
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
-        renderer.draw(gui.Text{
-            .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
-            .pos = linmath.I32x2{ 2, 6 },
-        });
-
-        var buf: [20]u8 = [_]u8{0} ** 20;
-        if (dt != 0.0) {
-            _ = try std.fmt.bufPrint(&buf, "fps {}", .{@floatToInt(i32, 1000.0 / dt)});
+        if (is_show_f3) {
             renderer.draw(gui.Text{
-                .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
-                .pos = linmath.I32x2{ 2, -24 },
-                .alignment = gui.Alignment.left_top,
+                .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
+                .pos = linmath.I32x2{ 2, 6 },
             });
+
+            var buf: [500]u8 = [_]u8{0} ** 500;
+            if (dt != 0.0) {
+                _ = try std.fmt.bufPrint(&buf, "fps {}\nCamera\n|-pos {}\n|-rot: {}", .{
+                    @floatToInt(i32, 1000.0 / dt),
+                    renderer.camera.pos,
+                    renderer.camera.rot,
+                });
+                renderer.draw(gui.Text{
+                    .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
+                    .pos = linmath.I32x2{ 2, -24 },
+                    .alignment = gui.Alignment.left_top,
+                });
+            }
         }
 
         window.swap();
