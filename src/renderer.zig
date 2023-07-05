@@ -32,7 +32,7 @@ pub const Renderer = struct {
             color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
             alignment: gui.Alignment = gui.Alignment.left_top,
             border: struct {
-                width: i32 = 0,
+                width: i32 = 1,
                 color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
             },
             program: struct {
@@ -48,7 +48,7 @@ pub const Renderer = struct {
             mesh: Mesh,
         },
         text: struct {
-            color: Color = .{ 0.921, 0.858, 0.698, 1.0 },
+            color: Color = .{ 0.7, 0.7, 0.7, 1.0 },
             program: struct {
                 id: ShaderProgram,
                 uniforms: struct {
@@ -405,12 +405,12 @@ pub const Renderer = struct {
                 }
             },
             gui.Button => {
-                self.gui.rect.color = .{ 0.400, 0.360, 0.329, 1.0 };
+                self.gui.rect.color = .{ 0.2, 0.2, 0.2, 1.0 };
                 self.gui.rect.border.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => self.gui.rect.border.color = .{ 0.235, 0.219, 0.211, 1.0 },
-                    gui.Button.State.Focused => self.gui.rect.border.color = .{ 0.484, 0.435, 0.392, 1.0 },
-                    gui.Button.State.Pushed => self.gui.rect.border.color = .{ 0.658, 0.6, 0.517, 1.0 },
+                    gui.Button.State.Normal => self.gui.rect.border.color = .{ 0.1, 0.1, 0.1, 1.0 },
+                    gui.Button.State.Focused => self.gui.rect.border.color = .{ 0.4, 0.4, 0.4, 1.0 },
+                    gui.Button.State.Pushed => self.gui.rect.border.color = .{ 0.7, 0.7, 0.7, 1.0 },
                 }
                 const alignment = self.gui.rect.alignment;
                 self.gui.rect.alignment = obj.alignment;
