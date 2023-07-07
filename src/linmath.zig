@@ -45,6 +45,14 @@ pub fn RotZ(f: f32) Mat {
     };
 }
 
+pub fn Rot(rot: F32x3) Mat {
+    var mat = MatIdentity;
+    mat = mul(mat, RotZ(rot[2]));
+    mat = mul(mat, RotX(rot[0]));
+    mat = mul(mat, RotY(rot[1]));
+    return mat;
+}
+
 pub fn Pos(pos: F32x3) Mat {
     return Mat{
         @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },

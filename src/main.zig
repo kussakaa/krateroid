@@ -32,7 +32,7 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
-    renderer.camera.rot[0] = std.math.pi / 4.0;
+    renderer.camera.rot[0] = std.math.pi / 6.0;
 
     var gui_main_menu = gui.Gui.init();
     defer gui_main_menu.destroy();
@@ -152,9 +152,7 @@ pub fn main() !void {
         if (control.rotate.left) renderer.camera.rot[2] -= camera_speed * dt;
         renderer.camera.view = linmath.MatIdentity;
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Pos(-renderer.camera.pos));
-        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotZ(renderer.camera.rot[2]));
-        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotX(renderer.camera.rot[0]));
-        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.RotY(renderer.camera.rot[1]));
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Rot(renderer.camera.rot));
 
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);

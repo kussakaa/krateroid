@@ -3,6 +3,8 @@ const c = @import("c.zig");
 const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
 const shape = @import("shape.zig");
+const world = @import("world.zig");
+const mct = @import("mct.zig");
 const Shader = @import("shader.zig").Shader;
 const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
@@ -405,10 +407,10 @@ pub const Renderer = struct {
                 }
             },
             gui.Button => {
-                self.gui.rect.color = .{ 0.2, 0.2, 0.2, 1.0 };
+                self.gui.rect.color = .{ 0.1, 0.1, 0.1, 1.0 };
                 self.gui.rect.border.width = 5;
                 switch (obj.state) {
-                    gui.Button.State.Normal => self.gui.rect.border.color = .{ 0.1, 0.1, 0.1, 1.0 },
+                    gui.Button.State.Normal => self.gui.rect.border.color = .{ 0.2, 0.2, 0.2, 1.0 },
                     gui.Button.State.Focused => self.gui.rect.border.color = .{ 0.4, 0.4, 0.4, 1.0 },
                     gui.Button.State.Pushed => self.gui.rect.border.color = .{ 0.7, 0.7, 0.7, 1.0 },
                 }
@@ -435,6 +437,7 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(f32, self.shape.program.uniforms.light_ambient, self.light.ambient);
                 self.shape.quad.mesh.draw();
             },
+            world.Chunk => {},
             else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw an object of this type!"),
         }
     }
