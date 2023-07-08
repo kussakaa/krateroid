@@ -1,7 +1,10 @@
+const I32x2 = @import("linmath.zig").I32x2;
+
 pub const Chunk = struct {
     const WIDTH = 8;
     const VOLUME = WIDTH * WIDTH * WIDTH;
 
+    pos: I32x2,
     data: [VOLUME]u8 = [1]u8{0} ** VOLUME,
 
     pub fn init() Chunk {

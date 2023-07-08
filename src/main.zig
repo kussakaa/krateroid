@@ -13,11 +13,14 @@ const Event = @import("events.zig").Event;
 
 const shape = @import("shape.zig");
 
+const WINDOW_WIDTH = 1200;
+const WINDOW_HEIGHT = 900;
+
 pub fn main() !void {
     try sdl.init();
     defer sdl.destroy();
 
-    var window = try sdl.Window.init("krateroid", 1200, 900);
+    var window = try sdl.Window.init("krateroid", WINDOW_WIDTH, WINDOW_HEIGHT);
     defer window.destroy();
 
     c.glEnable(c.GL_DEPTH_TEST);
@@ -32,6 +35,12 @@ pub fn main() !void {
     var renderer = try Renderer.init();
     defer renderer.destroy();
 
+    renderer.vpsize = window.size;
+    renderer.camera.proj = linmath.Scale(.{
+        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.1,
+        0.1,
+        0.001,
+    });
     renderer.camera.rot[0] = std.math.pi / 6.0;
 
     var gui_main_menu = gui.Gui.init();
@@ -61,19 +70,26 @@ pub fn main() !void {
             right: bool = false,
         },
         rotate: struct {
-            right: bool = false,
+            up: bool = false,
             left: bool = false,
+            down: bool = false,
+            right: bool = false,
         },
     };
 
     var control = Control{ .move = .{}, .rotate = .{} };
 
-    const camera_speed = 0.003;
+    const camera_speed = 0.01;
+    const camera_rotate_speed = std.math.pi / 720.0;
 
     var is_show_f3 = false;
 
     var last_time = @intCast(i32, c.SDL_GetTicks());
     var run = true;
+
+    var frame: u32 = 0;
+    var fps: u32 = 0;
+    var seconds: u32 = 0;
 
     while (run) {
         const current_time = @intCast(i32, c.SDL_GetTicks());
@@ -93,8 +109,10 @@ pub fn main() !void {
                         c.SDLK_a => control.move.left = true,
                         c.SDLK_s => control.move.down = true,
                         c.SDLK_d => control.move.right = true,
-                        c.SDLK_q => control.rotate.left = true,
-                        c.SDLK_e => control.rotate.right = true,
+                        c.SDLK_UP => control.rotate.up = true,
+                        c.SDLK_LEFT => control.rotate.left = true,
+                        c.SDLK_DOWN => control.rotate.down = true,
+                        c.SDLK_RIGHT => control.rotate.right = true,
                         else => {},
                     }
                 },
@@ -104,14 +122,20 @@ pub fn main() !void {
                         c.SDLK_a => control.move.left = false,
                         c.SDLK_s => control.move.down = false,
                         c.SDLK_d => control.move.right = false,
-                        c.SDLK_q => control.rotate.left = false,
-                        c.SDLK_e => control.rotate.right = false,
+                        c.SDLK_UP => control.rotate.up = false,
+                        c.SDLK_LEFT => control.rotate.left = false,
+                        c.SDLK_DOWN => control.rotate.down = false,
+                        c.SDLK_RIGHT => control.rotate.right = false,
                         else => {},
                     }
                 },
                 Event.window_size => |size| {
                     window.size = size;
-                    renderer.camera.proj = linmath.Scale(Vec3{ @intToFloat(f32, size[1]) / @intToFloat(f32, size[0]), 1.0, 0.01 });
+                    renderer.camera.proj = linmath.Scale(.{
+                        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.1,
+                        0.1,
+                        0.001,
+                    });
                     c.glViewport(0, 0, size[0], size[1]);
                 },
                 else => {},
@@ -148,8 +172,10 @@ pub fn main() !void {
             renderer.camera.pos[0] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
             renderer.camera.pos[1] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
         }
-        if (control.rotate.right) renderer.camera.rot[2] += camera_speed * dt;
-        if (control.rotate.left) renderer.camera.rot[2] -= camera_speed * dt;
+        if (control.rotate.up) renderer.camera.rot[0] += camera_rotate_speed * dt;
+        if (control.rotate.right) renderer.camera.rot[2] += camera_rotate_speed * dt;
+        if (control.rotate.down) renderer.camera.rot[0] -= camera_rotate_speed * dt;
+        if (control.rotate.left) renderer.camera.rot[2] -= camera_rotate_speed * dt;
         renderer.camera.view = linmath.MatIdentity;
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Pos(-renderer.camera.pos));
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Rot(renderer.camera.rot));
@@ -160,7 +186,7 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.draw(shape.Quad{});
+        renderer.draw(shape.Quad{ .size = .{ 16.0, 16.0, 1.0 } });
 
         // ...
 
@@ -171,25 +197,47 @@ pub fn main() !void {
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
         if (is_show_f3) {
+            if (@divTrunc(c.SDL_GetTicks(), 1000) > seconds) {
+                seconds = @divTrunc(c.SDL_GetTicks(), 1000);
+                fps = frame;
+                frame = 0;
+            }
+
+            renderer.gui.rect.color = .{ 0.0, 0.0, 0.0, 0.5 };
+            renderer.gui.rect.border.width = 0;
+            renderer.gui.rect.alignment = gui.Alignment.left_bottom;
+            renderer.draw(gui.Rect{
+                0,
+                0,
+                window.size[0],
+                28,
+            });
             renderer.draw(gui.Text{
                 .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
                 .pos = linmath.I32x2{ 2, 6 },
             });
 
+            renderer.gui.rect.alignment = gui.Alignment.left_top;
+            renderer.draw(gui.Rect{
+                0,
+                -102,
+                window.size[0],
+                0,
+            });
             var buf: [500]u8 = [_]u8{0} ** 500;
-            if (dt != 0.0) {
-                _ = try std.fmt.bufPrint(&buf, "fps {}\nCamera\n|-pos {}\n|-rot: {}", .{
-                    @floatToInt(i32, 1000.0 / dt),
-                    renderer.camera.pos,
-                    renderer.camera.rot,
-                });
-                renderer.draw(gui.Text{
-                    .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
-                    .pos = linmath.I32x2{ 2, -24 },
-                    .alignment = gui.Alignment.left_top,
-                });
-            }
+            _ = try std.fmt.bufPrint(&buf, "fps {}\nCamera\n|-pos {}\n|-rot: {}", .{
+                fps,
+                renderer.camera.pos,
+                renderer.camera.rot,
+            });
+            renderer.draw(gui.Text{
+                .data = try std.unicode.utf8ToUtf16LeWithNull(std.heap.page_allocator, buf[0..]),
+                .pos = linmath.I32x2{ 2, -24 },
+                .alignment = gui.Alignment.left_top,
+            });
         }
+
+        frame += 1;
 
         window.swap();
     }

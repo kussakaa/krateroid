@@ -18,30 +18,30 @@ pub const Quat = F32x4;
 // матрица поворота по оси X на градус f
 pub fn RotX(f: f32) Mat {
     return Mat{
-        @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, math.cos(f), -math.sin(f), 0.0 },
-        @Vector(4, f32){ 0.0, math.sin(f), math.cos(f), 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+        .{ 1.0, 0.0, 0.0, 0.0 },
+        .{ 0.0, math.cos(f), -math.sin(f), 0.0 },
+        .{ 0.0, math.sin(f), math.cos(f), 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
     };
 }
 
 // матрица поворота по оси Y на градус f
 pub fn RotY(f: f32) Mat {
     return Mat{
-        @Vector(4, f32){ math.cos(f), 0.0, math.sin(f), 0.0 },
-        @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
-        @Vector(4, f32){ -math.sin(f), 0.0, math.cos(f), 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+        .{ math.cos(f), 0.0, math.sin(f), 0.0 },
+        .{ 0.0, 1.0, 0.0, 0.0 },
+        .{ -math.sin(f), 0.0, math.cos(f), 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
     };
 }
 
 // матрица поворота по оси Z на градус f
 pub fn RotZ(f: f32) Mat {
     return Mat{
-        @Vector(4, f32){ math.cos(f), -math.sin(f), 0.0, 0.0 },
-        @Vector(4, f32){ math.sin(f), math.cos(f), 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+        .{ math.cos(f), -math.sin(f), 0.0, 0.0 },
+        .{ math.sin(f), math.cos(f), 0.0, 0.0 },
+        .{ 0.0, 0.0, 1.0, 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
     };
 }
 
@@ -55,19 +55,19 @@ pub fn Rot(rot: F32x3) Mat {
 
 pub fn Pos(pos: F32x3) Mat {
     return Mat{
-        @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
-        @Vector(4, f32){ pos[0], pos[1], pos[2], 1.0 },
+        .{ 1.0, 0.0, 0.0, 0.0 },
+        .{ 0.0, 1.0, 0.0, 0.0 },
+        .{ 0.0, 0.0, 1.0, 0.0 },
+        .{ pos[0], pos[1], pos[2], 1.0 },
     };
 }
 
 pub fn Scale(scale: F32x3) Mat {
     return Mat{
-        @Vector(4, f32){ scale[0], 0.0, 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, scale[1], 0.0, 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, scale[2], 0.0 },
-        @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+        .{ scale[0], 0.0, 0.0, 0.0 },
+        .{ 0.0, scale[1], 0.0, 0.0 },
+        .{ 0.0, 0.0, scale[2], 0.0 },
+        .{ 0.0, 0.0, 0.0, 1.0 },
     };
 }
 

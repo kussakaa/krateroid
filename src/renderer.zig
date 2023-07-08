@@ -21,9 +21,9 @@ const Mat = linmath.Mat;
 const MatIdentity = linmath.MatIdentity;
 
 pub const Renderer = struct {
-    vpsize: I32x2 = .{ 1200, 900 },
+    vpsize: I32x2 = .{ 800, 600 },
     color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
-    camera: Camera = .{ .proj = linmath.Scale(Vec3{ 900.0 / 1200.0, 1.0, 0.01 }) },
+    camera: Camera = .{},
     light: struct {
         direction: Vec3 = .{ 0.2, 0.3, 1.0 },
         intensity: f32 = 0.5,
@@ -32,7 +32,7 @@ pub const Renderer = struct {
     gui: struct {
         rect: struct {
             color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
-            alignment: gui.Alignment = gui.Alignment.left_top,
+            alignment: gui.Alignment = gui.Alignment.left_bottom,
             border: struct {
                 width: i32 = 1,
                 color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
@@ -78,6 +78,9 @@ pub const Renderer = struct {
         quad: struct {
             mesh: Mesh,
         },
+    },
+    world: struct {
+        chunks: [16]?Mesh = [1]?Mesh{null} ** 16,
     },
 
     const Glyph = struct {
@@ -318,6 +321,7 @@ pub const Renderer = struct {
                     .mesh = shape_quad_mesh,
                 },
             },
+            .world = .{},
         };
     }
 
