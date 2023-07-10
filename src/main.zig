@@ -11,6 +11,7 @@ const gui = @import("gui.zig");
 const Renderer = @import("renderer.zig").Renderer;
 const Event = @import("events.zig").Event;
 const shape = @import("shape.zig");
+const world = @import("world.zig");
 
 const WINDOW_WIDTH = 1200;
 const WINDOW_HEIGHT = 900;
@@ -24,9 +25,9 @@ pub fn main() !void {
 
     c.glEnable(c.GL_DEPTH_TEST);
     c.glEnable(c.GL_CULL_FACE);
+    c.glEnable(c.GL_BLEND);
     c.glCullFace(c.GL_FRONT);
     c.glFrontFace(c.GL_CW);
-    c.glEnable(c.GL_BLEND);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     c.glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -38,7 +39,7 @@ pub fn main() !void {
     renderer.camera.proj = linmath.Scale(.{
         @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.1,
         0.1,
-        0.001,
+        -0.001,
     });
     renderer.camera.rot[0] = std.math.pi / 6.0;
 
@@ -80,6 +81,8 @@ pub fn main() !void {
 
     const camera_speed = 0.01;
     const camera_rotate_speed = std.math.pi / 720.0;
+
+    const chunk = world.Chunk.init();
 
     var is_show_f3 = false;
 
@@ -131,9 +134,9 @@ pub fn main() !void {
                 Event.window_size => |size| {
                     window.size = size;
                     renderer.camera.proj = linmath.Scale(.{
-                        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.1,
-                        0.1,
-                        0.001,
+                        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.05,
+                        0.05,
+                        -0.001,
                     });
                     c.glViewport(0, 0, size[0], size[1]);
                 },
@@ -185,9 +188,7 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.draw(shape.Quad{ .size = .{ 16.0, 16.0, 1.0 } });
-
-        // ...
+        renderer.draw(chunk);
 
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D

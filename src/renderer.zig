@@ -80,7 +80,7 @@ pub const Renderer = struct {
         },
     },
     world: struct {
-        chunks: [16]?Mesh = [1]?Mesh{null} ** 16,
+        chunk: [16]?Mesh = [1]?Mesh{null} ** 16,
     },
 
     const Glyph = struct {
@@ -436,7 +436,92 @@ pub const Renderer = struct {
                 ShaderProgram.setUniform(self.shape.program.uniforms.light_ambient, self.light.ambient);
                 self.shape.quad.mesh.draw();
             },
-            world.Chunk => {},
+            world.Chunk => {
+                if (self.world.chunk[0] == null) {
+                    const width = world.Chunk.width;
+
+                    var vertices = [1]f32{0.0} ** 100000;
+
+                    var tricnt: usize = 0;
+                    const vertsize: usize = 6;
+
+                    var z: usize = 0;
+                    while (z < width - 1) : (z += 1) {
+                        var y: usize = 0;
+                        while (y < width - 1) : (y += 1) {
+                            var x: usize = 0;
+                            while (x < width - 1) : (x += 1) {
+                                var index: usize = 0;
+
+                                if (obj.data[(z + 0) * width * width + (y + 0) * width + (x + 0)] > 0) index |= 0b00001000;
+                                if (obj.data[(z + 0) * width * width + (y + 0) * width + (x + 1)] > 0) index |= 0b00000100;
+                                if (obj.data[(z + 0) * width * width + (y + 1) * width + (x + 1)] > 0) index |= 0b00000010;
+                                if (obj.data[(z + 0) * width * width + (y + 1) * width + (x + 0)] > 0) index |= 0b00000001;
+                                if (obj.data[(z + 1) * width * width + (y + 0) * width + (x + 0)] > 0) index |= 0b10000000;
+                                if (obj.data[(z + 1) * width * width + (y + 0) * width + (x + 1)] > 0) index |= 0b01000000;
+                                if (obj.data[(z + 1) * width * width + (y + 1) * width + (x + 1)] > 0) index |= 0b00100000;
+                                if (obj.data[(z + 1) * width * width + (y + 1) * width + (x + 0)] > 0) index |= 0b00010000;
+
+                                if (index == 0) continue;
+
+                                var i: usize = 0;
+                                while (mct.tri[index][i] >= 0) : (i += 3) {
+                                    const p1 = Vec3{
+                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][0],
+                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][1],
+                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][2],
+                                    };
+
+                                    const p2 = Vec3{
+                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][0],
+                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][1],
+                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][2],
+                                    };
+
+                                    const p3 = Vec3{
+                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][0],
+                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][1],
+                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][2],
+                                    };
+
+                                    const n = linmath.cross((p2 - p1), (p3 - p1));
+
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 0] = p1[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 1] = p1[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 2] = p1[2];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 0] = p2[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 1] = p2[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 2] = p2[2];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 0] = p3[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 1] = p3[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 2] = p3[2];
+
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 3] = n[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 4] = n[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 5] = n[2];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 3] = n[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 4] = n[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 5] = n[2];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 3] = n[0];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 4] = n[1];
+                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 5] = n[2];
+                                    tricnt += 1;
+                                }
+                            }
+                        }
+                    }
+                    std.debug.print("{}", .{tricnt * 3 * vertsize});
+                    self.world.chunk[0] = Mesh.init(vertices[0..(tricnt * 3 * vertsize)], &[_]u32{ 3, 3 });
+                }
+                self.shape.program.id.use();
+                ShaderProgram.setUniform(self.shape.program.uniforms.model, MatIdentity);
+                ShaderProgram.setUniform(self.shape.program.uniforms.view, self.camera.view);
+                ShaderProgram.setUniform(self.shape.program.uniforms.proj, self.camera.proj);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_direction, self.light.direction);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_intensity, self.light.intensity);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_ambient, self.light.ambient);
+                self.world.chunk[0].?.draw();
+            },
             else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw an object of this type!"),
         }
     }

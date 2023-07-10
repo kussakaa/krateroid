@@ -15,6 +15,15 @@ pub const MatIdentity = Mat{
 };
 pub const Quat = F32x4;
 
+// перемножение матриц
+pub fn cross(v1: F32x3, v2: F32x3) F32x3 {
+    return F32x3{
+        v1[1] * v2[2] - v1[2] * v2[1],
+        v1[0] * v2[2] - v1[2] * v2[0],
+        v1[0] * v2[1] - v1[1] * v2[0],
+    };
+}
+
 // матрица поворота по оси X на градус f
 pub fn RotX(f: f32) Mat {
     return Mat{
@@ -72,13 +81,13 @@ pub fn Scale(scale: F32x3) Mat {
 }
 
 // перемножение матриц
-pub fn mul(m0: Mat, m1: Mat) Mat {
+pub fn mul(m1: Mat, m2: Mat) Mat {
     var result: Mat = undefined;
     comptime var i = 0;
     inline while (i < 4) {
         comptime var j = 0;
         inline while (j < 4) {
-            result[i][j] = m0[i][0] * m1[0][j] + m0[i][1] * m1[1][j] + m0[i][2] * m1[2][j] + m0[i][3] * m1[3][j];
+            result[i][j] = m1[i][0] * m2[0][j] + m1[i][1] * m2[1][j] + m1[i][2] * m2[2][j] + m1[i][3] * m2[3][j];
             j += 1;
         }
         i += 1;
