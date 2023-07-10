@@ -86,8 +86,8 @@ pub const ShaderProgram = struct {
     }
 
     // отправление значение в шейдер по идентификатору юниформы
-    pub fn setUniform(comptime T: type, location: i32, value: T) void {
-        switch (T) {
+    pub fn setUniform(location: i32, value: anytype) void {
+        switch (@TypeOf(value)) {
             f32 => c.glUniform1f(location, value),
             i32 => c.glUniform1i(location, value),
             @Vector(3, f32) => {
@@ -119,7 +119,7 @@ pub const ShaderProgram = struct {
                 };
                 c.glUniformMatrix4fv(location, 1, c.GL_FALSE, &array);
             },
-            else => @compileError("[!FAILED!]:[COMPILING]:Incorrect type in setUniform"),
+            else => panic("[!FAILED!]:[COMPILING]:Incorrect type in setUniform"),
         }
     }
 

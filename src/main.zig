@@ -10,7 +10,6 @@ const shader_sources = @import("shader_sources.zig");
 const gui = @import("gui.zig");
 const Renderer = @import("renderer.zig").Renderer;
 const Event = @import("events.zig").Event;
-
 const shape = @import("shape.zig");
 
 const WINDOW_WIDTH = 1200;

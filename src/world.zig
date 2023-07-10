@@ -4,8 +4,9 @@ pub const Chunk = struct {
     const WIDTH = 8;
     const VOLUME = WIDTH * WIDTH * WIDTH;
 
-    pos: I32x2,
+    pos: I32x2 = .{ 0, 0 },
     data: [VOLUME]u8 = [1]u8{0} ** VOLUME,
+    edit: i32 = 0,
 
     pub fn init() Chunk {
         var chunk = Chunk{};

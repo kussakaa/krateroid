@@ -338,7 +338,6 @@ pub const Renderer = struct {
             gui.Rect => {
                 self.gui.rect.program.id.use();
                 ShaderProgram.setUniform(
-                    I32x4,
                     self.gui.rect.program.uniforms.rect,
                     gui.rectAlignOfVp(
                         obj,
@@ -347,22 +346,18 @@ pub const Renderer = struct {
                     ),
                 );
                 ShaderProgram.setUniform(
-                    I32x2,
                     self.gui.rect.program.uniforms.vpsize,
                     self.vpsize,
                 );
                 ShaderProgram.setUniform(
-                    Color,
                     self.gui.rect.program.uniforms.color,
                     self.gui.rect.color,
                 );
                 ShaderProgram.setUniform(
-                    i32,
                     self.gui.rect.program.uniforms.borders_width,
                     self.gui.rect.border.width,
                 );
                 ShaderProgram.setUniform(
-                    Color,
                     self.gui.rect.program.uniforms.borders_color,
                     self.gui.rect.border.color,
                 );
@@ -395,14 +390,14 @@ pub const Renderer = struct {
                                 obj.alignment,
                                 self.vpsize,
                             );
-                            ShaderProgram.setUniform(I32x4, self.gui.text.program.uniforms.rect, .{
+                            ShaderProgram.setUniform(self.gui.text.program.uniforms.rect, I32x4{
                                 min[0] + advance + self.gui.text.glyphs[i].bearing[0],
                                 min[1] + height - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
                                 max[0] + advance + self.gui.text.glyphs[i].bearing[0],
                                 max[1] + height - (max[1] - min[1] - self.gui.text.glyphs[i].bearing[1]),
                             });
-                            ShaderProgram.setUniform(I32x2, self.gui.text.program.uniforms.vpsize, self.vpsize);
-                            ShaderProgram.setUniform(Color, self.gui.text.program.uniforms.color, self.gui.text.color);
+                            ShaderProgram.setUniform(self.gui.text.program.uniforms.vpsize, self.vpsize);
+                            ShaderProgram.setUniform(self.gui.text.program.uniforms.color, self.gui.text.color);
                             self.gui.rect.mesh.draw();
                             advance += self.gui.text.glyphs[i].advance;
                             continue :glyph;
@@ -433,12 +428,12 @@ pub const Renderer = struct {
             shape.Quad => {
                 self.shape.program.id.use();
                 const model = linmath.mul(linmath.Scale(obj.size), linmath.Pos(obj.pos));
-                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.model, model);
-                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.view, self.camera.view);
-                ShaderProgram.setUniform(Mat, self.shape.program.uniforms.proj, self.camera.proj);
-                ShaderProgram.setUniform(Vec3, self.shape.program.uniforms.light_direction, self.light.direction);
-                ShaderProgram.setUniform(f32, self.shape.program.uniforms.light_intensity, self.light.intensity);
-                ShaderProgram.setUniform(f32, self.shape.program.uniforms.light_ambient, self.light.ambient);
+                ShaderProgram.setUniform(self.shape.program.uniforms.model, model);
+                ShaderProgram.setUniform(self.shape.program.uniforms.view, self.camera.view);
+                ShaderProgram.setUniform(self.shape.program.uniforms.proj, self.camera.proj);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_direction, self.light.direction);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_intensity, self.light.intensity);
+                ShaderProgram.setUniform(self.shape.program.uniforms.light_ambient, self.light.ambient);
                 self.shape.quad.mesh.draw();
             },
             world.Chunk => {},
