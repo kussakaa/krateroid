@@ -25,9 +25,9 @@ pub const Renderer = struct {
     color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
     camera: Camera = .{},
     light: struct {
-        direction: Vec3 = .{ 0.2, 0.3, 1.0 },
-        intensity: f32 = 0.5,
-        ambient: f32 = 0.3,
+        direction: Vec3 = .{ 0.0, 0.0, 1.0 },
+        intensity: f32 = 0.3,
+        ambient: f32 = 0.4,
     },
     gui: struct {
         rect: struct {

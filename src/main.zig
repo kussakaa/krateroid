@@ -36,9 +36,10 @@ pub fn main() !void {
     defer renderer.destroy();
 
     renderer.vpsize = window.size;
+    renderer.light.direction = .{ 0.4, 0.7, 1.0 };
     renderer.camera.proj = linmath.Scale(.{
-        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.1,
-        0.1,
+        @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]) * 0.05,
+        0.05,
         -0.001,
     });
     renderer.camera.rot[0] = std.math.pi / 6.0;
@@ -79,8 +80,8 @@ pub fn main() !void {
 
     var control = Control{ .move = .{}, .rotate = .{} };
 
-    const camera_speed = 0.01;
-    const camera_rotate_speed = std.math.pi / 720.0;
+    const camera_speed = 10.0;
+    const camera_rotate_speed = std.math.pi;
 
     const chunk = world.Chunk.init();
 
@@ -95,7 +96,7 @@ pub fn main() !void {
 
     while (run) {
         const current_time = @intCast(i32, c.SDL_GetTicks());
-        const dt: f32 = @intToFloat(f32, current_time - last_time);
+        const dt: f32 = @intToFloat(f32, current_time - last_time) / 1000.0;
         last_time = current_time;
 
         while (true) {
@@ -189,6 +190,7 @@ pub fn main() !void {
         // 3D
 
         renderer.draw(chunk);
+        renderer.draw(shape.Quad{ .size = .{ 20.0, 20.0, 20.0 } });
 
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D
@@ -213,7 +215,7 @@ pub fn main() !void {
                 28,
             });
             renderer.draw(gui.Text{
-                .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid 0.0.3 alpha"),
+                .data = std.unicode.utf8ToUtf16LeStringLiteral("krateroid prototype 1"),
                 .pos = linmath.I32x2{ 2, 6 },
             });
 

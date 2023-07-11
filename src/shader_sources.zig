@@ -92,7 +92,7 @@ pub const shape_fragment =
     \\    vec3 color = vec3(1.0, 1.0, 1.0);
     \\    vec3 lightdir = normalize(light_direction);
     \\    float li = light_intensity;
-    \\    float la = 0.3;
+    \\    float la = light_ambient;
     \\    FragColor = vec4(color*(la+li*max(0.0, dot(normal, lightdir))), 1.0);
     \\}
 ;
