@@ -46,6 +46,7 @@ pub fn main() !void {
 
     var gui_main_menu = gui.Gui.init();
     defer gui_main_menu.destroy();
+    gui_main_menu.enable = false;
 
     try gui_main_menu.addButton(gui.Button.init(
         gui.Rect{ -90, 40, 90, 100 },
@@ -190,7 +191,6 @@ pub fn main() !void {
         // 3D
 
         renderer.draw(chunk);
-        renderer.draw(shape.Quad{ .size = .{ 20.0, 20.0, 20.0 } });
 
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D

@@ -101,22 +101,17 @@ pub const Alignment = enum {
 };
 
 pub const Gui = struct {
-    enable: bool,
-    vpsize: I32x2,
+    enable: bool = true,
+    vpsize: I32x2 = .{ 1200, 900 },
     mouse: struct {
-        click: bool,
-        pos: I32x2,
+        click: bool = false,
+        pos: I32x2 = I32x2{ 0, 0 },
     },
     buttons: std.ArrayList(Button),
 
     pub fn init() Gui {
         return Gui{
-            .enable = true,
-            .vpsize = I32x2{ 1200, 900 },
-            .mouse = .{
-                .click = false,
-                .pos = I32x2{ 0, 0 },
-            },
+            .mouse = .{},
             .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
         };
     }

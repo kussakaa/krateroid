@@ -331,6 +331,11 @@ pub const Renderer = struct {
         self.gui.text.program.id.destroy();
         self.shape.program.id.destroy();
         self.shape.quad.mesh.destroy();
+        for (self.world.chunk) |chunk| {
+            if (chunk != null) {
+                chunk.?.destroy();
+            }
+        }
     }
 
     pub fn draw(self: *Renderer, obj: anytype) void {
@@ -440,8 +445,6 @@ pub const Renderer = struct {
                 if (self.world.chunk[0] == null) {
                     const width = world.Chunk.width;
 
-                    var vertices = [1]f32{0.0} ** 100000;
-
                     var tricnt: usize = 0;
                     const vertsize: usize = 6;
 
@@ -451,67 +454,68 @@ pub const Renderer = struct {
                         while (y < width - 1) : (y += 1) {
                             var x: usize = 0;
                             while (x < width - 1) : (x += 1) {
-                                var index: usize = 0;
+                                var index: usize = 0b00000000;
 
-                                if (obj.data[(z + 0) * width * width + (y + 0) * width + (x + 0)] > 0) index |= 0b00001000;
-                                if (obj.data[(z + 0) * width * width + (y + 0) * width + (x + 1)] > 0) index |= 0b00000100;
-                                if (obj.data[(z + 0) * width * width + (y + 1) * width + (x + 1)] > 0) index |= 0b00000010;
-                                if (obj.data[(z + 0) * width * width + (y + 1) * width + (x + 0)] > 0) index |= 0b00000001;
-                                if (obj.data[(z + 1) * width * width + (y + 0) * width + (x + 0)] > 0) index |= 0b10000000;
-                                if (obj.data[(z + 1) * width * width + (y + 0) * width + (x + 1)] > 0) index |= 0b01000000;
-                                if (obj.data[(z + 1) * width * width + (y + 1) * width + (x + 1)] > 0) index |= 0b00100000;
-                                if (obj.data[(z + 1) * width * width + (y + 1) * width + (x + 0)] > 0) index |= 0b00010000;
+                                @setRuntimeSafety(false);
 
-                                if (index == 0) continue;
+                                index |= obj.data[(z + 0) * width * width + (y + 0) * width + (x + 0)] << 3;
+                                index |= obj.data[(z + 0) * width * width + (y + 0) * width + (x + 1)] << 2;
+                                index |= obj.data[(z + 0) * width * width + (y + 1) * width + (x + 1)] << 1;
+                                index |= obj.data[(z + 0) * width * width + (y + 1) * width + (x + 0)] << 0;
+                                index |= obj.data[(z + 1) * width * width + (y + 0) * width + (x + 0)] << 7;
+                                index |= obj.data[(z + 1) * width * width + (y + 0) * width + (x + 1)] << 6;
+                                index |= obj.data[(z + 1) * width * width + (y + 1) * width + (x + 1)] << 5;
+                                index |= obj.data[(z + 1) * width * width + (y + 1) * width + (x + 0)] << 4;
+
+                                if (index == 0 or index == 255) continue;
 
                                 var i: usize = 0;
-                                while (mct.tri[index][i] >= 0) : (i += 3) {
+                                while (mct.tri[index][i] < 12) : (i += 3) {
                                     const p1 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][0],
-                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][1],
-                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 0])][2],
+                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 0]][0],
+                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 0]][1],
+                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 0]][2],
                                     };
 
                                     const p2 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][0],
-                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][1],
-                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 1])][2],
+                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 1]][0],
+                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 1]][1],
+                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 1]][2],
                                     };
 
                                     const p3 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][0],
-                                        @intToFloat(f32, y) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][1],
-                                        @intToFloat(f32, z) + mct.edge[@intCast(usize, mct.tri[index][i + 2])][2],
+                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 2]][0],
+                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 2]][1],
+                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 2]][2],
                                     };
 
                                     const n = linmath.cross((p2 - p1), (p3 - p1));
 
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 0] = p1[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 1] = p1[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 2] = p1[2];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 0] = p2[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 1] = p2[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 2] = p2[2];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 0] = p3[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 1] = p3[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 2] = p3[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 0] = p1[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 1] = p1[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 2] = p1[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 0] = p2[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 1] = p2[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 2] = p2[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 0] = p3[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 1] = p3[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 2] = p3[2];
 
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 3] = n[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 4] = n[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 0 + 5] = n[2];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 3] = n[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 4] = n[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 1 + 5] = n[2];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 3] = n[0];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 4] = n[1];
-                                    vertices[tricnt * 3 * vertsize + vertsize * 2 + 5] = n[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 3] = n[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 4] = n[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 5] = n[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 3] = n[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 4] = n[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 5] = n[2];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 3] = n[0];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 4] = n[1];
+                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 5] = n[2];
                                     tricnt += 1;
                                 }
                             }
                         }
                     }
-                    std.debug.print("{}", .{tricnt * 3 * vertsize});
-                    self.world.chunk[0] = Mesh.init(vertices[0..(tricnt * 3 * vertsize)], &[_]u32{ 3, 3 });
+                    self.world.chunk[0] = Mesh.init(chunk_vertices[0..(tricnt * 3 * vertsize)], &[_]u32{ 3, 3 });
                 }
                 self.shape.program.id.use();
                 ShaderProgram.setUniform(self.shape.program.uniforms.model, MatIdentity);
@@ -526,3 +530,5 @@ pub const Renderer = struct {
         }
     }
 };
+
+var chunk_vertices = [1]f32{0.0} ** 4194304;

@@ -49,7 +49,7 @@ pub const Window = struct {
             panic("[!FAILED!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
         }
 
-        _ = c.SDL_GL_SetSwapInterval(1);
+        _ = c.SDL_GL_SetSwapInterval(0);
 
         c.glViewport(0, 0, width, height);
 
