@@ -81,10 +81,14 @@ pub fn main() !void {
 
     var control = Control{ .move = .{}, .rotate = .{} };
 
-    const camera_speed = 10.0;
+    const camera_speed = 20.0;
     const camera_rotate_speed = std.math.pi;
 
-    const chunk = world.Chunk.init();
+    var main_world = world.World.init(0);
+    try main_world.add_chunk(.{ 0, 0 });
+    try main_world.add_chunk(.{ -1, 0 });
+    try main_world.add_chunk(.{ -1, -1 });
+    try main_world.add_chunk(.{ 0, -1 });
 
     var is_show_f3 = false;
 
@@ -99,6 +103,12 @@ pub fn main() !void {
         const current_time = @intCast(i32, c.SDL_GetTicks());
         const dt: f32 = @intToFloat(f32, current_time - last_time) / 1000.0;
         last_time = current_time;
+
+        if (@divTrunc(c.SDL_GetTicks(), 1000) > seconds) {
+            seconds = @divTrunc(c.SDL_GetTicks(), 1000);
+            fps = frame;
+            frame = 0;
+        }
 
         while (true) {
             const event = sdl.pollEvent();
@@ -176,9 +186,9 @@ pub fn main() !void {
             renderer.camera.pos[0] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
             renderer.camera.pos[1] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
         }
-        if (control.rotate.up) renderer.camera.rot[0] += camera_rotate_speed * dt;
+        if (control.rotate.up) renderer.camera.rot[0] -= camera_rotate_speed * dt;
         if (control.rotate.right) renderer.camera.rot[2] += camera_rotate_speed * dt;
-        if (control.rotate.down) renderer.camera.rot[0] -= camera_rotate_speed * dt;
+        if (control.rotate.down) renderer.camera.rot[0] += camera_rotate_speed * dt;
         if (control.rotate.left) renderer.camera.rot[2] -= camera_rotate_speed * dt;
         renderer.camera.view = linmath.MatIdentity;
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Pos(-renderer.camera.pos));
@@ -190,7 +200,10 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.draw(chunk);
+        renderer.draw(main_world.chunks.items[0]);
+        renderer.draw(main_world.chunks.items[1]);
+        renderer.draw(main_world.chunks.items[2]);
+        renderer.draw(main_world.chunks.items[3]);
 
         c.glDisable(c.GL_DEPTH_TEST);
         // 2D
@@ -199,12 +212,6 @@ pub fn main() !void {
         if (gui_main_menu.enable) renderer.draw(gui_main_menu);
 
         if (is_show_f3) {
-            if (@divTrunc(c.SDL_GetTicks(), 1000) > seconds) {
-                seconds = @divTrunc(c.SDL_GetTicks(), 1000);
-                fps = frame;
-                frame = 0;
-            }
-
             renderer.gui.rect.color = .{ 0.0, 0.0, 0.0, 0.5 };
             renderer.gui.rect.border.width = 0;
             renderer.gui.rect.alignment = gui.Alignment.left_bottom;

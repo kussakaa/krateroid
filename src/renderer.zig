@@ -80,7 +80,7 @@ pub const Renderer = struct {
         },
     },
     world: struct {
-        chunk: [16]?Mesh = [1]?Mesh{null} ** 16,
+        chunks: [16]?RendererChunk = [1]?RendererChunk{null} ** 16,
     },
 
     const Glyph = struct {
@@ -90,11 +90,19 @@ pub const Renderer = struct {
         bearing: I32x2,
     };
 
+    const RendererChunk = struct {
+        pos: I32x2,
+        edit: u32,
+        mesh: Mesh,
+    };
+
+    // Инициализация машины состояний отрисовщика
+    // ==========================================
+
     pub fn init() !Renderer {
 
-        //=============
         // GUI RECT
-        //=============
+        //=========
 
         const gui_rect_vertex = try Shader.init(
             std.heap.page_allocator,
@@ -125,9 +133,8 @@ pub const Renderer = struct {
         };
         const gui_rect_mesh = Mesh.init(gui_rect_mesh_vertices[0..], &[_]u32{ 2, 2 });
 
-        //=============
         // GUI TEXT
-        //=============
+        //=========
 
         const gui_text_vertex = try Shader.init(
             std.heap.page_allocator,
@@ -205,9 +212,8 @@ pub const Renderer = struct {
         _ = c.FT_Done_Face(face);
         _ = c.FT_Done_FreeType(ft);
 
-        //=================
         // SHAPE QUAD
-        //=================
+        //===========
 
         const shape_vertex = try Shader.init(
             std.heap.page_allocator,
@@ -325,19 +331,23 @@ pub const Renderer = struct {
         };
     }
 
+    // Уничтожение машины состояний отрисовщика
+    // ========================================
     pub fn destroy(self: Renderer) void {
         self.gui.rect.program.id.destroy();
         self.gui.rect.mesh.destroy();
         self.gui.text.program.id.destroy();
         self.shape.program.id.destroy();
         self.shape.quad.mesh.destroy();
-        for (self.world.chunk) |chunk| {
+        for (self.world.chunks) |chunk| {
             if (chunk != null) {
-                chunk.?.destroy();
+                chunk.?.mesh.destroy();
             }
         }
     }
 
+    // Рисование объекта
+    // ========================================
     pub fn draw(self: *Renderer, obj: anytype) void {
         switch (@TypeOf(obj)) {
             gui.Rect => {
@@ -442,91 +452,136 @@ pub const Renderer = struct {
                 self.shape.quad.mesh.draw();
             },
             world.Chunk => {
-                if (self.world.chunk[0] == null) {
-                    const width = world.Chunk.width;
+                var chunk_id: usize = 0;
+                while (chunk_id < self.world.chunks.len) : (chunk_id += 1) {
+                    if (self.world.chunks[chunk_id] == null) continue;
+                    if (obj.pos[0] == self.world.chunks[chunk_id].?.pos[0] and
+                        obj.pos[1] == self.world.chunks[chunk_id].?.pos[1] and
+                        obj.edit == self.world.chunks[chunk_id].?.edit)
+                    {
+                        self.shape.program.id.use();
+                        ShaderProgram.setUniform(self.shape.program.uniforms.model, MatIdentity);
+                        ShaderProgram.setUniform(self.shape.program.uniforms.view, self.camera.view);
+                        ShaderProgram.setUniform(self.shape.program.uniforms.proj, self.camera.proj);
+                        ShaderProgram.setUniform(self.shape.program.uniforms.light_direction, self.light.direction);
+                        ShaderProgram.setUniform(self.shape.program.uniforms.light_intensity, self.light.intensity);
+                        ShaderProgram.setUniform(self.shape.program.uniforms.light_ambient, self.light.ambient);
+                        self.world.chunks[chunk_id].?.mesh.draw();
+                        return;
+                    }
+                }
+                self.render(obj);
+                self.draw(obj);
+            },
+            else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw type: {}", .{@TypeOf(obj)}),
+        }
+    }
 
-                    var tricnt: usize = 0;
-                    const vertsize: usize = 6;
+    // Преотрисовка объекта
+    // ========================================
+    fn render(self: *Renderer, obj: anytype) void {
+        switch (@TypeOf(obj)) {
+            world.Chunk => {
+                var chunk_id: usize = 0;
+                while (chunk_id < self.world.chunks.len) : (chunk_id += 1) {
+                    if (self.world.chunks[chunk_id] == null) continue;
+                    if (obj.pos[0] == self.world.chunks[chunk_id].?.pos[0] and
+                        obj.pos[1] == self.world.chunks[chunk_id].?.pos[1])
+                    {
+                        if (obj.edit == self.world.chunks[chunk_id].?.edit) return;
+                        break;
+                    }
+                }
 
-                    var z: usize = 0;
-                    while (z < width - 1) : (z += 1) {
-                        var y: usize = 0;
-                        while (y < width - 1) : (y += 1) {
-                            var x: usize = 0;
-                            while (x < width - 1) : (x += 1) {
-                                var index: usize = 0b00000000;
+                if (chunk_id == self.world.chunks.len) {
+                    chunk_id = 0;
+                    while (chunk_id < self.world.chunks.len) : (chunk_id += 1) {
+                        if (self.world.chunks[chunk_id] == null) {
+                            break;
+                        }
+                    }
+                }
 
-                                @setRuntimeSafety(false);
+                const width = world.Chunk.width;
 
-                                index |= obj.data[(z + 0) * width * width + (y + 0) * width + (x + 0)] << 3;
-                                index |= obj.data[(z + 0) * width * width + (y + 0) * width + (x + 1)] << 2;
-                                index |= obj.data[(z + 0) * width * width + (y + 1) * width + (x + 1)] << 1;
-                                index |= obj.data[(z + 0) * width * width + (y + 1) * width + (x + 0)] << 0;
-                                index |= obj.data[(z + 1) * width * width + (y + 0) * width + (x + 0)] << 7;
-                                index |= obj.data[(z + 1) * width * width + (y + 0) * width + (x + 1)] << 6;
-                                index |= obj.data[(z + 1) * width * width + (y + 1) * width + (x + 1)] << 5;
-                                index |= obj.data[(z + 1) * width * width + (y + 1) * width + (x + 0)] << 4;
+                var tricnt: usize = 0;
+                const vertsize: usize = 6;
 
-                                if (index == 0 or index == 255) continue;
+                var z: usize = 0;
+                while (z < width - 1) : (z += 1) {
+                    var y: usize = 0;
+                    while (y < width - 1) : (y += 1) {
+                        var x: usize = 0;
+                        while (x < width - 1) : (x += 1) {
+                            var index: usize = 0;
 
-                                var i: usize = 0;
-                                while (mct.tri[index][i] < 12) : (i += 3) {
-                                    const p1 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 0]][0],
-                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 0]][1],
-                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 0]][2],
-                                    };
+                            @setRuntimeSafety(false);
 
-                                    const p2 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 1]][0],
-                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 1]][1],
-                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 1]][2],
-                                    };
+                            index |= obj.blocks[(z + 0) * width * width + (y + 0) * width + (x + 0)] << 3;
+                            index |= obj.blocks[(z + 0) * width * width + (y + 0) * width + (x + 1)] << 2;
+                            index |= obj.blocks[(z + 0) * width * width + (y + 1) * width + (x + 1)] << 1;
+                            index |= obj.blocks[(z + 0) * width * width + (y + 1) * width + (x + 0)] << 0;
+                            index |= obj.blocks[(z + 1) * width * width + (y + 0) * width + (x + 0)] << 7;
+                            index |= obj.blocks[(z + 1) * width * width + (y + 0) * width + (x + 1)] << 6;
+                            index |= obj.blocks[(z + 1) * width * width + (y + 1) * width + (x + 1)] << 5;
+                            index |= obj.blocks[(z + 1) * width * width + (y + 1) * width + (x + 0)] << 4;
 
-                                    const p3 = Vec3{
-                                        @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 2]][0],
-                                        @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 2]][1],
-                                        @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 2]][2],
-                                    };
+                            if (index == 0 or index == 255) continue;
 
-                                    const n = linmath.cross((p2 - p1), (p3 - p1));
+                            var i: usize = 0;
+                            while (mct.tri[index][i] < 12) : (i += 3) {
+                                const p1 = Vec3{
+                                    @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 0]][0] + @intToFloat(f32, obj.pos[0] * width),
+                                    @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 0]][1] + @intToFloat(f32, obj.pos[1] * width),
+                                    @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 0]][2],
+                                };
 
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 0] = p1[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 1] = p1[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 2] = p1[2];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 0] = p2[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 1] = p2[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 2] = p2[2];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 0] = p3[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 1] = p3[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 2] = p3[2];
+                                const p2 = Vec3{
+                                    @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 1]][0] + @intToFloat(f32, obj.pos[0] * width),
+                                    @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 1]][1] + @intToFloat(f32, obj.pos[1] * width),
+                                    @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 1]][2],
+                                };
 
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 3] = n[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 4] = n[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 5] = n[2];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 3] = n[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 4] = n[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 5] = n[2];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 3] = n[0];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 4] = n[1];
-                                    chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 5] = n[2];
-                                    tricnt += 1;
-                                }
+                                const p3 = Vec3{
+                                    @intToFloat(f32, x) + mct.edge[mct.tri[index][i + 2]][0] + @intToFloat(f32, obj.pos[0] * width),
+                                    @intToFloat(f32, y) + mct.edge[mct.tri[index][i + 2]][1] + @intToFloat(f32, obj.pos[1] * width),
+                                    @intToFloat(f32, z) + mct.edge[mct.tri[index][i + 2]][2],
+                                };
+
+                                const n = linmath.cross((p2 - p1), (p3 - p1));
+
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 0] = p1[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 1] = p1[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 2] = p1[2];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 0] = p2[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 1] = p2[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 2] = p2[2];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 0] = p3[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 1] = p3[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 2] = p3[2];
+
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 3] = n[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 4] = n[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 0 + 5] = n[2];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 3] = n[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 4] = n[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 1 + 5] = n[2];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 3] = n[0];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 4] = n[1];
+                                chunk_vertices[tricnt * 3 * vertsize + vertsize * 2 + 5] = n[2];
+                                tricnt += 1;
                             }
                         }
                     }
-                    self.world.chunk[0] = Mesh.init(chunk_vertices[0..(tricnt * 3 * vertsize)], &[_]u32{ 3, 3 });
                 }
-                self.shape.program.id.use();
-                ShaderProgram.setUniform(self.shape.program.uniforms.model, MatIdentity);
-                ShaderProgram.setUniform(self.shape.program.uniforms.view, self.camera.view);
-                ShaderProgram.setUniform(self.shape.program.uniforms.proj, self.camera.proj);
-                ShaderProgram.setUniform(self.shape.program.uniforms.light_direction, self.light.direction);
-                ShaderProgram.setUniform(self.shape.program.uniforms.light_intensity, self.light.intensity);
-                ShaderProgram.setUniform(self.shape.program.uniforms.light_ambient, self.light.ambient);
-                self.world.chunk[0].?.draw();
+
+                self.world.chunks[chunk_id] = .{
+                    .pos = obj.pos,
+                    .edit = obj.edit,
+                    .mesh = Mesh.init(chunk_vertices[0..(tricnt * 3 * vertsize)], &[_]u32{ 3, 3 }),
+                };
             },
-            else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to draw an object of this type!"),
+            else => std.debug.panic("[!FAILED!]:[RENDERER]:Impossible to render type: {}", .{@TypeOf(obj)}),
         }
     }
 };
