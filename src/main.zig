@@ -70,19 +70,24 @@ pub fn main() !void {
             left: bool = false,
             down: bool = false,
             right: bool = false,
-        },
+        } = .{},
         rotate: struct {
             up: bool = false,
             left: bool = false,
             down: bool = false,
             right: bool = false,
-        },
+        } = .{},
+        zoom: struct {
+            plus: bool = false,
+            minus: bool = false,
+        } = .{},
     };
 
-    var control = Control{ .move = .{}, .rotate = .{} };
+    var control = Control{};
 
-    const camera_speed = 20.0;
+    const camera_move_speed = 30.0;
     const camera_rotate_speed = std.math.pi;
+    const camera_zoom_speed = 0.0007;
 
     var main_world = world.World.init(0);
     try main_world.add_chunk(.{ 0, 0 });
@@ -127,6 +132,8 @@ pub fn main() !void {
                         c.SDLK_LEFT => control.rotate.left = true,
                         c.SDLK_DOWN => control.rotate.down = true,
                         c.SDLK_RIGHT => control.rotate.right = true,
+                        c.SDLK_e => control.zoom.plus = true,
+                        c.SDLK_q => control.zoom.minus = true,
                         else => {},
                     }
                 },
@@ -140,6 +147,8 @@ pub fn main() !void {
                         c.SDLK_LEFT => control.rotate.left = false,
                         c.SDLK_DOWN => control.rotate.down = false,
                         c.SDLK_RIGHT => control.rotate.right = false,
+                        c.SDLK_e => control.zoom.plus = false,
+                        c.SDLK_q => control.zoom.minus = false,
                         else => {},
                     }
                 },
@@ -171,28 +180,39 @@ pub fn main() !void {
         renderer.vpsize = vpsize;
 
         if (control.move.up) {
-            renderer.camera.pos[0] -= @sin(renderer.camera.rot[2]) * camera_speed * dt;
-            renderer.camera.pos[1] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[0] -= @sin(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[0] * dt;
+            renderer.camera.pos[1] += @cos(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[1] * dt;
         }
         if (control.move.left) {
-            renderer.camera.pos[0] -= @cos(renderer.camera.rot[2]) * camera_speed * dt;
-            renderer.camera.pos[1] -= @sin(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[0] -= @cos(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[0] * dt;
+            renderer.camera.pos[1] -= @sin(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[1] * dt;
         }
         if (control.move.down) {
-            renderer.camera.pos[0] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
-            renderer.camera.pos[1] -= @cos(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[0] += @sin(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[0] * dt;
+            renderer.camera.pos[1] -= @cos(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[1] * dt;
         }
         if (control.move.right) {
-            renderer.camera.pos[0] += @cos(renderer.camera.rot[2]) * camera_speed * dt;
-            renderer.camera.pos[1] += @sin(renderer.camera.rot[2]) * camera_speed * dt;
+            renderer.camera.pos[0] += @cos(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[1] * dt;
+            renderer.camera.pos[1] += @sin(renderer.camera.rot[2]) * camera_move_speed / renderer.camera.scale[1] * dt;
         }
         if (control.rotate.up) renderer.camera.rot[0] -= camera_rotate_speed * dt;
         if (control.rotate.right) renderer.camera.rot[2] += camera_rotate_speed * dt;
         if (control.rotate.down) renderer.camera.rot[0] += camera_rotate_speed * dt;
         if (control.rotate.left) renderer.camera.rot[2] -= camera_rotate_speed * dt;
+
+        if (control.zoom.plus) {
+            renderer.camera.scale[0] *= 1.0 + camera_zoom_speed;
+            renderer.camera.scale[1] *= 1.0 + camera_zoom_speed;
+        }
+        if (control.zoom.minus) {
+            renderer.camera.scale[0] *= 1.0 - camera_zoom_speed;
+            renderer.camera.scale[1] *= 1.0 - camera_zoom_speed;
+        }
+
         renderer.camera.view = linmath.MatIdentity;
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Pos(-renderer.camera.pos));
         renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Rot(renderer.camera.rot));
+        renderer.camera.view = linmath.mul(renderer.camera.view, linmath.Scale(renderer.camera.scale));
 
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);

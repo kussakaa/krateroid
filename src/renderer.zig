@@ -28,7 +28,7 @@ pub const Renderer = struct {
         direction: Vec3 = .{ 0.0, 0.0, 1.0 },
         intensity: f32 = 0.3,
         ambient: f32 = 0.4,
-    },
+    } = .{},
     gui: struct {
         rect: struct {
             color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
@@ -36,7 +36,7 @@ pub const Renderer = struct {
             border: struct {
                 width: i32 = 1,
                 color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
-            },
+            } = .{},
             program: struct {
                 id: ShaderProgram,
                 uniforms: struct {
@@ -80,8 +80,8 @@ pub const Renderer = struct {
         },
     },
     world: struct {
-        chunks: [16]?RendererChunk = [1]?RendererChunk{null} ** 16,
-    },
+        chunks: [64]?RendererChunk = [1]?RendererChunk{null} ** 64,
+    } = .{},
 
     const Glyph = struct {
         texture: u32,
@@ -282,10 +282,8 @@ pub const Renderer = struct {
         const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &[_]u32{ 3, 3 });
 
         return Renderer{
-            .light = .{},
             .gui = .{
                 .rect = .{
-                    .border = .{},
                     .program = .{
                         .id = gui_rect_program,
                         .uniforms = .{
@@ -327,7 +325,6 @@ pub const Renderer = struct {
                     .mesh = shape_quad_mesh,
                 },
             },
-            .world = .{},
         };
     }
 
