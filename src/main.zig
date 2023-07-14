@@ -42,7 +42,7 @@ pub fn main() !void {
         0.05,
         -0.001,
     });
-    renderer.camera.rot[0] = std.math.pi / 6.0;
+    renderer.camera.rot[0] = -std.math.pi / 6.0;
 
     var gui_main_menu = gui.Gui.init();
     defer gui_main_menu.destroy();
@@ -87,7 +87,7 @@ pub fn main() !void {
 
     const camera_move_speed = 30.0;
     const camera_rotate_speed = std.math.pi;
-    const camera_zoom_speed = 0.0007;
+    const camera_zoom_speed = 3.0;
 
     var main_world = world.World.init(0);
     try main_world.add_chunk(.{ 0, 0 });
@@ -201,12 +201,12 @@ pub fn main() !void {
         if (control.rotate.left) renderer.camera.rot[2] -= camera_rotate_speed * dt;
 
         if (control.zoom.plus) {
-            renderer.camera.scale[0] *= 1.0 + camera_zoom_speed;
-            renderer.camera.scale[1] *= 1.0 + camera_zoom_speed;
+            renderer.camera.scale[0] *= 1.0 + camera_zoom_speed * dt;
+            renderer.camera.scale[1] *= 1.0 + camera_zoom_speed * dt;
         }
         if (control.zoom.minus) {
-            renderer.camera.scale[0] *= 1.0 - camera_zoom_speed;
-            renderer.camera.scale[1] *= 1.0 - camera_zoom_speed;
+            renderer.camera.scale[0] *= 1.0 - camera_zoom_speed * dt;
+            renderer.camera.scale[1] *= 1.0 - camera_zoom_speed * dt;
         }
 
         renderer.camera.view = linmath.MatIdentity;
