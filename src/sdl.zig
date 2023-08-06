@@ -13,7 +13,7 @@ pub fn init() !void {
     }
 }
 
-pub fn destroy() void {
+pub fn deinit() void {
     c.SDL_Quit();
     print("[*SUCCES*]:[SDL2]:Destroyed\n", .{});
 }
@@ -62,7 +62,7 @@ pub const Window = struct {
         c.SDL_GL_SwapWindow(self.handle);
     }
 
-    pub fn destroy(self: Window) void {
+    pub fn deinit(self: Window) void {
         print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Destroyed\n", .{self.title});
         c.SDL_DestroyWindow(self.handle);
         c.SDL_GL_DeleteContext(self.context);

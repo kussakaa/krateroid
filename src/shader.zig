@@ -32,6 +32,7 @@ pub const Shader = struct {
             var info_log_len: i32 = 0;
             c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            defer allocator.fere(info_log);
             c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
             panic("\n[!FAILED!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
         }
@@ -42,7 +43,7 @@ pub const Shader = struct {
         };
     }
 
-    pub fn destroy(self: Shader) void {
+    pub fn deinit(self: Shader) void {
         c.glDeleteShader(self.id);
         print("[*SUCCES*]:[SHADER]:[ID:{}]:Destroyed\n", .{self.id});
     }
@@ -68,6 +69,7 @@ pub const ShaderProgram = struct {
             var info_log_len: i32 = 0;
             c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            defer allocator.free(info_log);
             c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
             panic("[!FAILED!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
         }
@@ -130,7 +132,7 @@ pub const ShaderProgram = struct {
     }
 
     // уничтожение шейдерной программы
-    pub fn destroy(self: ShaderProgram) void {
+    pub fn deinit(self: ShaderProgram) void {
         c.glDeleteProgram(self.id);
         print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Destroyed\n", .{self.id});
     }

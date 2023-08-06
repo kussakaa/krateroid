@@ -5,6 +5,7 @@ const gui = @import("gui.zig");
 const shape = @import("shape.zig");
 const world = @import("world.zig");
 const mct = @import("mct.zig");
+const Allocator = std.mem.Allocator;
 const Shader = @import("shader.zig").Shader;
 const ShaderType = @import("shader.zig").ShaderType;
 const ShaderProgram = @import("shader.zig").ShaderProgram;
@@ -22,6 +23,7 @@ const Mat = linmath.Mat;
 const MatIdentity = linmath.MatIdentity;
 
 pub const Renderer = struct {
+    allocator: Allocator,
     vpsize: I32x2 = .{ 800, 600 },
     camera: Camera = .{},
     light: struct {
@@ -110,27 +112,19 @@ pub const Renderer = struct {
     // Инициализация машины состояний отрисовщика
     // ==========================================
 
-    pub fn init() !Renderer {
+    pub fn init(allocator: Allocator) !Renderer {
 
         // GUI RECT
         //=========
 
-        const gui_rect_vertex = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.rect_vertex,
-            ShaderType.vertex,
-        );
-        defer gui_rect_vertex.destroy();
+        const gui_rect_vertex = try Shader.init(allocator, shader_sources.rect_vertex, ShaderType.vertex);
+        defer gui_rect_vertex.deinit();
 
-        const gui_rect_fragment = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.rect_fragment,
-            ShaderType.fragment,
-        );
-        defer gui_rect_fragment.destroy();
+        const gui_rect_fragment = try Shader.init(allocator, shader_sources.rect_fragment, ShaderType.fragment);
+        defer gui_rect_fragment.deinit();
 
         const gui_rect_program = try ShaderProgram.init(
-            std.heap.page_allocator,
+            allocator,
             &.{ gui_rect_vertex, gui_rect_fragment },
         );
 
@@ -147,24 +141,13 @@ pub const Renderer = struct {
         // GUI TEXT
         //=========
 
-        const gui_text_vertex = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.text_vertex,
-            ShaderType.vertex,
-        );
-        defer gui_text_vertex.destroy();
+        const gui_text_vertex = try Shader.init(allocator, shader_sources.text_vertex, ShaderType.vertex);
+        defer gui_text_vertex.deinit();
 
-        const gui_text_fragment = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.text_fragment,
-            ShaderType.fragment,
-        );
-        defer gui_text_fragment.destroy();
+        const gui_text_fragment = try Shader.init(allocator, shader_sources.text_fragment, ShaderType.fragment);
+        defer gui_text_fragment.deinit();
 
-        const gui_text_program = try ShaderProgram.init(
-            std.heap.page_allocator,
-            &[_]Shader{ gui_text_vertex, gui_text_fragment },
-        );
+        const gui_text_program = try ShaderProgram.init(allocator, &[_]Shader{ gui_text_vertex, gui_text_fragment });
 
         var ft: c.FT_Library = undefined;
         if (c.FT_Init_FreeType(&ft) != 0) {
@@ -226,24 +209,13 @@ pub const Renderer = struct {
         // SHAPE QUAD
         //===========
 
-        const shape_vertex = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.shape_vertex,
-            ShaderType.vertex,
-        );
-        defer shape_vertex.destroy();
+        const shape_vertex = try Shader.init(allocator, shader_sources.shape_vertex, ShaderType.vertex);
+        defer shape_vertex.deinit();
 
-        const shape_fragment = try Shader.init(
-            std.heap.page_allocator,
-            shader_sources.shape_fragment,
-            ShaderType.fragment,
-        );
-        defer shape_fragment.destroy();
+        const shape_fragment = try Shader.init(allocator, shader_sources.shape_fragment, ShaderType.fragment);
+        defer shape_fragment.deinit();
 
-        const shape_program = try ShaderProgram.init(
-            std.heap.page_allocator,
-            &[_]Shader{ shape_vertex, shape_fragment },
-        );
+        const shape_program = try ShaderProgram.init(allocator, &[_]Shader{ shape_vertex, shape_fragment });
 
         const shape_line_mesh_vertices = [_]f32{
             0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -301,6 +273,7 @@ pub const Renderer = struct {
         const shape_quad_mesh = Mesh.init(shape_quad_mesh_vertices[0..], &.{ 3, 3 });
 
         return Renderer{
+            .allocator = allocator,
             .gui = .{
                 .rect = .{
                     .program = .{
@@ -357,16 +330,16 @@ pub const Renderer = struct {
 
     // Уничтожение машины состояний отрисовщика
     // ========================================
-    pub fn destroy(self: Renderer) void {
-        self.gui.rect.program.id.destroy();
-        self.gui.rect.mesh.destroy();
-        self.gui.text.program.id.destroy();
-        self.shape.program.id.destroy();
-        self.shape.line.mesh.destroy();
-        self.shape.quad.mesh.destroy();
+    pub fn deinit(self: Renderer) void {
+        self.gui.rect.program.id.deinit();
+        self.gui.rect.mesh.deinit();
+        self.gui.text.program.id.deinit();
+        self.shape.program.id.deinit();
+        self.shape.line.mesh.deinit();
+        self.shape.quad.mesh.deinit();
         for (self.world.chunks) |chunk| {
             if (chunk != null) {
-                chunk.?.mesh.destroy();
+                chunk.?.mesh.deinit();
             }
         }
     }
@@ -546,7 +519,7 @@ pub const Renderer = struct {
                         if (obj.edit == self.world.chunks[chunk_id].?.edit) {
                             return;
                         } else {
-                            self.world.chunks[chunk_id].?.mesh.destroy();
+                            self.world.chunks[chunk_id].?.mesh.deinit();
                         }
                         break;
                     }

@@ -1,4 +1,6 @@
 const std = @import("std");
+const Allocator = std.mem.Allocator;
+
 const Event = @import("events.zig").Event;
 
 pub const I32x2 = @import("linmath.zig").I32x2;
@@ -109,10 +111,10 @@ pub const Gui = struct {
     },
     buttons: std.ArrayList(Button),
 
-    pub fn init() Gui {
+    pub fn init(allocator: Allocator) Gui {
         return Gui{
             .mouse = .{},
-            .buttons = std.ArrayList(Button).init(std.heap.page_allocator),
+            .buttons = std.ArrayList(Button).init(allocator),
         };
     }
 
@@ -166,7 +168,7 @@ pub const Gui = struct {
         return GuiEvent.none;
     }
 
-    pub fn destroy(self: Gui) void {
+    pub fn deinit(self: Gui) void {
         _ = self;
     }
 };

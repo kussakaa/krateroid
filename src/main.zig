@@ -18,10 +18,10 @@ const WINDOW_HEIGHT = 900;
 
 pub fn main() !void {
     try sdl.init();
-    defer sdl.destroy();
+    defer sdl.deinit();
 
     var window = try sdl.Window.init("krateroid", WINDOW_WIDTH, WINDOW_HEIGHT);
-    defer window.destroy();
+    defer window.deinit();
 
     c.glEnable(c.GL_DEPTH_TEST);
     c.glEnable(c.GL_CULL_FACE);
@@ -35,8 +35,8 @@ pub fn main() !void {
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     c.glClearColor(0.0, 0.0, 0.0, 1.0);
 
-    var renderer = try Renderer.init();
-    defer renderer.destroy();
+    var renderer = try Renderer.init(std.heap.page_allocator);
+    defer renderer.deinit();
 
     renderer.vpsize = window.size;
     renderer.light.direction = .{ -1.0, 0.0, 1.0 };
@@ -51,8 +51,8 @@ pub fn main() !void {
     });
     window.swap();
 
-    var gui_main_menu = gui.Gui.init();
-    defer gui_main_menu.destroy();
+    var gui_main_menu = gui.Gui.init(std.heap.page_allocator);
+    defer gui_main_menu.deinit();
     gui_main_menu.enable = false;
 
     try gui_main_menu.addButton(gui.Button.init(

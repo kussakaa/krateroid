@@ -58,7 +58,7 @@ pub const Mesh = struct {
         };
     }
 
-    pub fn destroy(self: Mesh) void {
+    pub fn deinit(self: Mesh) void {
         c.glDeleteVertexArrays(1, &self.vao);
         c.glDeleteBuffers(1, &self.vbo);
         print("[*SUCCES*]:[MESH]:[Vertices:{}|VBO:{}|VAO:{}]:Destroyed\n", .{ self.len, self.vbo, self.vao });
