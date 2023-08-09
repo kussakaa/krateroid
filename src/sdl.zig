@@ -2,6 +2,7 @@ const c = @import("c.zig");
 const std = @import("std");
 const print = std.debug.print;
 const panic = std.debug.panic;
+const log_enable = @import("log.zig").sdl_log_enable;
 const I32x2 = @import("linmath.zig").I32x2;
 const Event = @import("events.zig").Event;
 
@@ -9,13 +10,13 @@ pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_EVERYTHING) < 0) {
         panic("[!FAILED!]:[SDL2]:Initiased! {s}\n", .{c.SDL_GetError()});
     } else {
-        print("[*SUCCES*]:[SDL2]:Initialised\n", .{});
+        if (log_enable) print("[*SUCCES*]:[SDL2]:Initialised\n", .{});
     }
 }
 
 pub fn deinit() void {
     c.SDL_Quit();
-    print("[*SUCCES*]:[SDL2]:Destroyed\n", .{});
+    if (log_enable) print("[*SUCCES*]:[SDL2]:Destroyed\n", .{});
 }
 
 pub const Window = struct {
@@ -54,7 +55,7 @@ pub const Window = struct {
 
         c.glViewport(0, 0, width, height);
 
-        print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Initialised\n", .{title});
+        if (log_enable) print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Initialised\n", .{title});
         return Window{ .handle = handle, .context = context, .title = title, .size = I32x2{ width, height } };
     }
 
@@ -63,7 +64,7 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: Window) void {
-        print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Destroyed\n", .{self.title});
+        if (log_enable) print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Destroyed\n", .{self.title});
         c.SDL_DestroyWindow(self.handle);
         c.SDL_GL_DeleteContext(self.context);
     }

@@ -5,6 +5,7 @@ const std = @import("std");
 const print = std.debug.print;
 const panic = std.debug.panic;
 const Allocator = std.mem.Allocator;
+const log_enable = @import("log.zig").shader_log_enable;
 
 pub const ShaderType = enum {
     vertex,
@@ -37,7 +38,7 @@ pub const Shader = struct {
             panic("\n[!FAILED!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
         }
 
-        print("[*SUCCES*]:[SHADER]:[ID:{}]:Compiling\n", .{shader});
+        if (log_enable) print("[*SUCCES*]:[SHADER]:[ID:{}]:Compiling\n", .{shader});
         return Shader{
             .id = shader,
         };
@@ -45,7 +46,7 @@ pub const Shader = struct {
 
     pub fn deinit(self: Shader) void {
         c.glDeleteShader(self.id);
-        print("[*SUCCES*]:[SHADER]:[ID:{}]:Destroyed\n", .{self.id});
+        if (log_enable) print("[*SUCCES*]:[SHADER]:[ID:{}]:Destroyed\n", .{self.id});
     }
 };
 
@@ -74,7 +75,7 @@ pub const ShaderProgram = struct {
             panic("[!FAILED!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
         }
 
-        print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Linking\n", .{program});
+        if (log_enable) print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Linking\n", .{program});
         return ShaderProgram{ .id = program };
     }
 
@@ -134,6 +135,6 @@ pub const ShaderProgram = struct {
     // уничтожение шейдерной программы
     pub fn deinit(self: ShaderProgram) void {
         c.glDeleteProgram(self.id);
-        print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Destroyed\n", .{self.id});
+        if (log_enable) print("[*SUCCES*]:[SHADER PROGRAM]:[ID:{}]:Destroyed\n", .{self.id});
     }
 };

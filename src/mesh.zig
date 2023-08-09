@@ -1,5 +1,6 @@
 const c = @import("c.zig");
 const print = @import("std").debug.print;
+const log_enable = @import("log.zig").mesh_log_enable;
 
 pub const Mesh = struct {
     vbo: u32, // Объект буфера вершин
@@ -50,7 +51,7 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
         c.glBindVertexArray(0);
 
-        print("[*SUCCES*]:[MESH]:[Vertices:{}|VBO:{}|VAO:{}]:Initialised\n", .{ vertices.len / vertex_size, vbo, vao });
+        if (log_enable) print("[*SUCCES*]:[MESH]:[Vertices:{}|VBO:{}|VAO:{}]:Initialised\n", .{ vertices.len / vertex_size, vbo, vao });
         return Mesh{
             .vbo = vbo,
             .vao = vao,
@@ -61,7 +62,7 @@ pub const Mesh = struct {
     pub fn deinit(self: Mesh) void {
         c.glDeleteVertexArrays(1, &self.vao);
         c.glDeleteBuffers(1, &self.vbo);
-        print("[*SUCCES*]:[MESH]:[Vertices:{}|VBO:{}|VAO:{}]:Destroyed\n", .{ self.len, self.vbo, self.vao });
+        if (log_enable) print("[*SUCCES*]:[MESH]:[Vertices:{}|VBO:{}|VAO:{}]:Destroyed\n", .{ self.len, self.vbo, self.vao });
     }
 
     pub fn draw(self: Mesh) void {

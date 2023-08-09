@@ -96,7 +96,8 @@ pub fn main() !void {
     const camera_rotate_speed = std.math.pi;
     const camera_zoom_speed = 3.0;
 
-    var main_world = world.World{};
+    var main_world = world.World.init(std.heap.page_allocator);
+    defer main_world.deinit();
     var y: i32 = -4;
     while (y < 4) : (y += 1) {
         var x: i32 = -4;
