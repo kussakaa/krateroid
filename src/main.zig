@@ -238,7 +238,7 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         // 3D
 
-        renderer.shape.color = .{ 1.0, 1.0, 1.0, 1.0 };
+        renderer.shape.color = .{ 0.4, 0.7, 0.4, 1.0 };
         for (main_world.chunks.items) |chunk| {
             renderer.draw(chunk);
         }
