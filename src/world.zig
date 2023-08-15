@@ -3,8 +3,7 @@ const std = @import("std");
 const log_enable = @import("log.zig").world_log_enable;
 const Allocator = std.mem.Allocator;
 const I32x2 = @import("linmath.zig").I32x2;
-const entity = @import("entity.zig");
-const component = @import("component.zig");
+const ecs = @import("ecs.zig");
 
 pub const Cell = enum {
     air, // клетка пустая
@@ -130,18 +129,21 @@ pub const World = struct {
     allocator: Allocator,
     seed: u32 = 0,
     chunks: std.ArrayList(Chunk) = std.ArrayList(Chunk).init(std.heap.page_allocator),
-    entities: entity.Manager,
+    entities: ecs.Entities,
 
     pub fn init(allocator: Allocator) World {
         return World{
             .allocator = allocator,
             .chunks = std.ArrayList(Chunk).init(allocator),
-            .entities = entity.Manager.init(allocator),
+            .entities = ecs.Entities.init(allocator),
         };
     }
 
     pub fn deinit(self: *World) void {
         self.chunks.deinit();
+        for (self.entities.items) |*entity| {
+            entity.deinit();
+        }
         self.entities.deinit();
     }
 
