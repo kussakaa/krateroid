@@ -6,6 +6,7 @@ const Event = @import("events.zig").Event;
 pub const I32x2 = @import("linmath.zig").I32x2;
 pub const I32x4 = @import("linmath.zig").I32x4;
 pub const Point = I32x2;
+pub const Size = I32x2;
 pub const Line = I32x2;
 pub const Rect = I32x4;
 pub const Text = struct {
@@ -13,6 +14,11 @@ pub const Text = struct {
     pos: I32x2 = I32x2{ 0, 0 },
     alignment: Alignment = Alignment.left_bottom,
 };
+
+pub const Component = union(enum) {};
+
+pub const Control = std.ArrayList(Component);
+pub const Controls = std.ArrayList(?Control);
 
 pub const Button = struct {
     rect: Rect = Rect{ 0, 0, 100, 50 },
@@ -33,7 +39,7 @@ pub const Button = struct {
             .text = Text{
                 .data = title,
                 .pos = I32x2{
-                    rect[0] + @divTrunc(rect[2] - rect[0], 2) - @intCast(i32, title.len) * 7,
+                    rect[0] + @divTrunc(rect[2] - rect[0], 2) - @as(i32, @intCast(title.len)) * 7,
                     rect[1] + @divTrunc(rect[3] - rect[1], 2) - 8,
                 },
                 .alignment = alignment,
@@ -141,10 +147,10 @@ pub const Gui = struct {
             Event.mouse_button_down => |key| {
                 if (self.enable and key == 1) {
                     self.mouse.click = true;
-                    for (self.buttons.items) |*button, i| {
+                    for (self.buttons.items, 0..) |*button, i| {
                         if (button.state == Button.State.Focused) {
                             button.state = Button.State.Pushed;
-                            return GuiEvent{ .button_down = @intCast(i32, i) };
+                            return GuiEvent{ .button_down = @as(i32, @intCast(i)) };
                         }
                     }
                 }
@@ -152,10 +158,10 @@ pub const Gui = struct {
             Event.mouse_button_up => |key| {
                 if (self.enable and key == 1) {
                     self.mouse.click = false;
-                    for (self.buttons.items) |*button, i| {
+                    for (self.buttons.items, 0..) |*button, i| {
                         if (button.state == Button.State.Pushed) {
                             button.state = Button.State.Focused;
-                            return GuiEvent{ .button_up = @intCast(i32, i) };
+                            return GuiEvent{ .button_up = @as(i32, @intCast(i)) };
                         }
                     }
                 }

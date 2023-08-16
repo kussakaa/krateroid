@@ -41,7 +41,7 @@ pub fn main() !void {
     renderer.vpsize = window.size;
     renderer.light.direction = .{ -1.0, 0.0, 1.0 };
     renderer.camera.rot[0] = -std.math.pi / 6.0;
-    renderer.camera.ratio = @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]);
+    renderer.camera.ratio = @as(f32, @floatFromInt(window.size[1])) / @as(f32, @floatFromInt(window.size[0]));
     renderer.camera.zoom = 0.01;
     renderer.camera.update();
 
@@ -109,7 +109,7 @@ pub fn main() !void {
     var is_show_f3 = false;
     var is_debug_mesh = false;
 
-    var last_time = @intCast(i32, c.SDL_GetTicks());
+    var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
 
     var frame: u32 = 0;
@@ -117,8 +117,8 @@ pub fn main() !void {
     var seconds: u32 = 0;
 
     while (run) {
-        const current_time = @intCast(i32, c.SDL_GetTicks());
-        const dt: f32 = @intToFloat(f32, current_time - last_time) / 1000.0;
+        const current_time = @as(i32, @intCast(c.SDL_GetTicks()));
+        const dt: f32 = @as(f32, @floatFromInt(current_time - last_time)) / 1000.0;
         last_time = current_time;
 
         if (@divTrunc(c.SDL_GetTicks(), 1000) > seconds) {
@@ -178,7 +178,7 @@ pub fn main() !void {
                 },
                 Event.window_size => |size| {
                     window.size = size;
-                    renderer.camera.ratio = @intToFloat(f32, window.size[1]) / @intToFloat(f32, window.size[0]);
+                    renderer.camera.ratio = @as(f32, @floatFromInt(window.size[1])) / @as(f32, @floatFromInt(window.size[0]));
                     renderer.camera.update_proj();
                     c.glViewport(0, 0, size[0], size[1]);
                 },

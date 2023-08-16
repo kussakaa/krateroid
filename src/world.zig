@@ -69,17 +69,17 @@ pub const Chunk = struct {
                 while (x < width) : (x += 1) {
                     const velue = c.fnlGetNoise2D(
                         &noise_velue,
-                        @intToFloat(f32, (self.pos[0] * @intCast(i32, width) + @intCast(i32, x)) * 3),
-                        @intToFloat(f32, (self.pos[1] * @intCast(i32, width) + @intCast(i32, y)) * 3),
+                        @as(f32, @floatFromInt((self.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
+                        @as(f32, @floatFromInt((self.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
                     );
 
                     const cellular = c.fnlGetNoise2D(
                         &noise_cellular,
-                        @intToFloat(f32, (self.pos[0] * @intCast(i32, width) + @intCast(i32, x)) * 3),
-                        @intToFloat(f32, (self.pos[1] * @intCast(i32, width) + @intCast(i32, y)) * 3),
+                        @as(f32, @floatFromInt((self.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
+                        @as(f32, @floatFromInt((self.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
                     );
 
-                    if (@intToFloat(f32, z) < (velue + cellular) * 15.0 + 32.0) {
+                    if (@as(f32, @floatFromInt(z)) < (velue + cellular) * 15.0 + 32.0) {
                         self.grid[z][y][x] = Cell.block;
                     } else {
                         self.grid[z][y][x] = Cell.air;

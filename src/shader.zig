@@ -32,7 +32,7 @@ pub const Shader = struct {
         if (succes == 0) {
             var info_log_len: i32 = 0;
             c.glGetShaderiv(shader, c.GL_INFO_LOG_LENGTH, &info_log_len);
-            const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
             defer allocator.fere(info_log);
             c.glGetShaderInfoLog(shader, info_log_len, null, info_log.ptr);
             panic("\n[!FAILED!]:[SHADER]:[ID:{}]:Compiling: {s}\n", .{ shader, info_log });
@@ -69,7 +69,7 @@ pub const ShaderProgram = struct {
         if (succes == 0) {
             var info_log_len: i32 = 0;
             c.glGetProgramiv(program, c.GL_INFO_LOG_LENGTH, &info_log_len);
-            const info_log = try allocator.alloc(u8, @intCast(usize, info_log_len));
+            const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
             defer allocator.free(info_log);
             c.glGetProgramInfoLog(program, info_log_len, null, info_log.ptr);
             panic("[!FAILED!]:[SHADER PROGRAM]:[ID:{}]:Linking: {s}\n", .{ program, info_log });
@@ -85,7 +85,7 @@ pub const ShaderProgram = struct {
 
     // получение идентификатора юниформы
     pub fn getUniform(self: ShaderProgram, name: [*c]const u8) !i32 {
-        const location = @intCast(i32, c.glGetUniformLocation(self.id, name));
+        const location = @as(i32, @intCast(c.glGetUniformLocation(self.id, name)));
         if (location < 0) {
             panic("[!FAILED!]:[SHADER PROGRAM]:[ID:{}]:Failed finding uniform! {s}\n", .{ self.id, name });
         }

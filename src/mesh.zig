@@ -28,23 +28,23 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
-            @intCast(c_long, vertices.len * @sizeOf(f32)),
+            @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
             @as(*const anyopaque, &vertices[0]),
             c.GL_STATIC_DRAW,
         );
 
         var offset: u32 = 0;
-        for (attrs) |_, i| {
+        for (attrs, 0..) |_, i| {
             const size = attrs[i];
             c.glVertexAttribPointer(
-                @intCast(c_uint, i),
-                @intCast(c_int, size),
+                @as(c_uint, @intCast(i)),
+                @as(c_int, @intCast(size)),
                 c.GL_FLOAT,
                 c.GL_FALSE,
-                @intCast(c_int, vertex_size * @sizeOf(f32)),
-                @intToPtr(?*anyopaque, offset * @sizeOf(f32)),
+                @as(c_int, @intCast(vertex_size * @sizeOf(f32))),
+                @as(?*anyopaque, @ptrFromInt(offset * @sizeOf(f32))),
             );
-            c.glEnableVertexAttribArray(@intCast(c_uint, i));
+            c.glEnableVertexAttribArray(@as(c_uint, @intCast(i)));
             offset += size;
         }
 
@@ -71,7 +71,7 @@ pub const Mesh = struct {
             Mode.triangles => c.GL_TRIANGLES,
             Mode.lines => c.GL_LINES,
         };
-        c.glDrawArrays(mode, 0, @intCast(i32, self.len));
+        c.glDrawArrays(mode, 0, @as(i32, @intCast(self.len)));
         c.glBindVertexArray(0);
     }
 };

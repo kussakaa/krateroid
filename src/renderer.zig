@@ -164,7 +164,7 @@ pub const Renderer = struct {
         const chars = [_]u16{ '#', '.', ',', '-', '|', '+', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 'а', 'б', 'в', 'г', 'д', 'е', 'ё', 'ж', 'з', 'и', 'й', 'к', 'л', 'м', 'н', 'о', 'п', 'р', 'с', 'т', 'у', 'ф', 'х', 'ц', 'ч', 'ш', 'щ', 'ъ', 'ы', 'ь', 'э', 'ю', 'я' };
         var glyphs: [chars.len]Glyph = undefined;
 
-        for (chars) |char, i| {
+        for (chars, 0..) |char, i| {
             if (c.FT_Load_Char(face, char, c.FT_LOAD_RENDER) != 0) {
                 std.debug.panic("[!FAILED!]:[FREETYPE]:To load Glyph \"{}\"", .{char});
             }
@@ -177,8 +177,8 @@ pub const Renderer = struct {
                 c.GL_TEXTURE_2D,
                 0,
                 c.GL_RED,
-                @intCast(c_int, face.*.glyph.*.bitmap.width),
-                @intCast(c_int, face.*.glyph.*.bitmap.rows),
+                @as(c_int, @intCast(face.*.glyph.*.bitmap.width)),
+                @as(c_int, @intCast(face.*.glyph.*.bitmap.rows)),
                 0,
                 c.GL_RED,
                 c.GL_UNSIGNED_BYTE,
@@ -193,13 +193,13 @@ pub const Renderer = struct {
             glyphs[i] = Glyph{
                 .texture = texture,
                 .size = I32x2{
-                    @intCast(i32, face.*.glyph.*.bitmap.width),
-                    @intCast(i32, face.*.glyph.*.bitmap.rows),
+                    @as(i32, @intCast(face.*.glyph.*.bitmap.width)),
+                    @as(i32, @intCast(face.*.glyph.*.bitmap.rows)),
                 },
-                .advance = @intCast(i32, face.*.glyph.*.advance.x) >> 6,
+                .advance = @as(i32, @intCast(face.*.glyph.*.advance.x)) >> 6,
                 .bearing = I32x2{
-                    @intCast(i32, face.*.glyph.*.bitmap_left),
-                    @intCast(i32, face.*.glyph.*.bitmap_top),
+                    @as(i32, @intCast(face.*.glyph.*.bitmap_left)),
+                    @as(i32, @intCast(face.*.glyph.*.bitmap_top)),
                 },
             };
         }
@@ -390,7 +390,7 @@ pub const Renderer = struct {
                         advance = 0;
                         continue :glyph;
                     }
-                    for (self.gui.text.chars) |renderer_char, i| {
+                    for (self.gui.text.chars, 0..) |renderer_char, i| {
                         if (char == renderer_char) {
                             c.glBindTexture(c.GL_TEXTURE_2D, self.gui.text.glyphs[i].texture);
                             const min = gui.pointAlignOfVp(
@@ -553,41 +553,41 @@ pub const Renderer = struct {
                             var index: usize = 0;
 
                             if (x < width - 1 and y < width - 1) {
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x] == world.Cell.block)) << 3;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x + 1] == world.Cell.block)) << 2;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y + 1][x + 1] == world.Cell.block)) << 1;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y + 1][x] == world.Cell.block)) << 0;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x] == world.Cell.block)) << 7;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x + 1] == world.Cell.block)) << 6;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y + 1][x + 1] == world.Cell.block)) << 5;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y + 1][x] == world.Cell.block)) << 4;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x] == world.Cell.block))) << 3;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x + 1] == world.Cell.block))) << 2;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y + 1][x + 1] == world.Cell.block))) << 1;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y + 1][x] == world.Cell.block))) << 0;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x] == world.Cell.block))) << 7;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x + 1] == world.Cell.block))) << 6;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y + 1][x + 1] == world.Cell.block))) << 5;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y + 1][x] == world.Cell.block))) << 4;
                             } else if (x == width - 1 and y < width - 1 and chunk_01 != null) {
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x] == world.Cell.block)) << 3;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z][y][0] == world.Cell.block)) << 2;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z][y + 1][0] == world.Cell.block)) << 1;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y + 1][x] == world.Cell.block)) << 0;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x] == world.Cell.block)) << 7;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z + 1][y][0] == world.Cell.block)) << 6;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z + 1][y + 1][0] == world.Cell.block)) << 5;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y + 1][x] == world.Cell.block)) << 4;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x] == world.Cell.block))) << 3;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z][y][0] == world.Cell.block))) << 2;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z][y + 1][0] == world.Cell.block))) << 1;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y + 1][x] == world.Cell.block))) << 0;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x] == world.Cell.block))) << 7;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z + 1][y][0] == world.Cell.block))) << 6;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z + 1][y + 1][0] == world.Cell.block))) << 5;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y + 1][x] == world.Cell.block))) << 4;
                             } else if (x < width - 1 and y == width - 1 and chunk_10 != null) {
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x] == world.Cell.block)) << 3;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x + 1] == world.Cell.block)) << 2;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z][0][x + 1] == world.Cell.block)) << 1;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z][0][x] == world.Cell.block)) << 0;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x] == world.Cell.block)) << 7;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x + 1] == world.Cell.block)) << 6;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z + 1][0][x + 1] == world.Cell.block)) << 5;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z + 1][0][x] == world.Cell.block)) << 4;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x] == world.Cell.block))) << 3;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x + 1] == world.Cell.block))) << 2;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z][0][x + 1] == world.Cell.block))) << 1;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z][0][x] == world.Cell.block))) << 0;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x] == world.Cell.block))) << 7;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x + 1] == world.Cell.block))) << 6;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z + 1][0][x + 1] == world.Cell.block))) << 5;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z + 1][0][x] == world.Cell.block))) << 4;
                             } else if (chunk_01 != null and chunk_10 != null and chunk_11 != null) {
-                                index |= @intCast(u8, @boolToInt(obj.grid[z][y][x] == world.Cell.block)) << 3;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z][y][0] == world.Cell.block)) << 2;
-                                index |= @intCast(u8, @boolToInt(chunk_11.?.grid[z][0][0] == world.Cell.block)) << 1;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z][0][x] == world.Cell.block)) << 0;
-                                index |= @intCast(u8, @boolToInt(obj.grid[z + 1][y][x] == world.Cell.block)) << 7;
-                                index |= @intCast(u8, @boolToInt(chunk_01.?.grid[z + 1][y][0] == world.Cell.block)) << 6;
-                                index |= @intCast(u8, @boolToInt(chunk_11.?.grid[z + 1][0][0] == world.Cell.block)) << 5;
-                                index |= @intCast(u8, @boolToInt(chunk_10.?.grid[z + 1][0][x] == world.Cell.block)) << 4;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z][y][x] == world.Cell.block))) << 3;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z][y][0] == world.Cell.block))) << 2;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_11.?.grid[z][0][0] == world.Cell.block))) << 1;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z][0][x] == world.Cell.block))) << 0;
+                                index |= @as(u8, @intCast(@intFromBool(obj.grid[z + 1][y][x] == world.Cell.block))) << 7;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_01.?.grid[z + 1][y][0] == world.Cell.block))) << 6;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_11.?.grid[z + 1][0][0] == world.Cell.block))) << 5;
+                                index |= @as(u8, @intCast(@intFromBool(chunk_10.?.grid[z + 1][0][x] == world.Cell.block))) << 4;
                             }
 
                             if (index == 0 or index == 255) continue;
@@ -599,23 +599,23 @@ pub const Renderer = struct {
                                 const p3 = mct.edge[mct.tri[index][i + 2]];
                                 const n = linmath.normalize(linmath.cross(p2 - p1, p3 - p1));
 
-                                S.vertices[(vertcnt + 0) * vertsize + 0] = p1[0] + @intToFloat(f32, x) + @intToFloat(f32, obj.pos[0] * width);
-                                S.vertices[(vertcnt + 0) * vertsize + 1] = p1[1] + @intToFloat(f32, y) + @intToFloat(f32, obj.pos[1] * width);
-                                S.vertices[(vertcnt + 0) * vertsize + 2] = p1[2] + @intToFloat(f32, z);
+                                S.vertices[(vertcnt + 0) * vertsize + 0] = p1[0] + @as(f32, @floatFromInt(x)) + @as(f32, @floatFromInt(obj.pos[0] * width));
+                                S.vertices[(vertcnt + 0) * vertsize + 1] = p1[1] + @as(f32, @floatFromInt(y)) + @as(f32, @floatFromInt(obj.pos[1] * width));
+                                S.vertices[(vertcnt + 0) * vertsize + 2] = p1[2] + @as(f32, @floatFromInt(z));
                                 S.vertices[(vertcnt + 0) * vertsize + 3] = n[0];
                                 S.vertices[(vertcnt + 0) * vertsize + 4] = n[1];
                                 S.vertices[(vertcnt + 0) * vertsize + 5] = n[2];
 
-                                S.vertices[(vertcnt + 1) * vertsize + 0] = p2[0] + @intToFloat(f32, x) + @intToFloat(f32, obj.pos[0] * width);
-                                S.vertices[(vertcnt + 1) * vertsize + 1] = p2[1] + @intToFloat(f32, y) + @intToFloat(f32, obj.pos[1] * width);
-                                S.vertices[(vertcnt + 1) * vertsize + 2] = p2[2] + @intToFloat(f32, z);
+                                S.vertices[(vertcnt + 1) * vertsize + 0] = p2[0] + @as(f32, @floatFromInt(x)) + @as(f32, @floatFromInt(obj.pos[0] * width));
+                                S.vertices[(vertcnt + 1) * vertsize + 1] = p2[1] + @as(f32, @floatFromInt(y)) + @as(f32, @floatFromInt(obj.pos[1] * width));
+                                S.vertices[(vertcnt + 1) * vertsize + 2] = p2[2] + @as(f32, @floatFromInt(z));
                                 S.vertices[(vertcnt + 1) * vertsize + 3] = n[0];
                                 S.vertices[(vertcnt + 1) * vertsize + 4] = n[1];
                                 S.vertices[(vertcnt + 1) * vertsize + 5] = n[2];
 
-                                S.vertices[(vertcnt + 2) * vertsize + 0] = p3[0] + @intToFloat(f32, x) + @intToFloat(f32, obj.pos[0] * width);
-                                S.vertices[(vertcnt + 2) * vertsize + 1] = p3[1] + @intToFloat(f32, y) + @intToFloat(f32, obj.pos[1] * width);
-                                S.vertices[(vertcnt + 2) * vertsize + 2] = p3[2] + @intToFloat(f32, z);
+                                S.vertices[(vertcnt + 2) * vertsize + 0] = p3[0] + @as(f32, @floatFromInt(x)) + @as(f32, @floatFromInt(obj.pos[0] * width));
+                                S.vertices[(vertcnt + 2) * vertsize + 1] = p3[1] + @as(f32, @floatFromInt(y)) + @as(f32, @floatFromInt(obj.pos[1] * width));
+                                S.vertices[(vertcnt + 2) * vertsize + 2] = p3[2] + @as(f32, @floatFromInt(z));
                                 S.vertices[(vertcnt + 2) * vertsize + 3] = n[0];
                                 S.vertices[(vertcnt + 2) * vertsize + 4] = n[1];
                                 S.vertices[(vertcnt + 2) * vertsize + 5] = n[2];

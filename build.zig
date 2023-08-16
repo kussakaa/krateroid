@@ -1,30 +1,43 @@
 const std = @import("std");
-const Builder = std.build.Builder;
-const builtin = @import("builtin");
 
-pub fn build(b: *Builder) void {
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const mode = b.standardReleaseOptions();
+    const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable("krateroid", "src/main.zig");
+    const exe = b.addExecutable(.{
+        .name = "krateroid",
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+
     exe.linkSystemLibrary("c");
-    exe.linkLibC();
     exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("freetype2");
-    exe.addIncludePath("deps/fnl");
-    exe.addCSourceFile("deps/fnl/FastNoiseLite.c", &.{ "-std=c99", "-fno-sanitize=undefined", "-O3" });
-    exe.addIncludePath("deps/glad/include");
-    exe.addCSourceFile("deps/glad/src/glad.c", &.{"-std=c99"});
-    exe.setTarget(target);
-    exe.setBuildMode(mode);
-    exe.install();
+    exe.addIncludePath(.{ .path = "deps/glad/include" });
+    exe.addCSourceFile(.{ .file = .{ .path = "deps/fnl/FastNoiseLite.c" }, .flags = &.{
+        "-std=c99",
+        "-fno-sanitize=undefined",
+        "-O3",
+    } });
+    exe.addIncludePath(.{ .path = "deps/fnl" });
+    exe.addCSourceFile(.{ .file = .{ .path = "deps/glad/src/glad.c" }, .flags = &.{"-std=c99"} });
 
-    const run_cmd = exe.run();
+    b.installArtifact(exe);
+    const run_cmd = b.addRunArtifact(exe);
     run_cmd.step.dependOn(b.getInstallStep());
     if (b.args) |args| {
         run_cmd.addArgs(args);
     }
-
     const run_step = b.step("run", "Run the app");
     run_step.dependOn(&run_cmd.step);
+
+    const unit_tests = b.addTest(.{
+        .root_source_file = .{ .path = "src/main.zig" },
+        .target = target,
+        .optimize = optimize,
+    });
+    const run_unit_tests = b.addRunArtifact(unit_tests);
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&run_unit_tests.step);
 }

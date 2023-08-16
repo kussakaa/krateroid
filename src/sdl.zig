@@ -36,8 +36,8 @@ pub const Window = struct {
             title,
             c.SDL_WINDOWPOS_CENTERED,
             c.SDL_WINDOWPOS_CENTERED,
-            @intCast(c_int, width),
-            @intCast(c_int, height),
+            @as(c_int, @intCast(width)),
+            @as(c_int, @intCast(height)),
             c.SDL_WINDOW_OPENGL | c.SDL_WINDOW_RESIZABLE,
         );
 
@@ -47,7 +47,7 @@ pub const Window = struct {
 
         const context = c.SDL_GL_CreateContext(handle);
         _ = c.SDL_GL_MakeCurrent(handle, context);
-        if (c.gladLoadGLLoader(@ptrCast(c.GLADloadproc, &c.SDL_GL_GetProcAddress)) == 0) {
+        if (c.gladLoadGLLoader(@as(c.GLADloadproc, @ptrCast(&c.SDL_GL_GetProcAddress))) == 0) {
             panic("[!FAILED!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
         }
 
