@@ -1,186 +1,111 @@
 const std = @import("std");
-const Allocator = std.mem.Allocator;
 
-const Event = @import("events.zig").Event;
+const Mesh = @import("mesh.zig").Mesh;
+const glsl = @import("glsl.zig");
+const shader_sources = @import("shader_sources.zig");
 
-pub const I32x2 = @import("linmath.zig").I32x2;
-pub const I32x4 = @import("linmath.zig").I32x4;
-pub const Point = I32x2;
-pub const Size = I32x2;
-pub const Line = I32x2;
-pub const Rect = I32x4;
-pub const Text = struct {
-    data: []const u16,
-    pos: I32x2 = I32x2{ 0, 0 },
-    alignment: Alignment = Alignment.left_bottom,
+pub const Color = @Vector(4, f32);
+// Point {X|Y}
+pub const Point = @Vector(2, i32);
+// Rect {min X|min Y|max X|max Y}
+pub const Rect = @Vector(4, i32);
+
+pub const ComponentTag = enum {
+    color_panel,
+    border_panel,
+    text,
 };
 
-pub const Component = union(enum) {};
+pub const Component = union(ComponentTag) {
+    color_panel: struct {
+        rect: Rect,
+        color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
+    },
+    border_panel: struct {
+        rect: Rect,
+        color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
+        width: u32,
+    },
+    text: struct {
+        text: []const u16,
+        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
+    },
+};
 
 pub const Control = std.ArrayList(Component);
 pub const Controls = std.ArrayList(?Control);
 
-pub const Button = struct {
-    rect: Rect = Rect{ 0, 0, 100, 50 },
-    state: State = State.Normal,
-    alignment: Alignment = Alignment.left_bottom,
-    text: Text,
+pub const RenderSystem = struct {
+    allocator: std.mem.Allocator,
+    vpsize: Point = .{ 1200, 900 },
+    rect_mesh: Mesh,
+    color_panel_program: glsl.Program,
 
-    pub const State = enum {
-        Normal,
-        Focused,
-        Pushed,
-    };
+    pub fn init(allocator: std.mem.Allocator) !RenderSystem {
+        const color_panel_vertex = try glsl.Shader.initFormFile(
+            allocator,
+            "data/shader/color_panel_vertex.glsl",
+            glsl.ShaderType.vertex,
+        );
+        defer color_panel_vertex.deinit();
 
-    pub fn init(rect: Rect, alignment: Alignment, title: []const u16) Button {
-        return Button{
-            .rect = rect,
-            .alignment = alignment,
-            .text = Text{
-                .data = title,
-                .pos = I32x2{
-                    rect[0] + @divTrunc(rect[2] - rect[0], 2) - @as(i32, @intCast(title.len)) * 7,
-                    rect[1] + @divTrunc(rect[3] - rect[1], 2) - 8,
-                },
-                .alignment = alignment,
-            },
+        const color_panel_fragment = try glsl.Shader.initFormFile(
+            allocator,
+            "data/shader/color_panel_fragment.glsl",
+            glsl.ShaderType.fragment,
+        );
+        defer color_panel_fragment.deinit();
+
+        var color_panel_program = try glsl.Program.init(
+            allocator,
+            &.{ color_panel_vertex, color_panel_fragment },
+        );
+
+        try color_panel_program.addUniform("rect");
+        try color_panel_program.addUniform("vpsize");
+        try color_panel_program.addUniform("color");
+
+        const rect_mesh_vertices = [_]f32{
+            0.0, 0.0, 0.0, 1.0,
+            1.0, 0.0, 1.0, 1.0,
+            1.0, 1.0, 1.0, 0.0,
+            1.0, 1.0, 1.0, 0.0,
+            0.0, 1.0, 0.0, 0.0,
+            0.0, 0.0, 0.0, 1.0,
         };
-    }
-};
+        const rect_mesh = Mesh.init(rect_mesh_vertices[0..], &.{ 2, 2 });
 
-pub fn pointAlignOfVp(point: Point, alignment: Alignment, vpsize: I32x2) Point {
-    return switch (alignment) {
-        Alignment.left_bottom => point,
-        Alignment.right_bottom => point + Point{ vpsize[0], 0 },
-        Alignment.right_top => point + vpsize,
-        Alignment.left_top => point + Point{ 0, vpsize[1] },
-        Alignment.center_bottom => point + Point{ @divTrunc(vpsize[0], 2), 0 },
-        Alignment.right_center => point + Point{ vpsize[0], @divTrunc(vpsize[1], 2) },
-        Alignment.center_top => point + Point{ @divTrunc(vpsize[0], 2), vpsize[1] },
-        Alignment.left_center => point + Point{ 0, @divTrunc(vpsize[1], 2) },
-        Alignment.center_center => point + Point{ @divTrunc(vpsize[0], 2), @divTrunc(vpsize[1], 2) },
-    };
-}
-
-pub fn rectAlignOfVp(rect: Rect, alignment: Alignment, vpsize: I32x2) Rect {
-    return switch (alignment) {
-        Alignment.left_bottom => rect,
-        Alignment.right_bottom => rect + [4]i32{ vpsize[0], 0, vpsize[1], 0 },
-        Alignment.right_top => rect + [4]i32{ vpsize[0], vpsize[1], vpsize[0], vpsize[1] },
-        Alignment.left_top => rect + [4]i32{ 0, vpsize[1], 0, vpsize[1] },
-        Alignment.center_bottom => rect + [4]i32{ @divTrunc(vpsize[0], 2), 0, @divTrunc(vpsize[0], 2), 0 },
-        Alignment.right_center => rect + [4]i32{
-            vpsize[0],
-            @divTrunc(vpsize[1], 2),
-            vpsize[0],
-            @divTrunc(vpsize[1], 2),
-        },
-        Alignment.center_top => rect + [4]i32{
-            @divTrunc(vpsize[0], 2),
-            vpsize[1],
-            @divTrunc(vpsize[0], 2),
-            vpsize[1],
-        },
-        Alignment.left_center => rect + [4]i32{ 0, @divTrunc(vpsize[1], 2), 0, @divTrunc(vpsize[1], 2) },
-        Alignment.center_center => rect + [4]i32{
-            @divTrunc(vpsize[0], 2),
-            @divTrunc(vpsize[1], 2),
-            @divTrunc(vpsize[0], 2),
-            @divTrunc(vpsize[1], 2),
-        },
-    };
-}
-
-pub fn rectIsAround(rect: Rect, point: Point) bool {
-    if (point[0] > rect[0] and point[0] < rect[2] and point[1] > rect[1] and point[1] < rect[3]) return true;
-    return false;
-}
-
-pub const Alignment = enum {
-    left_bottom, // стандарт
-    right_bottom,
-    right_top,
-    left_top,
-    center_bottom,
-    right_center,
-    center_top,
-    left_center,
-    center_center,
-};
-
-pub const Gui = struct {
-    enable: bool = true,
-    vpsize: I32x2 = .{ 1200, 900 },
-    mouse: struct {
-        click: bool = false,
-        pos: I32x2 = I32x2{ 0, 0 },
-    },
-    buttons: std.ArrayList(Button),
-
-    pub fn init(allocator: Allocator) Gui {
-        return Gui{
-            .mouse = .{},
-            .buttons = std.ArrayList(Button).init(allocator),
+        return RenderSystem{
+            .allocator = allocator,
+            .rect_mesh = rect_mesh,
+            .color_panel_program = color_panel_program,
         };
     }
 
-    pub fn addButton(self: *Gui, button: Button) !void {
-        try self.buttons.append(button);
+    pub fn deinit(self: *RenderSystem) void {
+        self.rect_mesh.deinit();
+        self.color_panel_program.deinit();
     }
 
-    pub fn pollEvent(self: *Gui, event: Event) GuiEvent {
-        switch (event) {
-            Event.mouse_motion => |pos| {
-                self.mouse.pos = I32x2{ pos[0], self.vpsize[1] - pos[1] };
-                for (self.buttons.items) |*button| {
-                    if (rectIsAround(rectAlignOfVp(button.rect, button.alignment, self.vpsize), self.mouse.pos)) {
-                        if (self.mouse.click) {
-                            button.state = Button.State.Pushed;
-                        } else {
-                            button.state = Button.State.Focused;
-                        }
-                    } else {
-                        button.state = Button.State.Normal;
+    pub fn draw(self: RenderSystem, controls: Controls) void {
+        for (controls.items) |control| {
+            if (control != null) {
+                for (control.?.items) |component| {
+                    switch (component) {
+                        Component.color_panel => |rect| {
+                            self.color_panel_program.use();
+                            self.color_panel_program.setUniform(0, rect.rect);
+                            self.color_panel_program.setUniform(1, self.vpsize);
+                            self.color_panel_program.setUniform(2, rect.color);
+                            self.rect_mesh.draw();
+                        },
+                        Component.border_panel => {},
+                        Component.text => {},
                     }
                 }
-            },
-            Event.mouse_button_down => |key| {
-                if (self.enable and key == 1) {
-                    self.mouse.click = true;
-                    for (self.buttons.items, 0..) |*button, i| {
-                        if (button.state == Button.State.Focused) {
-                            button.state = Button.State.Pushed;
-                            return GuiEvent{ .button_down = @as(i32, @intCast(i)) };
-                        }
-                    }
-                }
-            },
-            Event.mouse_button_up => |key| {
-                if (self.enable and key == 1) {
-                    self.mouse.click = false;
-                    for (self.buttons.items, 0..) |*button, i| {
-                        if (button.state == Button.State.Pushed) {
-                            button.state = Button.State.Focused;
-                            return GuiEvent{ .button_up = @as(i32, @intCast(i)) };
-                        }
-                    }
-                }
-            },
-            Event.window_size => |size| {
-                self.vpsize = size;
-            },
-            else => {},
+            }
         }
-        return GuiEvent.none;
-    }
-
-    pub fn deinit(self: Gui) void {
-        _ = self;
     }
 };
 
-pub const GuiEvent = union(enum) {
-    button_down: i32,
-    button_up: i32,
-    none,
-};
+pub const InputSystem = struct {};

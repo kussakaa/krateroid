@@ -2,13 +2,67 @@ const c = @import("c.zig");
 const std = @import("std");
 const log_enable = @import("log.zig").world_log_enable;
 const Allocator = std.mem.Allocator;
-const I32x2 = @import("linmath.zig").I32x2;
-const ecs = @import("ecs.zig");
+const linmath = @import("linmath.zig");
+const Vec3 = linmath.F32x3;
+const I32x2 = linmath.I32x2;
 
-pub const Cell = enum {
-    air, // клетка пустая
-    block, // клетка это твёрдый материал
-    explosion, // клетка это взрыв
+pub const Component = union(enum) {
+    position: Vec3,
+    rotation: Vec3,
+    velocity: Vec3,
+};
+
+pub const Entity = std.ArrayList(Component);
+pub const Entities = std.ArrayList(Entity);
+
+pub const World = struct {
+    allocator: Allocator,
+    seed: u32 = 0,
+    chunks: std.ArrayList(Chunk) = std.ArrayList(Chunk).init(std.heap.page_allocator),
+    entities: Entities,
+
+    pub fn init(allocator: Allocator) World {
+        return World{
+            .allocator = allocator,
+            .chunks = std.ArrayList(Chunk).init(allocator),
+            .entities = Entities.init(allocator),
+        };
+    }
+
+    pub fn deinit(self: *World) void {
+        self.chunks.deinit();
+        for (self.entities.items) |*entity| {
+            entity.deinit();
+        }
+        self.entities.deinit();
+    }
+
+    pub fn addChunk(self: *World, pos: I32x2) !void {
+        for (self.chunks.items) |*self_chunk| {
+            if (self_chunk.pos[0] == pos[0] and self_chunk.pos[1] == pos[1]) {
+                return;
+            }
+        }
+
+        var chunk = Chunk.init(self, pos);
+        chunk.generate();
+
+        try self.chunks.append(chunk);
+    }
+
+    pub fn getChunk(self: *World, pos: I32x2) ?*Chunk {
+        for (self.chunks.items) |*chunk| {
+            if (chunk.pos[0] == pos[0] and chunk.pos[1] == pos[1]) return chunk;
+        }
+
+        return null;
+    }
+
+    pub fn update(self: *World) void {
+        for (self.chunks.items) |*chunk| {
+            chunk.updateGrid();
+        }
+    }
 };
 
 pub const Chunk = struct {
@@ -61,12 +115,9 @@ pub const Chunk = struct {
         var noise_cellular = c.fnlCreateState();
         noise_cellular.noise_type = c.FNL_NOISE_CELLULAR;
 
-        var z: usize = 0;
-        while (z < height) : (z += 1) {
-            var y: usize = 0;
-            while (y < width) : (y += 1) {
-                var x: usize = 0;
-                while (x < width) : (x += 1) {
+        for (0..height) |z| {
+            for (0..height) |y| {
+                for (0..height) |x| {
                     const velue = c.fnlGetNoise2D(
                         &noise_velue,
                         @as(f32, @floatFromInt((self.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
@@ -96,12 +147,9 @@ pub const Chunk = struct {
     pub fn updateGrid(self: *Chunk) void {
         if (self.update > 0) {
             @setRuntimeSafety(false);
-            var z: usize = 0;
-            while (z < height) : (z += 1) {
-                var y: usize = 0;
-                while (y < width) : (y += 1) {
-                    var x: usize = 0;
-                    while (x < width) : (x += 1) {
+            for (0..height) |z| {
+                for (0..height) |y| {
+                    for (0..height) |x| {
                         if (self.grid[z][y][x] == Cell.explosion) {
                             var ez: usize = @max(0, @max(10, z) - 10);
                             while (ez < @min(64, z + 10)) : (ez += 1) {
@@ -125,52 +173,8 @@ pub const Chunk = struct {
     }
 };
 
-pub const World = struct {
-    allocator: Allocator,
-    seed: u32 = 0,
-    chunks: std.ArrayList(Chunk) = std.ArrayList(Chunk).init(std.heap.page_allocator),
-    entities: ecs.Entities,
-
-    pub fn init(allocator: Allocator) World {
-        return World{
-            .allocator = allocator,
-            .chunks = std.ArrayList(Chunk).init(allocator),
-            .entities = ecs.Entities.init(allocator),
-        };
-    }
-
-    pub fn deinit(self: *World) void {
-        self.chunks.deinit();
-        for (self.entities.items) |*entity| {
-            entity.deinit();
-        }
-        self.entities.deinit();
-    }
-
-    pub fn addChunk(self: *World, pos: I32x2) !void {
-        for (self.chunks.items) |*self_chunk| {
-            if (self_chunk.pos[0] == pos[0] and self_chunk.pos[1] == pos[1]) {
-                return;
-            }
-        }
-
-        var chunk = Chunk.init(self, pos);
-        chunk.generate();
-
-        try self.chunks.append(chunk);
-    }
-
-    pub fn getChunk(self: *World, pos: I32x2) ?*Chunk {
-        for (self.chunks.items) |*chunk| {
-            if (chunk.pos[0] == pos[0] and chunk.pos[1] == pos[1]) return chunk;
-        }
-
-        return null;
-    }
-
-    pub fn update(self: *World) void {
-        for (self.chunks.items) |*chunk| {
-            chunk.updateGrid();
-        }
-    }
+pub const Cell = enum {
+    air, // клетка пустая
+    block, // клетка это твёрдый материал
+    explosion, // клетка это взрыв
 };

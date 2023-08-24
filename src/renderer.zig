@@ -6,9 +6,7 @@ const shape = @import("shape.zig");
 const world = @import("world.zig");
 const mct = @import("mct.zig");
 const Allocator = std.mem.Allocator;
-const Shader = @import("shader.zig").Shader;
-const ShaderType = @import("shader.zig").ShaderType;
-const ShaderProgram = @import("shader.zig").ShaderProgram;
+const glsl = @import("glsl.zig");
 const Mesh = @import("mesh.zig").Mesh;
 const Camera = @import("camera.zig").Camera;
 
@@ -42,7 +40,7 @@ pub const Renderer = struct {
                 color: ColorRgba = .{ 1.0, 1.0, 1.0, 1.0 },
             } = .{},
             program: struct {
-                id: ShaderProgram,
+                id: glsl.Program,
                 uniforms: struct {
                     rect: i32,
                     color: i32,
@@ -56,7 +54,7 @@ pub const Renderer = struct {
         text: struct {
             color: ColorRgba = .{ 0.7, 0.7, 0.7, 1.0 },
             program: struct {
-                id: ShaderProgram,
+                id: glsl.Program,
                 uniforms: struct {
                     rect: i32,
                     vpsize: i32,
@@ -70,7 +68,7 @@ pub const Renderer = struct {
     shape: struct {
         color: ColorRgba = .{ 1.0, 1.0, 1.0, 1.0 },
         program: struct {
-            id: ShaderProgram,
+            id: glsl.Program,
             uniforms: struct {
                 model: i32,
                 view: i32,
@@ -117,10 +115,18 @@ pub const Renderer = struct {
         // GUI RECT
         //=========
 
-        const gui_rect_vertex = try Shader.init(allocator, shader_sources.rect_vertex, ShaderType.vertex);
+        const gui_rect_vertex = try glsl.Shader.init(
+            allocator,
+            shader_sources.rect_vertex,
+            glsl.ShaderType.vertex,
+        );
         defer gui_rect_vertex.deinit();
 
-        const gui_rect_fragment = try Shader.init(allocator, shader_sources.rect_fragment, ShaderType.fragment);
+        const gui_rect_fragment = try glsl.Shader.init(
+            allocator,
+            shader_sources.rect_fragment,
+            glsl.ShaderType.fragment,
+        );
         defer gui_rect_fragment.deinit();
 
         const gui_rect_program = try ShaderProgram.init(
@@ -141,13 +147,24 @@ pub const Renderer = struct {
         // GUI TEXT
         //=========
 
-        const gui_text_vertex = try Shader.init(allocator, shader_sources.text_vertex, ShaderType.vertex);
+        const gui_text_vertex = try glsl.Shader.init(
+            allocator,
+            shader_sources.text_vertex,
+            glsl.ShaderType.vertex,
+        );
         defer gui_text_vertex.deinit();
 
-        const gui_text_fragment = try Shader.init(allocator, shader_sources.text_fragment, ShaderType.fragment);
+        const gui_text_fragment = try glsl.Shader.init(
+            allocator,
+            shader_sources.text_fragment,
+            glsl.ShaderType.fragment,
+        );
         defer gui_text_fragment.deinit();
 
-        const gui_text_program = try ShaderProgram.init(allocator, &[_]Shader{ gui_text_vertex, gui_text_fragment });
+        const gui_text_program = try glsl.Program.init(
+            allocator,
+            &[_]Shader{ gui_text_vertex, gui_text_fragment },
+        );
 
         var ft: c.FT_Library = undefined;
         if (c.FT_Init_FreeType(&ft) != 0) {
@@ -209,13 +226,21 @@ pub const Renderer = struct {
         // SHAPE QUAD
         //===========
 
-        const shape_vertex = try Shader.init(allocator, shader_sources.shape_vertex, ShaderType.vertex);
+        const shape_vertex = try glsl.Shader.init(
+            allocator,
+            shader_sources.shape_vertex,
+            glsl.ShaderType.vertex,
+        );
         defer shape_vertex.deinit();
 
-        const shape_fragment = try Shader.init(allocator, shader_sources.shape_fragment, ShaderType.fragment);
+        const shape_fragment = try glsl.Shader.init(
+            allocator,
+            shader_sources.shape_fragment,
+            glsl.ShaderType.fragment,
+        );
         defer shape_fragment.deinit();
 
-        const shape_program = try ShaderProgram.init(allocator, &[_]Shader{ shape_vertex, shape_fragment });
+        const shape_program = try glsl.Program.init(allocator, &[_]Shader{ shape_vertex, shape_fragment });
 
         const shape_line_mesh_vertices = [_]f32{
             0.0, 0.0, 0.0, 0.0, 0.0, 1.0,
@@ -276,54 +301,19 @@ pub const Renderer = struct {
             .allocator = allocator,
             .gui = .{
                 .rect = .{
-                    .program = .{
-                        .id = gui_rect_program,
-                        .uniforms = .{
-                            .rect = try gui_rect_program.getUniform("rect"),
-                            .color = try gui_rect_program.getUniform("color"),
-                            .vpsize = try gui_rect_program.getUniform("vpsize"),
-                            .borders_width = try gui_rect_program.getUniform("borders_width"),
-                            .borders_color = try gui_rect_program.getUniform("borders_color"),
-                        },
-                    },
+                    .program = gui_rect_program,
                     .mesh = gui_rect_mesh,
                 },
                 .text = .{
-                    .program = .{
-                        .id = gui_text_program,
-                        .uniforms = .{
-                            .rect = try gui_text_program.getUniform("rect"),
-                            .vpsize = try gui_text_program.getUniform("vpsize"),
-                            .color = try gui_text_program.getUniform("color"),
-                        },
-                    },
+                    .program = gui_text_program,
                     .glyphs = glyphs,
                     .chars = chars,
                 },
             },
             .shape = .{
-                .program = .{
-                    .id = shape_program,
-                    .uniforms = .{
-                        .model = try shape_program.getUniform("model"),
-                        .view = try shape_program.getUniform("view"),
-                        .proj = try shape_program.getUniform("proj"),
-                        .color = try shape_program.getUniform("color"),
-                        .light = .{
-                            .color = try shape_program.getUniform("light.color"),
-                            .direction = try shape_program.getUniform("light.direction"),
-                            .diffuse = try shape_program.getUniform("light.diffuse"),
-                            .ambient = try shape_program.getUniform("light.ambient"),
-                            .specular = try shape_program.getUniform("light.specular"),
-                        },
-                    },
-                },
-                .line = .{
-                    .mesh = shape_line_mesh,
-                },
-                .quad = .{
-                    .mesh = shape_quad_mesh,
-                },
+                .program = shape_program,
+                .line = .{ .mesh = shape_line_mesh },
+                .quad = .{ .mesh = shape_quad_mesh },
             },
         };
     }
