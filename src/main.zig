@@ -37,9 +37,29 @@ pub fn main() !void {
     defer gui_controls.deinit();
     try gui_controls.append(gui.Control.init(std.heap.page_allocator));
     defer gui_controls.items[0].?.deinit();
-    try gui_controls.items[0].?.append(gui.Component{ .color_panel = .{
-        .rect = .{ 50, 50, 100, 100 },
+    try gui_controls.items[0].?.append(gui.Component{ .panel_color = .{
+        .rect = .{ 50, 50, 150, 150 },
         .color = .{ 1.0, 0.0, 0.0, 1.0 },
+    } });
+    try gui_controls.items[0].?.append(gui.Component{ .panel_border = .{
+        .rect = .{ 50, 50, 100, 100 },
+        .color = .{ 0.0, 0.0, 1.0, 1.0 },
+        .width = 2,
+    } });
+    try gui_controls.items[0].?.append(gui.Component{ .panel_border = .{
+        .rect = .{ 100, 50, 150, 100 },
+        .color = .{ 0.0, 1.0, 0.0, 1.0 },
+        .width = 2,
+    } });
+    try gui_controls.items[0].?.append(gui.Component{ .panel_border = .{
+        .rect = .{ 50, 100, 100, 150 },
+        .color = .{ 0.0, 1.0, 0.0, 1.0 },
+        .width = 2,
+    } });
+    try gui_controls.items[0].?.append(gui.Component{ .panel_border = .{
+        .rect = .{ 100, 100, 150, 150 },
+        .color = .{ 0.0, 0.0, 1.0, 1.0 },
+        .width = 2,
     } });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
