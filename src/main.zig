@@ -30,24 +30,14 @@ pub fn main() !void {
     c.glLineWidth(1);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
 
-    var gui_properties = gui.Properties{};
+    var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
+    defer gui_state.deinit();
 
-    var gui_render_system = try gui.RenderSystem.init(std.heap.page_allocator, gui_properties);
-    defer gui_render_system.deinit();
-
-    var gui_controls = gui.Controls.init(std.heap.page_allocator);
-    defer gui_controls.deinit();
-
-    try gui_controls.append(gui.Control.init(std.heap.page_allocator));
-    defer gui_controls.items[0].deinit();
-    try gui_controls.items[0].append(gui.Component{ .panel_input_color = .{
-        .rect = .{ 50, 50, 250, 150 },
-    } });
-    try gui_controls.items[0].append(gui.Component{ .panel_border = .{
-        .rect = .{ 50, 50, 250, 150 },
-        .color = .{ 0.5, 0.5, 0.5, 1.0 },
-        .width = 2,
-    } });
+    _ = try gui_state.addControl(&.{
+        gui.Component{ .panel = .{ 50, 50, 100, 100 } },
+        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
+        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
+    });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
@@ -75,17 +65,16 @@ pub fn main() !void {
                 input.Event.quit => run = false,
                 input.Event.window_size => |size| {
                     window.size = size;
-                    gui_properties.vpsize = size;
-                    gui_render_system.vpsize = size;
+                    gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
                 },
                 else => {},
             }
-            const gui_event = gui.InputSystem.process(gui_controls, event.?, gui_properties);
-            if (gui_event != null) {
-                gui.EventSystem.process(&gui_controls, gui_event.?);
-                std.debug.print("event = {}\n", .{gui_event.?});
-            }
+            //const gui_event = gui.InputSystem.process(gui_controls, event.?, gui_properties);
+            //if (gui_event != null) {
+            //    gui.EventSystem.process(&gui_controls, gui_event.?);
+            //    std.debug.print("event = {}\n", .{gui_event.?});
+            //}
         }
 
         // Рисование
@@ -96,7 +85,7 @@ pub fn main() !void {
 
         c.glDisable(c.GL_DEPTH_TEST);
 
-        gui_render_system.draw(gui_controls);
+        gui.RenderSystem.draw(gui_state);
 
         frame += 1;
 

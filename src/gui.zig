@@ -21,28 +21,23 @@ pub fn isRectAroundPoint(rect: Rect, point: Point) bool {
     }
 }
 
-pub const Component = union(enum) {
-    panel_color: struct {
-        rect: Rect,
-        color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
-    },
-    panel_border: struct {
-        rect: Rect,
-        color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
+pub const ComponentTag = enum(usize) {
+    panel,
+    color,
+    border,
+    input,
+    text,
+};
+
+pub const Component = union(ComponentTag) {
+    panel: Rect,
+    color: Color,
+    border: struct {
+        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
         width: i32 = 3,
     },
-    panel_input: struct {
-        rect: Rect,
+    input: struct {
         state: PanelInputState = .empty,
-    },
-    panel_input_color: struct {
-        rect: Rect,
-        state: PanelInputState = .empty,
-        color: [3]Color = .{
-            .{ 0.2, 0.2, 0.2, 1.0 },
-            .{ 0.3, 0.3, 0.3, 1.0 },
-            .{ 0.5, 0.5, 0.5, 1.0 },
-        },
     },
     text: struct {
         text: []const u16,
@@ -56,22 +51,35 @@ const PanelInputState = enum(usize) {
     press,
 };
 
-pub const ComponentId = usize;
 pub const ControlId = usize;
-pub const Control = std.ArrayList(Component);
+pub const Control = std.ArrayListUnmanaged(Component);
 pub const Controls = std.ArrayList(Control);
 
-pub const Properties = struct {
+pub fn getComponent(control: Control, comptime component_tag: ComponentTag) ?Component {
+    for (control.items) |component| {
+        if (@as(ComponentTag, component) == component_tag) {
+            return component;
+        }
+    }
+    return null;
+}
+
+pub fn addControl(controls: *Controls, components: []const Component) !ControlId {
+    try controls.*.append(Control.initCapacity(controls.allocator, components.len));
+    try controls.*.items[controls.items.len - 1].appendSlice(controls.allocator, components);
+    return controls.items.len - 1;
+}
+
+pub const State = struct {
+    controls: Controls,
     vpsize: Point = .{ 1200, 900 },
-};
+    render: struct {
+        rect_mesh: Mesh,
+        panel_color_program: glsl.Program,
+        panel_border_program: glsl.Program,
+    },
 
-pub const RenderSystem = struct {
-    vpsize: Point,
-    rect_mesh: Mesh,
-    panel_color_program: glsl.Program,
-    panel_border_program: glsl.Program,
-
-    pub fn init(allocator: std.mem.Allocator, properties: Properties) !RenderSystem {
+    pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
         const rect_mesh_vertices = [_]f32{
             0.0, 0.0, 0.0, 1.0,
             1.0, 0.0, 1.0, 1.0,
@@ -129,155 +137,136 @@ pub const RenderSystem = struct {
         try panel_border_program.addUniform("color");
         try panel_border_program.addUniform("width");
 
-        return RenderSystem{
-            .vpsize = properties.vpsize,
-            .rect_mesh = rect_mesh,
-            .panel_color_program = panel_color_program,
-            .panel_border_program = panel_border_program,
+        return State{
+            .controls = Controls.init(allocator),
+            .vpsize = vpsize,
+            .render = .{
+                .rect_mesh = rect_mesh,
+                .panel_color_program = panel_color_program,
+                .panel_border_program = panel_border_program,
+            },
         };
     }
 
-    pub fn deinit(self: RenderSystem) void {
-        self.rect_mesh.deinit();
-        self.panel_color_program.deinit();
-        self.panel_border_program.deinit();
+    pub fn deinit(self: State) void {
+        self.controls.deinit();
+        self.render.rect_mesh.deinit();
+        self.render.panel_color_program.deinit();
+        self.render.panel_border_program.deinit();
     }
 
-    pub fn draw(self: RenderSystem, controls: Controls) void {
-        for (controls.items) |control| {
-            for (control.items) |component| {
-                switch (component) {
-                    Component.panel_color => |panel| {
-                        self.panel_color_program.use();
-                        self.panel_color_program.setUniform(0, self.vpsize);
-                        self.panel_color_program.setUniform(1, panel.rect);
-                        self.panel_color_program.setUniform(2, panel.color);
-                        self.rect_mesh.draw();
-                    },
-                    Component.panel_border => |panel| {
-                        self.panel_border_program.use();
-                        self.panel_border_program.setUniform(0, self.vpsize);
-                        self.panel_border_program.setUniform(1, panel.rect);
-                        self.panel_border_program.setUniform(2, panel.color);
-                        self.panel_border_program.setUniform(3, panel.width);
-                        self.rect_mesh.draw();
-                    },
-                    Component.panel_input_color => |panel| {
-                        self.panel_color_program.use();
-                        self.panel_color_program.setUniform(0, self.vpsize);
-                        self.panel_color_program.setUniform(1, panel.rect);
-                        self.panel_color_program.setUniform(2, panel.color[@intFromEnum(panel.state)]);
-                        self.rect_mesh.draw();
-                    },
-                    Component.text => {},
-                    else => {},
+    pub fn addControl(self: *State, components: []const Component) !ControlId {
+        try self.controls.append(try Control.initCapacity(self.controls.allocator, components.len));
+        try self.controls.items[self.controls.items.len - 1].appendSlice(self.controls.allocator, components);
+        return self.controls.items.len - 1;
+    }
+};
+
+pub const RenderSystem = struct {
+    pub fn draw(state: State) void {
+        for (state.controls.items) |control| {
+            const panel = getComponent(control, ComponentTag.panel);
+            if (panel != null) {
+                for (control.items) |component| {
+                    switch (component) {
+                        Component.color => |color| {
+                            state.render.panel_color_program.use();
+                            state.render.panel_color_program.setUniform(0, state.vpsize);
+                            state.render.panel_color_program.setUniform(1, panel.?.panel);
+                            state.render.panel_color_program.setUniform(2, color);
+                            state.render.rect_mesh.draw();
+                        },
+                        Component.border => |border| {
+                            state.render.panel_border_program.use();
+                            state.render.panel_border_program.setUniform(0, state.vpsize);
+                            state.render.panel_border_program.setUniform(1, panel.?.panel);
+                            state.render.panel_border_program.setUniform(2, border.color);
+                            state.render.panel_border_program.setUniform(3, border.width);
+                            state.render.rect_mesh.draw();
+                        },
+                        Component.text => {},
+                        else => {},
+                    }
                 }
             }
         }
     }
 };
 
-pub const InputSystem = struct {
-    pub fn process(controls: Controls, input_event: input.Event, properties: Properties) ?Event {
-        for (controls.items, 0..) |control, control_id| {
-            for (control.items, 0..) |component, component_id| {
-                switch (component) {
-                    .panel_input => |panel| {
-                        switch (input_event) {
-                            .mouse_motion => |motion| {
-                                const point = Point{ motion[0], properties.vpsize[1] - motion[1] };
-                                if (panel.state == .empty and isRectAroundPoint(panel.rect, point)) {
-                                    return Event{ .panel_focussed = .{ .control = control_id, .component = component_id } };
-                                } else if (panel.state != .empty and !isRectAroundPoint(panel.rect, point)) {
-                                    return Event{ .panel_unfocussed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            .mouse_button_down => |button| {
-                                if (panel.state == .focus and button == .left) {
-                                    return Event{ .panel_pressed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            .mouse_button_up => |button| {
-                                if (panel.state == .press and button == .left) {
-                                    return Event{ .panel_unpressed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            else => {},
-                        }
-                    },
-                    .panel_input_color => |panel| {
-                        switch (input_event) {
-                            .mouse_motion => |motion| {
-                                const point = Point{ motion[0], properties.vpsize[1] - motion[1] };
-                                if (panel.state == .empty and isRectAroundPoint(panel.rect, point)) {
-                                    return Event{ .panel_focussed = .{ .control = control_id, .component = component_id } };
-                                } else if (panel.state != .empty and !isRectAroundPoint(panel.rect, point)) {
-                                    return Event{ .panel_unfocussed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            .mouse_button_down => |button| {
-                                if (panel.state == .focus and button == .left) {
-                                    return Event{ .panel_pressed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            .mouse_button_up => |button| {
-                                if (panel.state == .press and button == .left) {
-                                    return Event{ .panel_unpressed = .{ .control = control_id, .component = component_id } };
-                                }
-                            },
-                            else => {},
-                        }
-                    },
-                    else => {},
-                }
-            }
-        }
-        return null;
-    }
-};
-
-pub const Event = union(enum) {
-    panel_focussed: struct { control: ControlId, component: ComponentId },
-    panel_unfocussed: struct { control: ControlId, component: ComponentId },
-    panel_pressed: struct { control: ControlId, component: ComponentId },
-    panel_unpressed: struct { control: ControlId, component: ComponentId },
-};
-
-pub const EventSystem = struct {
-    pub fn process(controls: *Controls, event: Event) void {
-        switch (event) {
-            .panel_focussed => |id| {
-                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
-                    .panel_input => |*panel| &panel.state,
-                    .panel_input_color => |*panel| &panel.state,
-                    else => @panic("Invalid component type"),
-                };
-                if (state.* == .empty) state.* = .focus;
-            },
-            .panel_unfocussed => |id| {
-                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
-                    .panel_input => |*panel| &panel.state,
-                    .panel_input_color => |*panel| &panel.state,
-                    else => @panic("Invalid component type"),
-                };
-                state.* = .empty;
-            },
-            .panel_pressed => |id| {
-                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
-                    .panel_input => |*panel| &panel.state,
-                    .panel_input_color => |*panel| &panel.state,
-                    else => @panic("Invalid component type"),
-                };
-                if (state.* == .focus) state.* = .press;
-            },
-            .panel_unpressed => |id| {
-                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
-                    .panel_input => |*panel| &panel.state,
-                    .panel_input_color => |*panel| &panel.state,
-                    else => @panic("Invalid component type"),
-                };
-                if (state.* == .press) state.* = .focus;
-            },
-        }
-    }
-};
+// pub const InputSystem = struct {
+//    pub fn process(controls: Controls, input_event: input.Event) ?Event {
+//        for (controls.items, 0..) |control, control_id| {
+//            for (control.items, 0..) |component, component_id| {
+//                switch (component) {
+//                    inline .panel_input, .panel_input_color => |panel| {
+//                        switch (input_event) {
+//                            .mouse_motion => |motion| {
+//                                const point = Point{ motion[0], properties.vpsize[1] - motion[1] };
+//                                if (panel.state == .empty and isRectAroundPoint(panel.rect, point)) {
+//                                    return Event{ .panel_focussed = .{ .control = control_id, .component = component_id } };
+//                                } else if (panel.state != .empty and !isRectAroundPoint(panel.rect, point)) {
+//                                    return Event{ .panel_unfocussed = .{ .control = control_id, .component = component_id } };
+//                                }
+//                            },
+//                            .mouse_button_down => |button| {
+//                                if (panel.state == .focus and button == .left) {
+//                                    return Event{ .panel_pressed = .{ .control = control_id, .component = component_id } };
+//                                }
+//                            },
+//                            .mouse_button_up => |button| {
+//                                if (panel.state == .press and button == .left) {
+//                                    return Event{ .panel_unpressed = .{ .control = control_id, .component = component_id } };
+//                                }
+//                            },
+//                            else => {},
+//                        }
+//                    },
+//                    else => {},
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//};
+//
+//pub const Event = union(enum) {
+//    panel_focussed: struct { control: ControlId, component: ComponentId },
+//    panel_unfocussed: struct { control: ControlId, component: ComponentId },
+//    panel_pressed: struct { control: ControlId, component: ComponentId },
+//    panel_unpressed: struct { control: ControlId, component: ComponentId },
+//};
+//
+//pub const EventSystem = struct {
+//    pub fn process(controls: *Controls, event: Event) void {
+//        switch (event) {
+//            .panel_focussed => |id| {
+//                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
+//                    inline .panel_input, .panel_input_color => |*panel| &panel.state,
+//                    else => @panic("Invalid component type"),
+//                };
+//                if (state.* == .empty) state.* = .focus;
+//            },
+//            .panel_unfocussed => |id| {
+//                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
+//                    inline .panel_input, .panel_input_color => |*panel| &panel.state,
+//                    else => @panic("Invalid component type"),
+//                };
+//                state.* = .empty;
+//            },
+//            .panel_pressed => |id| {
+//                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
+//                    inline .panel_input, .panel_input_color => |*panel| &panel.state,
+//                    else => @panic("Invalid component type"),
+//                };
+//                if (state.* == .focus) state.* = .press;
+//            },
+//            .panel_unpressed => |id| {
+//                const state: *PanelInputState = switch (controls.*.items[id.control].items[id.component]) {
+//                    inline .panel_input, .panel_input_color => |*panel| &panel.state,
+//                    else => @panic("Invalid component type"),
+//                };
+//                if (state.* == .press) state.* = .focus;
+//            },
+//        }
+//    }
+//};
