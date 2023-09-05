@@ -12,7 +12,7 @@ pub const Component = union(enum) {
     velocity: Vec3,
 };
 
-pub const Entity = std.ArrayList(Component);
+pub const Entity = std.ArrayListUnmanaged(Component);
 pub const Entities = std.ArrayList(Entity);
 
 pub const World = struct {

@@ -22,33 +22,44 @@ pub fn isRectAroundPoint(rect: Rect, point: Point) bool {
 }
 
 pub const ComponentTag = enum(usize) {
-    panel,
+    rect,
+    alignment,
     color,
     border,
-    input,
     text,
+    button,
 };
 
 pub const Component = union(ComponentTag) {
-    panel: Rect,
+    rect: Rect,
+    alignment: struct {
+        horizontal: enum {
+            left,
+            center,
+            right,
+        } = .left,
+        vertical: enum {
+            bottom,
+            center,
+            top,
+        } = .bottom,
+    },
     color: Color,
     border: struct {
         color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
         width: i32 = 3,
     },
-    input: struct {
-        state: PanelInputState = .empty,
-    },
     text: struct {
         text: []const u16,
         color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
     },
-};
-
-const PanelInputState = enum(usize) {
-    empty,
-    focus,
-    press,
+    button: struct {
+        state: enum {
+            empty,
+            focus,
+            press,
+        } = .empty,
+    },
 };
 
 pub const ControlId = usize;
@@ -62,12 +73,6 @@ pub fn getComponent(control: Control, comptime component_tag: ComponentTag) ?Com
         }
     }
     return null;
-}
-
-pub fn addControl(controls: *Controls, components: []const Component) !ControlId {
-    try controls.*.append(Control.initCapacity(controls.allocator, components.len));
-    try controls.*.items[controls.items.len - 1].appendSlice(controls.allocator, components);
-    return controls.items.len - 1;
 }
 
 pub const State = struct {
@@ -165,28 +170,51 @@ pub const State = struct {
 pub const RenderSystem = struct {
     pub fn draw(state: State) void {
         for (state.controls.items) |control| {
-            const panel = getComponent(control, ComponentTag.panel);
-            if (panel != null) {
-                for (control.items) |component| {
-                    switch (component) {
-                        Component.color => |color| {
-                            state.render.panel_color_program.use();
-                            state.render.panel_color_program.setUniform(0, state.vpsize);
-                            state.render.panel_color_program.setUniform(1, panel.?.panel);
-                            state.render.panel_color_program.setUniform(2, color);
-                            state.render.rect_mesh.draw();
-                        },
-                        Component.border => |border| {
-                            state.render.panel_border_program.use();
-                            state.render.panel_border_program.setUniform(0, state.vpsize);
-                            state.render.panel_border_program.setUniform(1, panel.?.panel);
-                            state.render.panel_border_program.setUniform(2, border.color);
-                            state.render.panel_border_program.setUniform(3, border.width);
-                            state.render.rect_mesh.draw();
-                        },
-                        Component.text => {},
-                        else => {},
-                    }
+            var rect: Rect = undefined;
+            for (control.items) |component| {
+                switch (component) {
+                    Component.rect => |_rect| rect = _rect,
+                    Component.alignment => |alignment| {
+                        switch (alignment.horizontal) {
+                            .left => {},
+                            .center => {
+                                rect[0] += @divTrunc(state.vpsize[0], 2);
+                                rect[2] += @divTrunc(state.vpsize[0], 2);
+                            },
+                            .right => {
+                                rect[0] += state.vpsize[0];
+                                rect[2] += state.vpsize[0];
+                            },
+                        }
+                        switch (alignment.vertical) {
+                            .bottom => {},
+                            .center => {
+                                rect[1] += @divTrunc(state.vpsize[1], 2);
+                                rect[3] += @divTrunc(state.vpsize[1], 2);
+                            },
+                            .top => {
+                                rect[1] += state.vpsize[1];
+                                rect[3] += state.vpsize[1];
+                            },
+                        }
+                    },
+                    Component.color => |color| {
+                        state.render.panel_color_program.use();
+                        state.render.panel_color_program.setUniform(0, state.vpsize);
+                        state.render.panel_color_program.setUniform(1, rect);
+                        state.render.panel_color_program.setUniform(2, color);
+                        state.render.rect_mesh.draw();
+                    },
+                    Component.border => |border| {
+                        state.render.panel_border_program.use();
+                        state.render.panel_border_program.setUniform(0, state.vpsize);
+                        state.render.panel_border_program.setUniform(1, rect);
+                        state.render.panel_border_program.setUniform(2, border.color);
+                        state.render.panel_border_program.setUniform(3, border.width);
+                        state.render.rect_mesh.draw();
+                    },
+                    Component.text => {},
+                    else => {},
                 }
             }
         }

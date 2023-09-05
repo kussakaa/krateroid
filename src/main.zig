@@ -34,7 +34,21 @@ pub fn main() !void {
     defer gui_state.deinit();
 
     _ = try gui_state.addControl(&.{
-        gui.Component{ .panel = .{ 50, 50, 100, 100 } },
+        gui.Component{ .rect = .{ 50, 50, 100, 100 } },
+        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
+        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
+    });
+
+    _ = try gui_state.addControl(&.{
+        gui.Component{ .rect = .{ -50, 50, 50, 100 } },
+        gui.Component{ .alignment = .{ .horizontal = .center } },
+        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
+        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
+    });
+
+    _ = try gui_state.addControl(&.{
+        gui.Component{ .rect = .{ 50, -50, 100, 50 } },
+        gui.Component{ .alignment = .{ .vertical = .center } },
         gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
         gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
     });
