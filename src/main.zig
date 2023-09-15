@@ -14,6 +14,8 @@ const WINDOW_WIDTH = 1200;
 const WINDOW_HEIGHT = 900;
 
 pub fn main() !void {
+    std.debug.print("\n", .{});
+
     try sdl.init();
     defer sdl.deinit();
 
@@ -33,24 +35,13 @@ pub fn main() !void {
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
 
-    _ = try gui_state.addControl(&.{
-        gui.Component{ .rect = .{ 50, 50, 100, 100 } },
-        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
-        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
-    });
-
-    _ = try gui_state.addControl(&.{
-        gui.Component{ .rect = .{ -50, 50, 50, 100 } },
-        gui.Component{ .alignment = .{ .horizontal = .center } },
-        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
-        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
-    });
-
-    _ = try gui_state.addControl(&.{
-        gui.Component{ .rect = .{ 50, -50, 100, 50 } },
-        gui.Component{ .alignment = .{ .vertical = .center } },
-        gui.Component{ .color = .{ 1.0, 0.0, 0.0, 1.0 } },
-        gui.Component{ .border = .{ .color = .{ 0.0, 1.0, 0.0, 1.0 }, .width = 5 } },
+    _ = try gui_state.addControl(gui.Control{
+        .button = .{
+            .rect = .{
+                .min = .{ 10, 10 },
+                .max = .{ 40, 40 },
+            },
+        },
     });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
@@ -84,6 +75,7 @@ pub fn main() !void {
                 },
                 else => {},
             }
+
             //const gui_event = gui.InputSystem.process(gui_controls, event.?, gui_properties);
             //if (gui_event != null) {
             //    gui.EventSystem.process(&gui_controls, gui_event.?);

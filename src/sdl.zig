@@ -1,22 +1,19 @@
 const c = @import("c.zig");
 const std = @import("std");
-const print = std.debug.print;
-const panic = std.debug.panic;
-const log_enable = @import("log.zig").sdl_log_enable;
 const I32x2 = @import("linmath.zig").I32x2;
 const Event = @import("input.zig").Event;
 
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_EVERYTHING) < 0) {
-        panic("[!FAILED!]:[SDL2]:Initiased! {s}\n", .{c.SDL_GetError()});
+        std.log.err("failed init SDL: {s}", .{c.SDL_GetError()});
     } else {
-        if (log_enable) print("[*SUCCES*]:[SDL2]:Initialised\n", .{});
+        std.log.debug("init sdl", .{});
     }
 }
 
 pub fn deinit() void {
+    std.log.debug("deinit sdl", .{});
     c.SDL_Quit();
-    if (log_enable) print("[*SUCCES*]:[SDL2]:Destroyed\n", .{});
 }
 
 pub const Window = struct {
@@ -42,21 +39,22 @@ pub const Window = struct {
         );
 
         if (handle == null) {
-            panic("[!FAILED!]:[WINDOW]:Initialize: {s}", .{c.SDL_GetError()});
+            std.log.err("failed init window: {s}", .{c.SDL_GetError()});
         }
 
         const context = c.SDL_GL_CreateContext(handle);
         _ = c.SDL_GL_MakeCurrent(handle, context);
         if (c.gladLoadGLLoader(@as(c.GLADloadproc, @ptrCast(&c.SDL_GL_GetProcAddress))) == 0) {
-            panic("[!FAILED!]:[WINDOW]:[GLCONTEXT]:Initialised\n", .{});
+            std.log.err("failed init gl functions", .{});
         }
 
         _ = c.SDL_GL_SetSwapInterval(0);
 
         c.glViewport(0, 0, width, height);
 
-        if (log_enable) print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Initialised\n", .{title});
-        return Window{ .handle = handle, .context = context, .title = title, .size = I32x2{ width, height } };
+        const window = Window{ .handle = handle, .context = context, .title = title, .size = I32x2{ width, height } };
+        std.log.debug("init window = {}", .{window});
+        return window;
     }
 
     pub fn swap(self: Window) void {
@@ -64,7 +62,7 @@ pub const Window = struct {
     }
 
     pub fn deinit(self: Window) void {
-        if (log_enable) print("[*SUCCES*]:[WINDOW]:[Title:{s}]:Destroyed\n", .{self.title});
+        std.log.debug("deinit window = {}", .{self});
         c.SDL_DestroyWindow(self.handle);
         c.SDL_GL_DeleteContext(self.context);
     }

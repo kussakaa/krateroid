@@ -1,6 +1,5 @@
 const c = @import("c.zig");
 const std = @import("std");
-const log_enable = @import("log.zig").world_log_enable;
 const Allocator = std.mem.Allocator;
 const linmath = @import("linmath.zig");
 const Vec3 = linmath.F32x3;
