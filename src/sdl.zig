@@ -6,6 +6,7 @@ const Event = @import("input.zig").Event;
 pub fn init() !void {
     if (c.SDL_Init(c.SDL_INIT_EVERYTHING) < 0) {
         std.log.err("failed init SDL: {s}", .{c.SDL_GetError()});
+        return error.SDLInit;
     } else {
         std.log.debug("init sdl", .{});
     }
@@ -40,12 +41,14 @@ pub const Window = struct {
 
         if (handle == null) {
             std.log.err("failed init window: {s}", .{c.SDL_GetError()});
+            return error.WindowInit;
         }
 
         const context = c.SDL_GL_CreateContext(handle);
         _ = c.SDL_GL_MakeCurrent(handle, context);
         if (c.gladLoadGLLoader(@as(c.GLADloadproc, @ptrCast(&c.SDL_GL_GetProcAddress))) == 0) {
             std.log.err("failed init gl functions", .{});
+            return error.GLInit;
         }
 
         _ = c.SDL_GL_SetSwapInterval(0);

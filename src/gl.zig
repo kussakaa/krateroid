@@ -120,11 +120,6 @@ pub const Shader = struct {
         fragment,
     };
 
-    const Error = error{
-        Compilation,
-        OutOfMemory,
-    };
-
     id: u32, // индекс шейдера
 
     pub fn initFormFile(allocator: std.mem.Allocator, shader_path: []const u8, shader_type: Type) !Shader {
@@ -155,7 +150,7 @@ pub const Shader = struct {
             defer allocator.free(info_log);
             c.glGetShaderInfoLog(id, info_log_len, null, info_log.ptr);
             std.log.err("shader {} compilation: {s}\n", .{ id, info_log });
-            return Error.Compilation;
+            return error.ShaderCompilation;
         }
 
         const shader = Shader{ .id = id };
@@ -196,6 +191,7 @@ pub const Program = struct {
             defer allocator.free(info_log);
             c.glGetProgramInfoLog(id, info_log_len, null, info_log.ptr);
             std.log.err("program {} linkage: {s}", .{ id, info_log });
+            return error.ShaderProgramLinkage;
         }
 
         const program = Program{ .id = id, .uniforms = Uniforms.init(allocator) };
