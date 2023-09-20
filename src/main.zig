@@ -8,8 +8,6 @@ const input = @import("input.zig");
 const shape = @import("shape.zig");
 const world = @import("world.zig");
 
-const page_allocator = std.heap.page_allocator;
-
 const WINDOW_WIDTH = 1200;
 const WINDOW_HEIGHT = 900;
 
@@ -38,8 +36,8 @@ pub fn main() !void {
     _ = try gui_state.addControl(gui.Control{
         .button = .{
             .rect = .{
-                .min = .{ 10, 10 },
-                .max = .{ 40, 40 },
+                .min = .{ 32, 32 },
+                .max = .{ 64, 64 },
             },
         },
     });
@@ -69,6 +67,7 @@ pub fn main() !void {
             switch (event.?) {
                 input.Event.quit => run = false,
                 input.Event.window_size => |size| {
+                    std.log.debug("event: window resize = {}", .{size});
                     window.size = size;
                     gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
@@ -76,11 +75,10 @@ pub fn main() !void {
                 else => {},
             }
 
-            //const gui_event = gui.InputSystem.process(gui_controls, event.?, gui_properties);
-            //if (gui_event != null) {
-            //    gui.EventSystem.process(&gui_controls, gui_event.?);
-            //    std.debug.print("event = {}\n", .{gui_event.?});
-            //}
+            const gui_event = gui.InputSystem.process(&gui_state, event.?);
+            if (gui_event != null) {
+                std.debug.print("{}\n", .{gui_event.?});
+            }
         }
 
         // Рисование

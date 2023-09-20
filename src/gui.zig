@@ -10,7 +10,7 @@ pub const Rect = struct {
     max: Point,
 
     pub fn isAroundPoint(self: Rect, point: Point) bool {
-        if (self.min[0] < point[0] and self.max[2] > point[0] and self.min[1] < point[1] and self.max[3] > point[1]) {
+        if (self.min[0] <= point[0] and self.max[0] >= point[0] and self.min[1] <= point[1] and self.max[1] >= point[1]) {
             return true;
         } else {
             return false;
@@ -37,7 +37,7 @@ pub const ControlId = usize;
 pub const State = struct {
     controls: std.ArrayList(Control),
     vpsize: Point = .{ 1200, 900 },
-    scale: i32 = 1,
+    scale: i32 = 4,
     render: struct {
         rect: struct { mesh: gl.Mesh },
         button: struct {
@@ -75,16 +75,13 @@ pub const State = struct {
         );
         defer button_fragment.deinit();
 
-        var button_program = try gl.Program.init(
-            allocator,
-            &.{ button_vertex, button_fragment },
-        );
+        var button_program = try gl.Program.init(allocator, &.{ button_vertex, button_fragment });
 
         try button_program.addUniform("vpsize");
         try button_program.addUniform("rect");
         try button_program.addUniform("texsize");
 
-        return State{
+        const state = State{
             .controls = Controls.init(allocator),
             .vpsize = vpsize,
             .render = .{
@@ -99,15 +96,18 @@ pub const State = struct {
                 },
             },
         };
+        std.log.debug("gui init state = {}", .{state});
+        return state;
     }
 
     pub fn deinit(self: State) void {
-        self.controls.deinit();
-        self.render.rect.mesh.deinit();
-        self.render.button.program.deinit();
-        self.render.button.texture.empty.deinit();
-        self.render.button.texture.focus.deinit();
+        std.log.debug("gui deinit state = {}", .{self});
         self.render.button.texture.press.deinit();
+        self.render.button.texture.focus.deinit();
+        self.render.button.texture.empty.deinit();
+        self.render.button.program.deinit();
+        self.render.rect.mesh.deinit();
+        self.controls.deinit();
     }
 
     pub fn addControl(self: *State, control: Control) !ControlId {
@@ -122,26 +122,74 @@ pub const RenderSystem = struct {
             switch (control) {
                 Control.button => |button| {
                     state.render.button.program.use();
+                    state.render.button.program.setUniform(0, state.vpsize);
+                    state.render.button.program.setUniform(1, @Vector(4, i32){ button.rect.min[0], button.rect.min[1], button.rect.max[0], button.rect.max[1] });
                     switch (button.state) {
                         .empty => {
                             state.render.button.texture.empty.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.empty.size);
+                            state.render.button.program.setUniform(2, state.render.button.texture.empty.size * Point{ state.scale, state.scale });
                         },
                         .focus => {
                             state.render.button.texture.focus.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.focus.size);
+                            state.render.button.program.setUniform(2, state.render.button.texture.focus.size * Point{ state.scale, state.scale });
                         },
                         .press => {
                             state.render.button.texture.press.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.press.size);
+                            state.render.button.program.setUniform(2, state.render.button.texture.press.size * Point{ state.scale, state.scale });
                         },
                     }
-                    state.render.button.program.setUniform(0, state.vpsize);
-                    state.render.button.program.setUniform(1, @Vector(4, i32){ button.rect.min[0], button.rect.min[1], button.rect.max[0], button.rect.max[1] });
                     state.render.rect.mesh.draw();
                 },
                 //else => {},
             }
         }
+    }
+};
+
+pub const Event = union(enum) {
+    button_focus: usize,
+    button_unfocus: usize,
+    button_press: usize,
+    button_unpress: usize,
+};
+
+pub const InputSystem = struct {
+    pub fn process(state: *State, event: input.Event) ?Event {
+        for (state.*.controls.items, 0..) |*control, i| {
+            switch (event) {
+                input.Event.mouse_motion => |pos| switch (control.*) {
+                    .button => {
+                        if (control.*.button.rect.isAroundPoint(pos) and control.*.button.state == .empty) {
+                            control.*.button.state = .focus;
+                            return .{ .button_focus = i };
+                        } else if (!control.*.button.rect.isAroundPoint(pos) and control.*.button.state != .empty) {
+                            control.*.button.state = .empty;
+                            return .{ .button_unfocus = i };
+                        }
+                    },
+                    // else => {},
+                },
+                input.Event{ .mouse_button_down = .left } => switch (control.*) {
+                    .button => {
+                        if (control.*.button.state == .focus) {
+                            control.*.button.state = .press;
+                            return .{ .button_press = i };
+                        }
+                    },
+                    // else => {},
+                },
+                input.Event{ .mouse_button_up = .left } => switch (control.*) {
+                    .button => {
+                        if (control.*.button.state != .empty) {
+                            control.*.button.state = .focus;
+                            return .{ .button_unpress = i };
+                        }
+                    },
+                    // else => {},
+                },
+                else => {},
+            }
+        }
+        return null;
     }
 };
