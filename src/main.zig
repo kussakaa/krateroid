@@ -30,17 +30,25 @@ pub fn main() !void {
     c.glLineWidth(1);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
 
+    var input_state = input.State.init();
+
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
 
-    _ = try gui_state.addControl(gui.Control{
-        .button = .{
-            .rect = .{
-                .min = .{ 32, 32 },
-                .max = .{ 64, 64 },
-            },
-        },
-    });
+    _ = try gui_state.addControl(gui.Control{ .button = .{
+        .rect = .{ .min = .{ -16, 10 }, .max = .{ 16, 26 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+    } });
+
+    _ = try gui_state.addControl(gui.Control{ .button = .{
+        .rect = .{ .min = .{ -16, -8 }, .max = .{ 16, 8 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+    } });
+
+    _ = try gui_state.addControl(gui.Control{ .button = .{
+        .rect = .{ .min = .{ -16, -26 }, .max = .{ 16, -10 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+    } });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
@@ -64,6 +72,7 @@ pub fn main() !void {
         while (true) {
             const event = sdl.pollEvent();
             if (event == null) break;
+            input_state.process(event.?);
             switch (event.?) {
                 input.Event.quit => run = false,
                 input.Event.window_size => |size| {
@@ -72,13 +81,17 @@ pub fn main() !void {
                     gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
                 },
+                input.Event.key_down => |key| {
+                    switch (key) {
+                        c.SDLK_w => gui_state.scale += 1,
+                        c.SDLK_s => gui_state.scale -= 1,
+                        else => {},
+                    }
+                },
                 else => {},
             }
 
-            const gui_event = gui.InputSystem.process(&gui_state, event.?);
-            if (gui_event != null) {
-                std.debug.print("{}\n", .{gui_event.?});
-            }
+            gui.InputSystem.process(&gui_state, input_state);
         }
 
         // Рисование

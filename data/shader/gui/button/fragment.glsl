@@ -1,23 +1,26 @@
 #version 330 core
 
+uniform ivec2 vpsize;
+uniform int   scale;
 uniform ivec4 rect;
 uniform ivec2 texsize;
 
 uniform sampler2D button;
-
 in vec2 v_pos;
+out vec4 f_color;
 
-out vec4 fragcolor;
 void main()
 {
-    vec2 texcoord = vec2(0.5,0.5);
-    vec2 fragcoord = gl_FragCoord.xy;
+    vec2 f_coord = gl_FragCoord.xy;
 
-    if (fragcoord.x > rect.x && fragcoord.x < rect.x + texsize.x/2) texcoord.x = float(fragcoord.x - rect.x) / float(texsize.x);
-    if (fragcoord.x < rect.z && fragcoord.x > rect.z - texsize.x/2) texcoord.x = float(rect.z - fragcoord.x) / float(texsize.x);
+    vec2 tex_coord = vec2(0.5,0.5);
+    vec2 tex_size = vec2(texsize) * vec2(scale);
 
-    if (fragcoord.y > rect.y && fragcoord.y < rect.y + texsize.y/2) texcoord.y = float(fragcoord.y - rect.y) / float(texsize.y);
-    if (fragcoord.y < rect.w && fragcoord.y > rect.w - texsize.y/2) texcoord.y = float(rect.w - fragcoord.y) / float(texsize.y);
+    if (f_coord.x > rect.x && f_coord.x < rect.x + tex_size.x/2) tex_coord.x = float(f_coord.x - rect.x) / float(tex_size.x);
+    if (f_coord.x < rect.z && f_coord.x > rect.z - tex_size.x/2) tex_coord.x = float(rect.z - f_coord.x) / float(tex_size.x);
 
-    fragcolor = texture(button, texcoord);
+    if (f_coord.y > rect.y && f_coord.y < rect.y + tex_size.y/2) tex_coord.y = float(f_coord.y - rect.y) / float(tex_size.y);
+    if (f_coord.y < rect.w && f_coord.y > rect.w - tex_size.y/2) tex_coord.y = float(rect.w - f_coord.y) / float(tex_size.y);
+
+    f_color = texture(button, tex_coord);
 };

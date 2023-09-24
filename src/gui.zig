@@ -9,6 +9,22 @@ pub const Rect = struct {
     min: Point,
     max: Point,
 
+    pub fn vector(self: Rect) @Vector(4, i32) {
+        return .{
+            self.min[0],
+            self.min[1],
+            self.max[0],
+            self.max[1],
+        };
+    }
+
+    pub fn scale(self: Rect, s: i32) Rect {
+        return .{
+            .min = .{ self.min[0] * s, self.min[1] * s },
+            .max = .{ self.max[0] * s, self.max[1] * s },
+        };
+    }
+
     pub fn isAroundPoint(self: Rect, point: Point) bool {
         if (self.min[0] <= point[0] and self.max[0] >= point[0] and self.min[1] <= point[1] and self.max[1] >= point[1]) {
             return true;
@@ -22,6 +38,33 @@ pub const Control = union(enum) {
     pub const Alignment = struct {
         horizontal: enum { left, center, right } = .left,
         vertical: enum { bottom, center, top } = .bottom,
+
+        pub fn transform(self: Alignment, rect: Rect, vpsize: Point) Rect {
+            var result: Rect = rect;
+            switch (self.horizontal) {
+                .left => {},
+                .center => {
+                    result.min[0] = @divTrunc(vpsize[0], 2) + rect.min[0];
+                    result.max[0] = @divTrunc(vpsize[0], 2) + rect.max[0];
+                },
+                .right => {
+                    result.min[0] = vpsize[0] + rect.min[0];
+                    result.max[0] = vpsize[0] + rect.max[0];
+                },
+            }
+            switch (self.vertical) {
+                .bottom => {},
+                .center => {
+                    result.min[1] = @divTrunc(vpsize[1], 2) + rect.min[1];
+                    result.max[1] = @divTrunc(vpsize[1], 2) + rect.max[1];
+                },
+                .top => {
+                    result.min[1] = vpsize[1] + rect.min[1];
+                    result.max[1] = vpsize[1] + rect.max[1];
+                },
+            }
+            return result;
+        }
     };
 
     button: struct {
@@ -78,6 +121,7 @@ pub const State = struct {
         var button_program = try gl.Program.init(allocator, &.{ button_vertex, button_fragment });
 
         try button_program.addUniform("vpsize");
+        try button_program.addUniform("scale");
         try button_program.addUniform("rect");
         try button_program.addUniform("texsize");
 
@@ -123,19 +167,20 @@ pub const RenderSystem = struct {
                 Control.button => |button| {
                     state.render.button.program.use();
                     state.render.button.program.setUniform(0, state.vpsize);
-                    state.render.button.program.setUniform(1, @Vector(4, i32){ button.rect.min[0], button.rect.min[1], button.rect.max[0], button.rect.max[1] });
+                    state.render.button.program.setUniform(1, state.scale);
+                    state.render.button.program.setUniform(2, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
                     switch (button.state) {
                         .empty => {
                             state.render.button.texture.empty.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.empty.size * Point{ state.scale, state.scale });
+                            state.render.button.program.setUniform(3, state.render.button.texture.empty.size);
                         },
                         .focus => {
                             state.render.button.texture.focus.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.focus.size * Point{ state.scale, state.scale });
+                            state.render.button.program.setUniform(3, state.render.button.texture.focus.size);
                         },
                         .press => {
                             state.render.button.texture.press.use();
-                            state.render.button.program.setUniform(2, state.render.button.texture.press.size * Point{ state.scale, state.scale });
+                            state.render.button.program.setUniform(3, state.render.button.texture.press.size);
                         },
                     }
                     state.render.rect.mesh.draw();
@@ -154,42 +199,21 @@ pub const Event = union(enum) {
 };
 
 pub const InputSystem = struct {
-    pub fn process(state: *State, event: input.Event) ?Event {
-        for (state.*.controls.items, 0..) |*control, i| {
-            switch (event) {
-                input.Event.mouse_motion => |pos| switch (control.*) {
-                    .button => {
-                        if (control.*.button.rect.isAroundPoint(pos) and control.*.button.state == .empty) {
-                            control.*.button.state = .focus;
-                            return .{ .button_focus = i };
-                        } else if (!control.*.button.rect.isAroundPoint(pos) and control.*.button.state != .empty) {
-                            control.*.button.state = .empty;
-                            return .{ .button_unfocus = i };
+    pub fn process(state: *State, input_state: input.State) void {
+        for (state.*.controls.items) |*control| {
+            switch (control.*) {
+                .button => |*button| {
+                    if (button.alignment.transform(button.rect.scale(state.scale), state.vpsize).isAroundPoint(input_state.cursor.pos)) {
+                        button.state = .focus;
+
+                        if (button.state == .focus and input_state.mouse.buttons[@intFromEnum(input.Mouse.Button.left)]) {
+                            button.state = .press;
                         }
-                    },
-                    // else => {},
+                    } else {
+                        button.state = .empty;
+                    }
                 },
-                input.Event{ .mouse_button_down = .left } => switch (control.*) {
-                    .button => {
-                        if (control.*.button.state == .focus) {
-                            control.*.button.state = .press;
-                            return .{ .button_press = i };
-                        }
-                    },
-                    // else => {},
-                },
-                input.Event{ .mouse_button_up = .left } => switch (control.*) {
-                    .button => {
-                        if (control.*.button.state != .empty) {
-                            control.*.button.state = .focus;
-                            return .{ .button_unpress = i };
-                        }
-                    },
-                    // else => {},
-                },
-                else => {},
             }
         }
-        return null;
     }
 };
