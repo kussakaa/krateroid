@@ -5,31 +5,48 @@ pub const Mesh = struct {
     vbo: u32, // Объект буфера вершин
     vao: u32, // Объект аттрибутов вершин
     len: usize, // Количество вершин
-    mode: Mode = Mode.triangles, // режим рисования
+    params: Params,
 
-    pub const Mode = enum {
-        triangles,
-        lines,
+    const Params = struct {
+        usage: enum {
+            static,
+            dynamic,
+        } = .static,
+        mode: enum {
+            triangles,
+            lines,
+        } = .triangles,
     };
 
-    pub fn init(vertices: []const f32, attrs: []const u32) Mesh {
+    pub fn init(vertices: []const f32, attrs: []const u32, params: Params) !Mesh {
         var vertex_size: u32 = 0;
         for (attrs) |i| {
             vertex_size += i;
         }
 
-        var vao: u32 = undefined;
+        var vao: u32 = 0;
         c.glGenVertexArrays(1, &vao);
+        if (vao < 0) {
+            std.log.err("failed VAO generate");
+            return error.GenerateVAO;
+        }
         c.glBindVertexArray(vao);
 
-        var vbo: u32 = undefined;
+        var vbo: u32 = 0;
         c.glCreateBuffers(1, &vbo);
+        if (vbo < 0) {
+            std.log.err("failed VBO create");
+            return error.CreateVBO;
+        }
         c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
             @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
             @as(*const anyopaque, &vertices[0]),
-            c.GL_STATIC_DRAW,
+            switch (params.usage) {
+                .static => c.GL_STATIC_DRAW,
+                .dynamic => c.GL_STATIC_DRAW,
+            },
         );
 
         var offset: u32 = 0;
@@ -50,7 +67,12 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
         c.glBindVertexArray(0);
 
-        const mesh = Mesh{ .vbo = vbo, .vao = vao, .len = vertices.len / vertex_size };
+        const mesh = Mesh{
+            .vbo = vbo,
+            .vao = vao,
+            .len = vertices.len / vertex_size,
+            .params = params,
+        };
         std.log.debug("init mesh = {}", .{mesh});
         return mesh;
     }
@@ -61,31 +83,37 @@ pub const Mesh = struct {
         c.glDeleteBuffers(1, &self.vbo);
     }
 
+    pub fn subData(self: Mesh) !void {
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
+        c.glBufferSubData(c.GL_ARRAY_BUFFER);
+        c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
+    }
+
     pub fn draw(self: Mesh) void {
         c.glBindVertexArray(self.vao);
-        const mode: u32 = switch (self.mode) {
-            Mode.triangles => c.GL_TRIANGLES,
-            Mode.lines => c.GL_LINES,
+        const mode = switch (self.params.mode) {
+            .triangles => c.GL_TRIANGLES,
+            .lines => c.GL_LINES,
         };
-        c.glDrawArrays(mode, 0, @as(i32, @intCast(self.len)));
+        c.glDrawArrays(@intCast(mode), 0, @as(i32, @intCast(self.len)));
         c.glBindVertexArray(0);
     }
 };
 
 pub const Texture = struct {
-    const Params = struct {};
-
     id: u32 = 0,
     size: @Vector(2, i32),
+    channels: i32,
 
     pub fn init(path: []const u8) !Texture {
         var width: i32 = 0;
         var height: i32 = 0;
-        var cnt: i32 = 0;
-        const data = c.stbi_load(path.ptr, &width, &height, &cnt, 0);
+        var channels: i32 = 0;
+        const data = c.stbi_load(path.ptr, &width, &height, &channels, 0);
 
         if (data == null) {
-            std.debug.panic("failed load image in {s}\n", .{path});
+            std.log.err("failed image upload in path {s}", .{path});
+            return error.ImageUpload;
         }
 
         var id: u32 = 0;
@@ -96,11 +124,25 @@ pub const Texture = struct {
         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST);
         c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
-        c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGB, width, height, 0, c.GL_RGB, c.GL_UNSIGNED_BYTE, data);
+        const format = switch (channels) {
+            1 => c.GL_RED,
+            3 => c.GL_RGB,
+            4 => c.GL_RGBA,
+            else => {
+                std.log.err("invalid channels count {} in texture", .{channels});
+                return error.ChannelsCount;
+            },
+        };
+
+        c.glTexImage2D(c.GL_TEXTURE_2D, 0, @intCast(format), width, height, 0, @intCast(format), c.GL_UNSIGNED_BYTE, data);
         c.glBindTexture(c.GL_TEXTURE_2D, 0);
         c.stbi_image_free(data);
 
-        const texture = Texture{ .id = id, .size = .{ width, height } };
+        const texture = Texture{
+            .id = id,
+            .size = .{ width, height },
+            .channels = channels,
+        };
         std.log.debug("init texture = {}", .{texture});
         return texture;
     }
@@ -149,7 +191,7 @@ pub const Shader = struct {
             const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
             defer allocator.free(info_log);
             c.glGetShaderInfoLog(id, info_log_len, null, info_log.ptr);
-            std.log.err("shader {} compilation: {s}\n", .{ id, info_log });
+            std.log.err("shader {} compilation: <r>{s}\n", .{ id, info_log });
             return error.ShaderCompilation;
         }
 

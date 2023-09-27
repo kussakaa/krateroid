@@ -67,11 +67,20 @@ pub const Control = union(enum) {
         }
     };
 
-    button: struct {
+    pub const Text = struct {
+        rect: Point = .{ 0, 0 },
+        data: []const u16 = &.{},
+    };
+
+    pub const Button = struct {
         rect: Rect,
         alignment: Alignment = .{},
         state: enum { empty, focus, press } = .empty,
-    },
+        label: Text = .{},
+    };
+
+    label: Text,
+    button: Button,
 };
 
 pub const Controls = std.ArrayList(Control);
@@ -83,6 +92,10 @@ pub const State = struct {
     scale: i32 = 4,
     render: struct {
         rect: struct { mesh: gl.Mesh },
+        text: struct {
+            program: gl.Program,
+            texture: gl.Texture,
+        },
         button: struct {
             program: gl.Program,
             texture: struct {
@@ -94,15 +107,8 @@ pub const State = struct {
     },
 
     pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
-        const rect_mesh_vertices = [_]f32{
-            0.0, 0.0, 0.0, 1.0,
-            1.0, 0.0, 1.0, 1.0,
-            1.0, 1.0, 1.0, 0.0,
-            1.0, 1.0, 1.0, 0.0,
-            0.0, 1.0, 0.0, 0.0,
-            0.0, 0.0, 0.0, 1.0,
-        };
-        const rect_mesh = gl.Mesh.init(rect_mesh_vertices[0..], &.{ 2, 2 });
+        const rect_mesh_vertices = [_]f32{ 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0 };
+        const rect_mesh = try gl.Mesh.init(rect_mesh_vertices[0..], &.{2}, .{});
 
         const button_vertex = try gl.Shader.initFormFile(
             allocator,
@@ -119,7 +125,6 @@ pub const State = struct {
         defer button_fragment.deinit();
 
         var button_program = try gl.Program.init(allocator, &.{ button_vertex, button_fragment });
-
         try button_program.addUniform("vpsize");
         try button_program.addUniform("scale");
         try button_program.addUniform("rect");
@@ -130,6 +135,10 @@ pub const State = struct {
             .vpsize = vpsize,
             .render = .{
                 .rect = .{ .mesh = rect_mesh },
+                .text = .{
+                    .program = undefined,
+                    .texture = try gl.Texture.init("data/gui/font.png"),
+                },
                 .button = .{
                     .program = button_program,
                     .texture = .{
@@ -164,7 +173,7 @@ pub const RenderSystem = struct {
     pub fn draw(state: State) void {
         for (state.controls.items) |control| {
             switch (control) {
-                Control.button => |button| {
+                .button => |button| {
                     state.render.button.program.use();
                     state.render.button.program.setUniform(0, state.vpsize);
                     state.render.button.program.setUniform(1, state.scale);
@@ -185,17 +194,10 @@ pub const RenderSystem = struct {
                     }
                     state.render.rect.mesh.draw();
                 },
-                //else => {},
+                .label => {},
             }
         }
     }
-};
-
-pub const Event = union(enum) {
-    button_focus: usize,
-    button_unfocus: usize,
-    button_press: usize,
-    button_unpress: usize,
 };
 
 pub const InputSystem = struct {
@@ -213,7 +215,53 @@ pub const InputSystem = struct {
                         button.state = .empty;
                     }
                 },
+                .label => {},
             }
         }
+    }
+};
+
+pub const Event = union(enum) {
+    press: usize,
+    unpress: usize,
+    none,
+};
+
+pub const EventSystem = struct {
+    pub fn process(state: State, input_state: input.State, event: input.Event) Event {
+        switch (event) {
+            .mouse_button_down => |mouse_button_code| if (mouse_button_code == .left) {
+                for (state.controls.items, 0..) |control, i| {
+                    switch (control) {
+                        .button => |button| {
+                            if (button.alignment.transform(
+                                button.rect.scale(state.scale),
+                                state.vpsize,
+                            ).isAroundPoint(input_state.cursor.pos)) {
+                                return .{ .press = i };
+                            }
+                        },
+                        else => {},
+                    }
+                }
+            },
+            .mouse_button_up => |mouse_button_code| if (mouse_button_code == .left) {
+                for (state.controls.items, 0..) |control, i| {
+                    switch (control) {
+                        .button => |button| {
+                            if (button.alignment.transform(
+                                button.rect.scale(state.scale),
+                                state.vpsize,
+                            ).isAroundPoint(input_state.cursor.pos)) {
+                                return .{ .unpress = i };
+                            }
+                        },
+                        else => {},
+                    }
+                }
+            },
+            else => {},
+        }
+        return .none;
     }
 };

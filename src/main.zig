@@ -36,7 +36,7 @@ pub fn main() !void {
     defer gui_state.deinit();
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
-        .rect = .{ .min = .{ -16, 10 }, .max = .{ 16, 26 } },
+        .rect = .{ .min = .{ -16, 9 }, .max = .{ 16, 25 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
     } });
 
@@ -46,7 +46,7 @@ pub fn main() !void {
     } });
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
-        .rect = .{ .min = .{ -16, -26 }, .max = .{ 16, -10 } },
+        .rect = .{ .min = .{ -16, -25 }, .max = .{ 16, -9 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
     } });
 
@@ -71,12 +71,12 @@ pub fn main() !void {
 
         while (true) {
             const event = sdl.pollEvent();
-            if (event == null) break;
-            input_state.process(event.?);
-            switch (event.?) {
+            if (event == .none) break;
+            input_state.process(event);
+            //std.log.debug("event: {}", .{event.?});
+            switch (event) {
                 input.Event.quit => run = false,
                 input.Event.window_size => |size| {
-                    std.log.debug("event: window resize = {}", .{size});
                     window.size = size;
                     gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
@@ -91,7 +91,16 @@ pub fn main() !void {
                 else => {},
             }
 
-            gui.InputSystem.process(&gui_state, input_state);
+            const gui_event = gui.EventSystem.process(gui_state, input_state, event);
+            if (gui_event != .none) std.log.debug("gui event: {}", .{gui_event});
+
+            switch (gui_event) {
+                .unpress => |id| switch (id) {
+                    2 => run = false,
+                    else => {},
+                },
+                else => {},
+            }
         }
 
         // Рисование
@@ -102,6 +111,7 @@ pub fn main() !void {
 
         c.glDisable(c.GL_DEPTH_TEST);
 
+        gui.InputSystem.process(&gui_state, input_state);
         gui.RenderSystem.draw(gui_state);
 
         frame += 1;

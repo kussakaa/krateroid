@@ -71,9 +71,9 @@ pub const Window = struct {
     }
 };
 
-pub fn pollEvent() ?Event {
+pub fn pollEvent() Event {
     var sdl_event: c.SDL_Event = undefined;
-    if (c.SDL_PollEvent(&sdl_event) <= 0) return null;
+    if (c.SDL_PollEvent(&sdl_event) <= 0) return .none;
     return switch (sdl_event.type) {
         c.SDL_QUIT => Event.quit,
         c.SDL_KEYDOWN => Event{ .key_down = sdl_event.key.keysym.sym },
@@ -83,8 +83,8 @@ pub fn pollEvent() ?Event {
         c.SDL_MOUSEBUTTONUP => Event{ .mouse_button_up = @enumFromInt(sdl_event.button.button) },
         c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
             c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window_size = I32x2{ sdl_event.window.data1, sdl_event.window.data2 } },
-            else => Event.none,
+            else => .none,
         },
-        else => Event.none,
+        else => .none,
     };
 }
