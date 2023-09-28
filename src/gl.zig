@@ -83,9 +83,14 @@ pub const Mesh = struct {
         c.glDeleteBuffers(1, &self.vbo);
     }
 
-    pub fn subData(self: Mesh) !void {
+    pub fn update(self: Mesh, vertices: []const f32) !void {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
-        c.glBufferSubData(c.GL_ARRAY_BUFFER);
+        c.glBufferSubData(
+            c.GL_ARRAY_BUFFER,
+            0,
+            @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
+            @as(*const anyopaque, &vertices[0]),
+        );
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
     }
 
@@ -208,25 +213,22 @@ pub const Shader = struct {
 
 pub const Program = struct {
     pub const Uniform = i32;
-    pub const Uniforms = std.ArrayList(Uniform);
 
     id: u32, // индекс шейдерной программы
-    uniforms: Uniforms, // список юниформ программы
+    uniforms: [16]Uniform, // список юниформ программы
 
-    pub fn init(allocator: std.mem.Allocator, shaders: []const Shader) !Program {
+    pub fn init(allocator: std.mem.Allocator, shaders: []const Shader, comptime uniform_names: []const [*c]const u8) !Program {
         const id = c.glCreateProgram();
         for (shaders) |shader| {
             c.glAttachShader(id, shader.id);
         }
-
         // компоновка шейдерной программы
         c.glLinkProgram(id);
 
+        // вывод ошибки если программа не скомпоновалась
         var succes: i32 = 1;
         c.glGetProgramiv(id, c.GL_LINK_STATUS, &succes);
-
-        // вывод ошибки если программа не скомпоновалась
-        if (succes == 0) {
+        if (succes <= 0) {
             var info_log_len: i32 = 0;
             c.glGetProgramiv(id, c.GL_INFO_LOG_LENGTH, &info_log_len);
             const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
@@ -236,7 +238,17 @@ pub const Program = struct {
             return error.ShaderProgramLinkage;
         }
 
-        const program = Program{ .id = id, .uniforms = Uniforms.init(allocator) };
+        var uniforms: [16]Uniform = [1]Uniform{0} ** 16;
+        for (uniform_names, 0..) |name, i| {
+            const location = @as(i32, @intCast(c.glGetUniformLocation(id, name)));
+            if (location < 0) {
+                std.log.err("failed finding uniform {s} in program {}", .{ name, id });
+                return error.UniformNotFound;
+            }
+            uniforms[i] = location;
+        }
+
+        const program = Program{ .id = id, .uniforms = uniforms };
         std.log.debug("init shader program = {}", .{program});
         return program;
     }
@@ -244,25 +256,15 @@ pub const Program = struct {
     pub fn deinit(self: Program) void {
         std.log.debug("deinit shader program = {}", .{self});
         c.glDeleteProgram(self.id);
-        self.uniforms.deinit();
     }
 
     pub fn use(self: Program) void {
         c.glUseProgram(self.id);
     }
 
-    // получение идентификатора юниформы
-    pub fn addUniform(self: *Program, name: [*c]const u8) !void {
-        const location = @as(i32, @intCast(c.glGetUniformLocation(self.id, name)));
-        if (location < 0) {
-            std.log.warn("failed finding uniform {s} in program {}", .{ name, self });
-        }
-        try self.uniforms.append(location);
-    }
-
     // отправление значение в шейдер по идентификатору юниформы
     pub fn setUniform(self: Program, index: usize, value: anytype) void {
-        const uniform = self.uniforms.items[index];
+        const uniform = self.uniforms[index];
         switch (comptime @TypeOf(value)) {
             f32 => c.glUniform1f(uniform, value),
             comptime_float => c.glUniform1f(uniform, value),

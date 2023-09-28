@@ -103,6 +103,8 @@ pub fn main() !void {
             }
         }
 
+        gui.InputSystem.process(&gui_state, input_state);
+
         // Рисование
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.0, 0.0, 0.0, 1.0);
@@ -111,7 +113,6 @@ pub fn main() !void {
 
         c.glDisable(c.GL_DEPTH_TEST);
 
-        gui.InputSystem.process(&gui_state, input_state);
         gui.RenderSystem.draw(gui_state);
 
         frame += 1;

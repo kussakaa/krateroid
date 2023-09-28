@@ -107,8 +107,19 @@ pub const State = struct {
     },
 
     pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
-        const rect_mesh_vertices = [_]f32{ 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0 };
-        const rect_mesh = try gl.Mesh.init(rect_mesh_vertices[0..], &.{2}, .{});
+        const text_vertex = try gl.Shader.initFormFile(
+            allocator,
+            "data/shader/gui/text/vertex.glsl",
+            gl.Shader.Type.vertex,
+        );
+        defer text_vertex.deinit();
+
+        const text_fragment = try gl.Shader.initFormFile(
+            allocator,
+            "data/shader/gui/text/fragment.glsl",
+            gl.Shader.Type.fragment,
+        );
+        defer text_fragment.deinit();
 
         const button_vertex = try gl.Shader.initFormFile(
             allocator,
@@ -124,23 +135,31 @@ pub const State = struct {
         );
         defer button_fragment.deinit();
 
-        var button_program = try gl.Program.init(allocator, &.{ button_vertex, button_fragment });
-        try button_program.addUniform("vpsize");
-        try button_program.addUniform("scale");
-        try button_program.addUniform("rect");
-        try button_program.addUniform("texsize");
-
         const state = State{
             .controls = Controls.init(allocator),
             .vpsize = vpsize,
             .render = .{
-                .rect = .{ .mesh = rect_mesh },
+                .rect = .{
+                    .mesh = try gl.Mesh.init(
+                        &.{ 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0 },
+                        &.{2},
+                        .{},
+                    ),
+                },
                 .text = .{
-                    .program = undefined,
+                    .program = try gl.Program.init(
+                        allocator,
+                        &.{ text_vertex, text_fragment },
+                        &.{ "matrix", "color" },
+                    ),
                     .texture = try gl.Texture.init("data/gui/font.png"),
                 },
                 .button = .{
-                    .program = button_program,
+                    .program = try gl.Program.init(
+                        allocator,
+                        &.{ button_vertex, button_fragment },
+                        &.{ "vpsize", "scale", "rect", "texsize" },
+                    ),
                     .texture = .{
                         .empty = try gl.Texture.init("data/gui/button/empty.png"),
                         .focus = try gl.Texture.init("data/gui/button/focus.png"),
@@ -159,6 +178,8 @@ pub const State = struct {
         self.render.button.texture.focus.deinit();
         self.render.button.texture.empty.deinit();
         self.render.button.program.deinit();
+        self.render.text.texture.deinit();
+        self.render.text.program.deinit();
         self.render.rect.mesh.deinit();
         self.controls.deinit();
     }
