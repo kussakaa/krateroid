@@ -8,10 +8,10 @@ pub const I32x3 = @Vector(3, i32);
 pub const I32x2 = @Vector(2, i32);
 pub const Mat = [4]F32x4;
 pub const MatIdentity = Mat{
-    @Vector(4, f32){ 1.0, 0.0, 0.0, 0.0 },
-    @Vector(4, f32){ 0.0, 1.0, 0.0, 0.0 },
-    @Vector(4, f32){ 0.0, 0.0, 1.0, 0.0 },
-    @Vector(4, f32){ 0.0, 0.0, 0.0, 1.0 },
+    .{ 1.0, 0.0, 0.0, 0.0 },
+    .{ 0.0, 1.0, 0.0, 0.0 },
+    .{ 0.0, 0.0, 1.0, 0.0 },
+    .{ 0.0, 0.0, 0.0, 1.0 },
 };
 pub const Quat = F32x4;
 

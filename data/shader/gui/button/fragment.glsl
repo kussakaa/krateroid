@@ -1,6 +1,5 @@
 #version 330 core
 
-uniform ivec2 vpsize;
 uniform int   scale;
 uniform ivec4 rect;
 uniform ivec2 texsize;

@@ -1,6 +1,7 @@
 const std = @import("std");
 const input = @import("input.zig");
 const gl = @import("gl.zig");
+const linmath = @import("linmath.zig");
 
 pub const Color = @Vector(4, f32);
 pub const Point = @Vector(2, i32);
@@ -8,6 +9,10 @@ pub const Point = @Vector(2, i32);
 pub const Rect = struct {
     min: Point,
     max: Point,
+
+    pub fn size(self: Rect) Point {
+        return self.max - self.min;
+    }
 
     pub fn vector(self: Rect) @Vector(4, i32) {
         return .{
@@ -68,7 +73,7 @@ pub const Control = union(enum) {
     };
 
     pub const Text = struct {
-        rect: Point = .{ 0, 0 },
+        pos: Point = .{ 0, 0 },
         data: []const u16 = &.{},
     };
 
@@ -88,10 +93,12 @@ pub const ControlId = usize;
 
 pub const State = struct {
     controls: std.ArrayList(Control),
-    vpsize: Point = .{ 1200, 900 },
-    scale: i32 = 4,
+    vpsize: Point,
+    scale: i32,
     render: struct {
-        rect: struct { mesh: gl.Mesh },
+        rect: struct {
+            mesh: gl.Mesh,
+        },
         text: struct {
             program: gl.Program,
             texture: gl.Texture,
@@ -138,6 +145,7 @@ pub const State = struct {
         const state = State{
             .controls = Controls.init(allocator),
             .vpsize = vpsize,
+            .scale = 4,
             .render = .{
                 .rect = .{
                     .mesh = try gl.Mesh.init(
@@ -158,7 +166,7 @@ pub const State = struct {
                     .program = try gl.Program.init(
                         allocator,
                         &.{ button_vertex, button_fragment },
-                        &.{ "vpsize", "scale", "rect", "texsize" },
+                        &.{ "matrix", "scale", "rect", "texsize" },
                     ),
                     .texture = .{
                         .empty = try gl.Texture.init("data/gui/button/empty.png"),
@@ -195,8 +203,26 @@ pub const RenderSystem = struct {
         for (state.controls.items) |control| {
             switch (control) {
                 .button => |button| {
+                    const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
+                    const size = button.rect.scale(state.scale).size();
+                    const matrix = linmath.Mat{
+                        .{
+                            @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
+                            0.0,
+                            0.0,
+                            -1.0 + @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
+                        },
+                        .{
+                            0.0,
+                            @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
+                            0.0,
+                            -1.0 + @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
+                        },
+                        .{ 0.0, 0.0, 1.0, 0.0 },
+                        .{ 0.0, 0.0, 0.0, 1.0 },
+                    };
                     state.render.button.program.use();
-                    state.render.button.program.setUniform(0, state.vpsize);
+                    state.render.button.program.setUniform(0, matrix);
                     state.render.button.program.setUniform(1, state.scale);
                     state.render.button.program.setUniform(2, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
                     switch (button.state) {
