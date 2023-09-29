@@ -38,16 +38,19 @@ pub fn main() !void {
     _ = try gui_state.addControl(gui.Control{ .button = .{
         .rect = .{ .min = .{ -16, 9 }, .max = .{ 16, 25 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("абв")),
     } });
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
         .rect = .{ .min = .{ -16, -8 }, .max = .{ 16, 8 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("иди нахуй")),
     } });
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
         .rect = .{ .min = .{ -16, -25 }, .max = .{ 16, -9 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("чмо")),
     } });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));

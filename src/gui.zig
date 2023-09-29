@@ -72,19 +72,99 @@ pub const Control = union(enum) {
         }
     };
 
-    pub const Text = struct {
-        pos: Point = .{ 0, 0 },
-        data: []const u16 = &.{},
+    pub const Label = struct {
+        pos: Point,
+        size: Point,
+        mesh: gl.Mesh,
+
+        pub fn init(data: []const u16) !Label {
+            var advance: i32 = 0;
+            var vertices: [9216]f32 = [1]f32{0.0} ** 9216;
+            if (data.len > 512) return error.TextSizeOverflow;
+            var i: usize = 0;
+            for (data) |char| {
+                if (char == ' ') {
+                    advance += 3;
+                    continue;
+                }
+                var glyph: Glyph = glyphs[0];
+                for (glyphs) |pglyph| {
+                    if (char == glyph.code) glyph = pglyph;
+                }
+
+                // XY
+                vertices[i + (4 * 0) + 0] = 0.0;
+                vertices[i + (4 * 0) + 1] = 0.0;
+                vertices[i + (4 * 1) + 0] = 1.0; //@as(f32, @floatFromInt(glyph.width));
+                vertices[i + (4 * 1) + 1] = 0.0;
+                vertices[i + (4 * 2) + 0] = 1.0; //@as(f32, @floatFromInt(glyph.width));
+                vertices[i + (4 * 2) + 1] = 8.0;
+                vertices[i + (4 * 3) + 0] = 1.0; //@as(f32, @floatFromInt(glyph.width));
+                vertices[i + (4 * 3) + 1] = 8.0;
+                vertices[i + (4 * 4) + 0] = 0.0;
+                vertices[i + (4 * 4) + 1] = 8.0;
+                vertices[i + (4 * 5) + 0] = 0.0;
+                vertices[i + (4 * 5) + 1] = 0.0;
+
+                // UV
+                vertices[i + (4 * 0) + 2] = 0.0;
+                vertices[i + (4 * 0) + 3] = 1.0;
+                vertices[i + (4 * 1) + 2] = 1.0;
+                vertices[i + (4 * 1) + 3] = 1.0;
+                vertices[i + (4 * 2) + 2] = 1.0;
+                vertices[i + (4 * 2) + 3] = 0.0;
+                vertices[i + (4 * 3) + 2] = 1.0;
+                vertices[i + (4 * 3) + 3] = 0.0;
+                vertices[i + (4 * 4) + 2] = 0.0;
+                vertices[i + (4 * 4) + 3] = 0.0;
+                vertices[i + (4 * 5) + 2] = 0.0;
+                vertices[i + (4 * 5) + 3] = 1.0;
+
+                advance += glyph.width + 1;
+                i += 1;
+            }
+
+            return Label{
+                .pos = .{ 0, 0 },
+                .size = .{ advance, 0 },
+                .mesh = try gl.Mesh.init(&.{
+                    0.0, 0.0, 0.0, 1.0,
+                    1.0, 0.0, 1.0, 1.0,
+                    1.0, 1.0, 1.0, 0.0,
+                    1.0, 1.0, 1.0, 0.0,
+                    0.0, 1.0, 0.0, 0.0,
+                    0.0, 0.0, 0.0, 1.0,
+                }, &.{ 2, 2 }, .{ .usage = .static }),
+            };
+        }
+
+        pub fn deinit(self: Label) void {
+            self.mesh.deinit();
+        }
+
+        const Glyph = struct {
+            code: u16,
+            pos: i32,
+            width: i32,
+        };
+
+        const glyphs = [_]Glyph{
+            .{ .code = '#', .pos = 0, .width = 5 },
+            .{ .code = 'а', .pos = 5, .width = 3 },
+            .{ .code = 'б', .pos = 8, .width = 3 },
+            .{ .code = 'в', .pos = 12, .width = 3 },
+            .{ .code = 'г', .pos = 15, .width = 3 },
+        };
     };
 
     pub const Button = struct {
         rect: Rect,
         alignment: Alignment = .{},
         state: enum { empty, focus, press } = .empty,
-        label: Text = .{},
+        label: Label,
     };
 
-    label: Text,
+    label: Label,
     button: Button,
 };
 
@@ -99,9 +179,11 @@ pub const State = struct {
         rect: struct {
             mesh: gl.Mesh,
         },
-        text: struct {
-            program: gl.Program,
+        font: struct {
             texture: gl.Texture,
+        },
+        label: struct {
+            program: gl.Program,
         },
         button: struct {
             program: gl.Program,
@@ -114,19 +196,19 @@ pub const State = struct {
     },
 
     pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
-        const text_vertex = try gl.Shader.initFormFile(
+        const label_vertex = try gl.Shader.initFormFile(
             allocator,
-            "data/shader/gui/text/vertex.glsl",
+            "data/shader/gui/label/vertex.glsl",
             gl.Shader.Type.vertex,
         );
-        defer text_vertex.deinit();
+        defer label_vertex.deinit();
 
-        const text_fragment = try gl.Shader.initFormFile(
+        const label_fragment = try gl.Shader.initFormFile(
             allocator,
-            "data/shader/gui/text/fragment.glsl",
+            "data/shader/gui/label/fragment.glsl",
             gl.Shader.Type.fragment,
         );
-        defer text_fragment.deinit();
+        defer label_fragment.deinit();
 
         const button_vertex = try gl.Shader.initFormFile(
             allocator,
@@ -154,13 +236,15 @@ pub const State = struct {
                         .{},
                     ),
                 },
-                .text = .{
+                .font = .{
+                    .texture = try gl.Texture.init("data/gui/font.png"),
+                },
+                .label = .{
                     .program = try gl.Program.init(
                         allocator,
-                        &.{ text_vertex, text_fragment },
+                        &.{ label_vertex, label_fragment },
                         &.{ "matrix", "color" },
                     ),
-                    .texture = try gl.Texture.init("data/gui/font.png"),
                 },
                 .button = .{
                     .program = try gl.Program.init(
@@ -186,9 +270,15 @@ pub const State = struct {
         self.render.button.texture.focus.deinit();
         self.render.button.texture.empty.deinit();
         self.render.button.program.deinit();
-        self.render.text.texture.deinit();
-        self.render.text.program.deinit();
+        self.render.font.texture.deinit();
+        self.render.label.program.deinit();
         self.render.rect.mesh.deinit();
+        for (self.controls.items) |control| {
+            switch (control) {
+                .label => control.label.deinit(),
+                .button => control.button.label.deinit(),
+            }
+        }
         self.controls.deinit();
     }
 
@@ -202,6 +292,7 @@ pub const RenderSystem = struct {
     pub fn draw(state: State) void {
         for (state.controls.items) |control| {
             switch (control) {
+                .label => {},
                 .button => |button| {
                     const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
                     const size = button.rect.scale(state.scale).size();
@@ -240,8 +331,13 @@ pub const RenderSystem = struct {
                         },
                     }
                     state.render.rect.mesh.draw();
+
+                    state.render.label.program.use();
+                    state.render.label.program.setUniform(0, linmath.MatIdentity);
+                    state.render.label.program.setUniform(1, Color{ 1.0, 1.0, 1.0, 1.0 });
+                    state.render.font.texture.use();
+                    button.label.mesh.draw();
                 },
-                .label => {},
             }
         }
     }

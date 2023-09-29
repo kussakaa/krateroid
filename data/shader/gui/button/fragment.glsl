@@ -5,7 +5,6 @@ uniform ivec4 rect;
 uniform ivec2 texsize;
 
 uniform sampler2D button;
-in vec2 v_pos;
 out vec4 f_color;
 
 void main()
