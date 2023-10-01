@@ -36,21 +36,21 @@ pub fn main() !void {
     defer gui_state.deinit();
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
-        .rect = .{ .min = .{ -16, 9 }, .max = .{ 16, 25 } },
+        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
-        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("абв")),
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("играть")),
     } });
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
-        .rect = .{ .min = .{ -16, -8 }, .max = .{ 16, 8 } },
+        .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
-        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("иди нахуй")),
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("настройки")),
     } });
 
     _ = try gui_state.addControl(gui.Control{ .button = .{
-        .rect = .{ .min = .{ -16, -25 }, .max = .{ 16, -9 } },
+        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
-        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("чмо")),
+        .label = try gui.Control.Label.init(std.unicode.utf8ToUtf16LeStringLiteral("выход")),
     } });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
@@ -84,10 +84,10 @@ pub fn main() !void {
                     gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
                 },
-                input.Event.key_down => |key| {
+                input.Event.keyboard_key_down => |key| {
                     switch (key) {
-                        c.SDLK_w => gui_state.scale += 1,
-                        c.SDLK_s => gui_state.scale -= 1,
+                        c.SDL_SCANCODE_W => gui_state.scale += 1,
+                        c.SDL_SCANCODE_S => gui_state.scale -= 1,
                         else => {},
                     }
                 },

@@ -4,25 +4,23 @@ pub const Point = @Vector(2, i32);
 
 pub const Event = union(enum) {
     quit,
-    key_down: Keyboard.Key,
-    key_up: Keyboard.Key,
-    mouse_button_down: Mouse.Button,
-    mouse_button_up: Mouse.Button,
+    keyboard_key_down: u32,
+    keyboard_key_up: u32,
+    mouse_button_down: u32,
+    mouse_button_up: u32,
     mouse_motion: Point,
     window_size: Point,
     none,
 };
 
 pub const Keyboard = struct {
-    pub const Key = i32;
-    keys: [1024]bool = [1]bool{false} ** 1024,
+    pub const Key = u32;
+    keys: [512]bool = [1]bool{false} ** 512,
 };
 
 pub const Mouse = struct {
-    pub const Button = enum(usize) {
-        left = 1,
-        middle = 2,
-        right = 3,
+    pub const Button = struct {
+        const Code = u32;
     };
     buttons: [9]bool = [1]bool{false} ** 9,
 };
@@ -49,8 +47,10 @@ pub const State = struct {
 
     pub fn process(self: *State, event: Event) void {
         switch (event) {
-            .mouse_button_down => |button| self.mouse.buttons[@intFromEnum(button)] = true,
-            .mouse_button_up => |button| self.mouse.buttons[@intFromEnum(button)] = false,
+            .keyboard_key_down => |key| self.keyboard.keys[@intCast(key)] = true,
+            .keyboard_key_up => |key| self.keyboard.keys[@intCast(key)] = false,
+            .mouse_button_down => |button| self.mouse.buttons[@intCast(button)] = true,
+            .mouse_button_up => |button| self.mouse.buttons[@intCast(button)] = false,
             .mouse_motion => |pos| self.cursor.pos = .{ pos[0], self.viewport.size[1] - pos[1] },
             .window_size => |size| self.viewport.size = size,
             else => {},
