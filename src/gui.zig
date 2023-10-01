@@ -253,7 +253,7 @@ pub const State = struct {
         const state = State{
             .controls = Controls.init(allocator),
             .vpsize = vpsize,
-            .scale = 4,
+            .scale = 3,
             .render = .{
                 .rect = .{
                     .mesh = try gl.Mesh.init(
@@ -358,7 +358,7 @@ pub const RenderSystem = struct {
                     }
                     state.render.rect.mesh.draw();
 
-                    const label_pos = pos + (button.rect.size() - button.label.size) * Point{ @divTrunc(state.scale, 2), @divTrunc(state.scale, 2) };
+                    const label_pos = pos + (@divTrunc(button.rect.size() - button.label.size, Point{ 2, 2 })) * Point{ state.scale, state.scale };
                     const matrix_label = linmath.Mat{
                         .{
                             @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
