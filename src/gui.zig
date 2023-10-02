@@ -75,9 +75,10 @@ pub const Control = union(enum) {
     pub const Text = struct {
         pos: Point,
         size: Point,
+        color: Color,
         mesh: gl.Mesh,
 
-        pub fn init(state: State, data: []const u16) !Text {
+        pub fn init(state: State, pos: Point, color: Color, data: []const u16) !Text {
             var advance: i32 = 0;
             if (data.len > 512) return error.TextSizeOverflow;
             var i: usize = 0;
@@ -87,47 +88,48 @@ pub const Control = union(enum) {
                     continue;
                 }
 
-                const pos = state.render.text.positions[c];
-                const width = state.render.text.widths[c];
+                const char_pos = state.render.text.positions[c];
+                const char_width = state.render.text.widths[c];
                 const tex_width = state.render.text.texture.size[0];
 
                 vertices[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 0) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 0) + 3] = 1.0; // V
 
-                vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
+                vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
                 vertices[i * 24 + (4 * 1) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 1) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 1) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 1) + 3] = 1.0; // V
 
-                vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
+                vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
                 vertices[i * 24 + (4 * 2) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 2) + 3] = 0.0; // V
 
-                vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
+                vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
                 vertices[i * 24 + (4 * 3) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 3) + 3] = 0.0; // V
 
                 vertices[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 4) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 4) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 4) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 4) + 3] = 0.0; // V
 
                 vertices[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 5) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
+                vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 5) + 3] = 1.0; // V
 
-                advance += width + 1;
+                advance += char_width + 1;
                 i += 1;
             }
 
             return Text{
-                .pos = .{ 0, 0 },
+                .pos = pos,
                 .size = .{ advance - 1, 8 },
+                .color = color,
                 .mesh = try gl.Mesh.init(vertices[0..(i * 24)], &.{ 2, 2 }, .{ .usage = .static }),
             };
         }
@@ -141,9 +143,22 @@ pub const Control = union(enum) {
 
     pub const Button = struct {
         rect: Rect,
-        alignment: Alignment = .{},
-        state: enum { empty, focus, press } = .empty,
+        alignment: Alignment,
+        state: enum(u8) { empty, focus, press },
         text: Text,
+
+        pub fn init(state: State, rect: Rect, alignment: Alignment, text: []const u16) !Button {
+            return Button{
+                .rect = rect,
+                .alignment = alignment,
+                .state = .empty,
+                .text = try Text.init(state, .{ 0, 0 }, .{ 1.0, 1.0, 1.0, 1.0 }, text),
+            };
+        }
+
+        pub fn deinit(self: Button) void {
+            self.text.deinit();
+        }
     };
 
     text: Text,
@@ -169,11 +184,7 @@ pub const State = struct {
         },
         button: struct {
             program: gl.Program,
-            texture: struct {
-                empty: gl.Texture,
-                focus: gl.Texture,
-                press: gl.Texture,
-            },
+            textures: [3]gl.Texture,
         },
     },
 
@@ -361,10 +372,10 @@ pub const State = struct {
                         &.{ button_vertex, button_fragment },
                         &.{ "matrix", "scale", "rect", "texsize" },
                     ),
-                    .texture = .{
-                        .empty = try gl.Texture.init("data/gui/button/empty.png"),
-                        .focus = try gl.Texture.init("data/gui/button/focus.png"),
-                        .press = try gl.Texture.init("data/gui/button/press.png"),
+                    .textures = .{
+                        try gl.Texture.init("data/gui/button/empty.png"),
+                        try gl.Texture.init("data/gui/button/focus.png"),
+                        try gl.Texture.init("data/gui/button/press.png"),
                     },
                 },
             },
@@ -375,9 +386,9 @@ pub const State = struct {
 
     pub fn deinit(self: State) void {
         std.log.debug("gui deinit state = {}", .{self});
-        self.render.button.texture.press.deinit();
-        self.render.button.texture.focus.deinit();
-        self.render.button.texture.empty.deinit();
+        for (self.render.button.textures) |texture| {
+            texture.deinit();
+        }
         self.render.button.program.deinit();
         self.render.text.texture.deinit();
         self.render.text.program.deinit();
@@ -385,7 +396,7 @@ pub const State = struct {
         for (self.controls.items) |control| {
             switch (control) {
                 .text => control.text.deinit(),
-                .button => control.button.text.deinit(),
+                .button => control.button.deinit(),
             }
         }
         self.controls.deinit();
@@ -401,66 +412,44 @@ pub const RenderSystem = struct {
     pub fn draw(state: State) void {
         for (state.controls.items) |control| {
             switch (control) {
-                .text => {},
+                .text => |text| {
+                    const pos = text.pos * Point{ state.scale, state.scale };
+                    var matrix: linmath.Mat = linmath.MatIdentity;
+                    matrix[0][0] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
+                    matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
+                    matrix[1][1] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;
+                    matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0;
+                    state.render.text.program.use();
+                    state.render.text.program.setUniform(0, matrix);
+                    state.render.text.program.setUniform(1, text.color);
+                    state.render.text.texture.use();
+                    text.mesh.draw();
+                },
                 .button => |button| {
                     const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
                     const size = button.rect.scale(state.scale).size();
-                    const matrix = linmath.Mat{
-                        .{
-                            @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
-                            0.0,
-                            0.0,
-                            -1.0 + @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
-                        },
-                        .{
-                            0.0,
-                            @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
-                            0.0,
-                            -1.0 + @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
-                        },
-                        .{ 0.0, 0.0, 1.0, 0.0 },
-                        .{ 0.0, 0.0, 0.0, 1.0 },
-                    };
+                    var matrix: linmath.Mat = linmath.MatIdentity;
+                    matrix[0][0] = @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
+                    matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
+                    matrix[1][1] = @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;
+                    matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0;
                     state.render.button.program.use();
                     state.render.button.program.setUniform(0, matrix);
                     state.render.button.program.setUniform(1, state.scale);
                     state.render.button.program.setUniform(2, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
-                    switch (button.state) {
-                        .empty => {
-                            state.render.button.texture.empty.use();
-                            state.render.button.program.setUniform(3, state.render.button.texture.empty.size);
-                        },
-                        .focus => {
-                            state.render.button.texture.focus.use();
-                            state.render.button.program.setUniform(3, state.render.button.texture.focus.size);
-                        },
-                        .press => {
-                            state.render.button.texture.press.use();
-                            state.render.button.program.setUniform(3, state.render.button.texture.press.size);
-                        },
-                    }
+                    state.render.button.textures[@intFromEnum(button.state)].use();
+                    state.render.button.program.setUniform(3, state.render.button.textures[@intFromEnum(button.state)].size);
                     state.render.rect.mesh.draw();
 
                     const text_pos = pos + (@divTrunc(button.rect.size() - button.text.size, Point{ 2, 2 })) * Point{ state.scale, state.scale };
-                    const matrix_text = linmath.Mat{
-                        .{
-                            @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
-                            0.0,
-                            0.0,
-                            @as(f32, @floatFromInt(text_pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0,
-                        },
-                        .{
-                            0.0,
-                            @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
-                            0.0,
-                            @as(f32, @floatFromInt(text_pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0,
-                        },
-                        .{ 0.0, 0.0, 1.0, 0.0 },
-                        .{ 0.0, 0.0, 0.0, 1.0 },
-                    };
+                    var matrix_text: linmath.Mat = linmath.MatIdentity;
+                    matrix_text[0][0] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
+                    matrix_text[0][3] = @as(f32, @floatFromInt(text_pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
+                    matrix_text[1][1] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;
+                    matrix_text[1][3] = @as(f32, @floatFromInt(text_pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0;
                     state.render.text.program.use();
                     state.render.text.program.setUniform(0, matrix_text);
-                    state.render.text.program.setUniform(1, Color{ 1.0, 1.0, 1.0, 1.0 });
+                    state.render.text.program.setUniform(1, button.text.color);
                     state.render.text.texture.use();
                     button.text.mesh.draw();
                 },
