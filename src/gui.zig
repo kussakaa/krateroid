@@ -72,125 +72,81 @@ pub const Control = union(enum) {
         }
     };
 
-    pub const Label = struct {
+    pub const Text = struct {
         pos: Point,
         size: Point,
         mesh: gl.Mesh,
 
-        pub fn init(data: []const u16) !Label {
+        pub fn init(state: State, data: []const u16) !Text {
             var advance: i32 = 0;
             if (data.len > 512) return error.TextSizeOverflow;
             var i: usize = 0;
-            for (data) |char| {
-                if (char == ' ') {
+            for (data) |c| {
+                if (c == ' ') {
                     advance += 3;
                     continue;
                 }
-                var glyph: Glyph = glyphs[0];
-                for (glyphs) |pglyph| {
-                    if (char == pglyph.code) glyph = pglyph;
-                }
+
+                const pos = state.render.text.positions[c];
+                const width = state.render.text.widths[c];
+                const tex_width = state.render.text.texture.size[0];
 
                 vertices[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 0) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(glyph.pos)) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 0) + 3] = 1.0; // V
 
-                vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(glyph.width)); // X
+                vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
                 vertices[i * 24 + (4 * 1) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 1) + 2] = (@as(f32, @floatFromInt(glyph.pos)) + @as(f32, @floatFromInt(glyph.width))) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 1) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 1) + 3] = 1.0; // V
 
-                vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(glyph.width)); // X
+                vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
                 vertices[i * 24 + (4 * 2) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(glyph.pos)) + @as(f32, @floatFromInt(glyph.width))) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 2) + 3] = 0.0; // V
 
-                vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(glyph.width)); // X
+                vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(width)); // X
                 vertices[i * 24 + (4 * 3) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(glyph.pos)) + @as(f32, @floatFromInt(glyph.width))) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(pos)) + @as(f32, @floatFromInt(width))) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 3) + 3] = 0.0; // V
 
                 vertices[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 4) + 1] = 8.0; // Y
-                vertices[i * 24 + (4 * 4) + 2] = @as(f32, @floatFromInt(glyph.pos)) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 4) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 4) + 3] = 0.0; // V
 
                 vertices[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(advance)); // X
                 vertices[i * 24 + (4 * 5) + 1] = 0.0; // Y
-                vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(glyph.pos)) / @as(f32, @floatFromInt(glyphs_width)); // U
+                vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(pos)) / @as(f32, @floatFromInt(tex_width)); // U
                 vertices[i * 24 + (4 * 5) + 3] = 1.0; // V
 
-                advance += glyph.width + 1;
+                advance += width + 1;
                 i += 1;
             }
 
-            return Label{
+            return Text{
                 .pos = .{ 0, 0 },
                 .size = .{ advance - 1, 8 },
                 .mesh = try gl.Mesh.init(vertices[0..(i * 24)], &.{ 2, 2 }, .{ .usage = .static }),
             };
         }
 
-        pub fn deinit(self: Label) void {
+        pub fn deinit(self: Text) void {
             self.mesh.deinit();
         }
 
-        const Glyph = struct {
-            code: u16,
-            pos: i32,
-            width: i32,
-        };
-
         var vertices: [9216]f32 = [1]f32{0.0} ** 9216;
-
-        const glyphs_width = 128;
-        const glyphs = [_]Glyph{
-            .{ .code = ' ', .pos = 0, .width = 3 },
-            .{ .code = 'а', .pos = 3, .width = 3 },
-            .{ .code = 'б', .pos = 6, .width = 3 },
-            .{ .code = 'в', .pos = 9, .width = 3 },
-            .{ .code = 'г', .pos = 12, .width = 3 },
-            .{ .code = 'д', .pos = 15, .width = 5 },
-            .{ .code = 'е', .pos = 20, .width = 3 },
-            .{ .code = 'ё', .pos = 23, .width = 3 },
-            .{ .code = 'ж', .pos = 26, .width = 5 },
-            .{ .code = 'з', .pos = 31, .width = 3 },
-            .{ .code = 'и', .pos = 34, .width = 4 },
-            .{ .code = 'й', .pos = 38, .width = 4 },
-            .{ .code = 'к', .pos = 42, .width = 3 },
-            .{ .code = 'л', .pos = 45, .width = 3 },
-            .{ .code = 'м', .pos = 48, .width = 5 },
-            .{ .code = 'н', .pos = 53, .width = 3 },
-            .{ .code = 'о', .pos = 56, .width = 3 },
-            .{ .code = 'п', .pos = 59, .width = 3 },
-            .{ .code = 'р', .pos = 62, .width = 3 },
-            .{ .code = 'с', .pos = 65, .width = 3 },
-            .{ .code = 'т', .pos = 68, .width = 3 },
-            .{ .code = 'у', .pos = 71, .width = 3 },
-            .{ .code = 'ф', .pos = 74, .width = 5 },
-            .{ .code = 'х', .pos = 79, .width = 3 },
-            .{ .code = 'ц', .pos = 82, .width = 4 },
-            .{ .code = 'ч', .pos = 86, .width = 3 },
-            .{ .code = 'ш', .pos = 89, .width = 5 },
-            .{ .code = 'щ', .pos = 94, .width = 5 },
-            .{ .code = 'ъ', .pos = 99, .width = 4 },
-            .{ .code = 'ы', .pos = 103, .width = 5 },
-            .{ .code = 'ь', .pos = 108, .width = 3 },
-            .{ .code = 'э', .pos = 111, .width = 4 },
-            .{ .code = 'ю', .pos = 115, .width = 5 },
-            .{ .code = 'я', .pos = 120, .width = 3 },
-        };
     };
 
     pub const Button = struct {
         rect: Rect,
         alignment: Alignment = .{},
         state: enum { empty, focus, press } = .empty,
-        label: Label,
+        text: Text,
     };
 
-    label: Label,
+    text: Text,
     button: Button,
 };
 
@@ -205,11 +161,11 @@ pub const State = struct {
         rect: struct {
             mesh: gl.Mesh,
         },
-        font: struct {
-            texture: gl.Texture,
-        },
-        label: struct {
+        text: struct {
+            positions: [2048]i32,
+            widths: [2048]i32,
             program: gl.Program,
+            texture: gl.Texture,
         },
         button: struct {
             program: gl.Program,
@@ -222,19 +178,146 @@ pub const State = struct {
     },
 
     pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
-        const label_vertex = try gl.Shader.initFormFile(
+        var widths: [2048]i32 = [1]i32{3} ** 2048;
+        widths['!'] = 1;
+        widths['#'] = 5;
+        widths['\''] = 1;
+        widths['('] = 2;
+        widths[')'] = 2;
+        widths[','] = 1;
+        widths['-'] = 2;
+        widths['.'] = 1;
+        widths['1'] = 2;
+        widths[':'] = 1;
+        widths[';'] = 1;
+        widths['@'] = 4;
+        widths['i'] = 1;
+        widths['m'] = 5;
+        widths['n'] = 4;
+        widths['['] = 2;
+        widths[']'] = 2;
+        widths['ж'] = 5;
+        widths['и'] = 4;
+        widths['й'] = 4;
+        widths['м'] = 5;
+        widths['ф'] = 4;
+        widths['ц'] = 4;
+        widths['ш'] = 5;
+        widths['щ'] = 5;
+        widths['ъ'] = 4;
+        widths['ы'] = 5;
+        widths['э'] = 4;
+        widths['ю'] = 5;
+
+        var positions: [2048]i32 = [1]i32{0} ** 2048;
+        positions['!'] = 3;
+        positions['"'] = 4;
+        positions['#'] = 7;
+        positions['$'] = 12;
+        positions['\''] = 15;
+        positions['('] = 16;
+        positions[')'] = 18;
+        positions['*'] = 20;
+        positions['+'] = 23;
+        positions[','] = 26;
+        positions['-'] = 27;
+        positions['.'] = 29;
+        positions['/'] = 30;
+        positions['0'] = 33;
+        positions['1'] = 36;
+        positions['2'] = 38;
+        positions['3'] = 41;
+        positions['4'] = 44;
+        positions['5'] = 47;
+        positions['6'] = 50;
+        positions['7'] = 53;
+        positions['8'] = 56;
+        positions['9'] = 59;
+        positions[':'] = 62;
+        positions[';'] = 63;
+        positions['<'] = 64;
+        positions['='] = 67;
+        positions['>'] = 70;
+        positions['?'] = 73;
+        positions['@'] = 76;
+        positions['a'] = 81;
+        positions['b'] = 84;
+        positions['c'] = 87;
+        positions['d'] = 90;
+        positions['e'] = 93;
+        positions['f'] = 96;
+        positions['g'] = 99;
+        positions['h'] = 102;
+        positions['i'] = 105;
+        positions['j'] = 106;
+        positions['k'] = 109;
+        positions['l'] = 112;
+        positions['m'] = 115;
+        positions['n'] = 120;
+        positions['o'] = 124;
+        positions['p'] = 127;
+        positions['q'] = 130;
+        positions['r'] = 133;
+        positions['s'] = 136;
+        positions['t'] = 139;
+        positions['u'] = 142;
+        positions['v'] = 145;
+        positions['w'] = 148;
+        positions['x'] = 153;
+        positions['y'] = 156;
+        positions['z'] = 159;
+        positions['['] = 162;
+        positions['\\'] = 164;
+        positions[']'] = 167;
+        positions['^'] = 169;
+        positions['_'] = 172;
+        positions['а'] = 81;
+        positions['б'] = 175;
+        positions['в'] = 84;
+        positions['г'] = 178;
+        positions['д'] = 181;
+        positions['е'] = 93;
+        positions['ё'] = 186;
+        positions['ж'] = 189;
+        positions['з'] = 194;
+        positions['и'] = 197;
+        positions['й'] = 201;
+        positions['к'] = 109;
+        positions['л'] = 205;
+        positions['м'] = 115;
+        positions['н'] = 102;
+        positions['о'] = 124;
+        positions['п'] = 208;
+        positions['р'] = 127;
+        positions['с'] = 87;
+        positions['т'] = 139;
+        positions['у'] = 156;
+        positions['ф'] = 211;
+        positions['х'] = 153;
+        positions['ц'] = 216;
+        positions['ч'] = 220;
+        positions['ш'] = 223;
+        positions['щ'] = 228;
+        positions['ъ'] = 233;
+        positions['ы'] = 237;
+        positions['ь'] = 242;
+        positions['э'] = 245;
+        positions['ю'] = 249;
+        positions['я'] = 25;
+
+        const text_vertex = try gl.Shader.initFormFile(
             allocator,
-            "data/shader/gui/label/vertex.glsl",
+            "data/shader/gui/text/vertex.glsl",
             gl.Shader.Type.vertex,
         );
-        defer label_vertex.deinit();
+        defer text_vertex.deinit();
 
-        const label_fragment = try gl.Shader.initFormFile(
+        const text_fragment = try gl.Shader.initFormFile(
             allocator,
-            "data/shader/gui/label/fragment.glsl",
+            "data/shader/gui/text/fragment.glsl",
             gl.Shader.Type.fragment,
         );
-        defer label_fragment.deinit();
+        defer text_fragment.deinit();
 
         const button_vertex = try gl.Shader.initFormFile(
             allocator,
@@ -262,15 +345,15 @@ pub const State = struct {
                         .{},
                     ),
                 },
-                .font = .{
-                    .texture = try gl.Texture.init("data/gui/font.png"),
-                },
-                .label = .{
+                .text = .{
                     .program = try gl.Program.init(
                         allocator,
-                        &.{ label_vertex, label_fragment },
+                        &.{ text_vertex, text_fragment },
                         &.{ "matrix", "color" },
                     ),
+                    .texture = try gl.Texture.init("data/gui/text/font.png"),
+                    .positions = positions,
+                    .widths = widths,
                 },
                 .button = .{
                     .program = try gl.Program.init(
@@ -296,13 +379,13 @@ pub const State = struct {
         self.render.button.texture.focus.deinit();
         self.render.button.texture.empty.deinit();
         self.render.button.program.deinit();
-        self.render.font.texture.deinit();
-        self.render.label.program.deinit();
+        self.render.text.texture.deinit();
+        self.render.text.program.deinit();
         self.render.rect.mesh.deinit();
         for (self.controls.items) |control| {
             switch (control) {
-                .label => control.label.deinit(),
-                .button => control.button.label.deinit(),
+                .text => control.text.deinit(),
+                .button => control.button.text.deinit(),
             }
         }
         self.controls.deinit();
@@ -318,7 +401,7 @@ pub const RenderSystem = struct {
     pub fn draw(state: State) void {
         for (state.controls.items) |control| {
             switch (control) {
-                .label => {},
+                .text => {},
                 .button => |button| {
                     const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
                     const size = button.rect.scale(state.scale).size();
@@ -358,28 +441,28 @@ pub const RenderSystem = struct {
                     }
                     state.render.rect.mesh.draw();
 
-                    const label_pos = pos + (@divTrunc(button.rect.size() - button.label.size, Point{ 2, 2 })) * Point{ state.scale, state.scale };
-                    const matrix_label = linmath.Mat{
+                    const text_pos = pos + (@divTrunc(button.rect.size() - button.text.size, Point{ 2, 2 })) * Point{ state.scale, state.scale };
+                    const matrix_text = linmath.Mat{
                         .{
                             @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0,
                             0.0,
                             0.0,
-                            @as(f32, @floatFromInt(label_pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0,
+                            @as(f32, @floatFromInt(text_pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0,
                         },
                         .{
                             0.0,
                             @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0,
                             0.0,
-                            @as(f32, @floatFromInt(label_pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0,
+                            @as(f32, @floatFromInt(text_pos[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0 - 1.0,
                         },
                         .{ 0.0, 0.0, 1.0, 0.0 },
                         .{ 0.0, 0.0, 0.0, 1.0 },
                     };
-                    state.render.label.program.use();
-                    state.render.label.program.setUniform(0, matrix_label);
-                    state.render.label.program.setUniform(1, Color{ 1.0, 1.0, 1.0, 1.0 });
-                    state.render.font.texture.use();
-                    button.label.mesh.draw();
+                    state.render.text.program.use();
+                    state.render.text.program.setUniform(0, matrix_text);
+                    state.render.text.program.setUniform(1, Color{ 1.0, 1.0, 1.0, 1.0 });
+                    state.render.text.texture.use();
+                    button.text.mesh.draw();
                 },
             }
         }
@@ -401,7 +484,7 @@ pub const InputSystem = struct {
                         button.state = .empty;
                     }
                 },
-                .label => {},
+                .text => {},
             }
         }
     }
