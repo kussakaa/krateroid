@@ -2,6 +2,8 @@ const std = @import("std");
 const input = @import("input.zig");
 const gl = @import("gl.zig");
 const linmath = @import("linmath.zig");
+const Mat = linmath.Mat;
+const Vec = linmath.Vec;
 
 pub const Color = @Vector(4, f32);
 pub const Point = @Vector(2, i32);
@@ -207,6 +209,7 @@ pub const State = struct {
         widths['n'] = 4;
         widths['['] = 2;
         widths[']'] = 2;
+        widths['д'] = 5;
         widths['ж'] = 5;
         widths['и'] = 4;
         widths['й'] = 4;
@@ -414,7 +417,7 @@ pub const RenderSystem = struct {
             switch (control) {
                 .text => |text| {
                     const pos = text.pos * Point{ state.scale, state.scale };
-                    var matrix: linmath.Mat = linmath.MatIdentity;
+                    var matrix: Mat = linmath.identity(Mat);
                     matrix[0][0] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
                     matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
                     matrix[1][1] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;
@@ -428,7 +431,7 @@ pub const RenderSystem = struct {
                 .button => |button| {
                     const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
                     const size = button.rect.scale(state.scale).size();
-                    var matrix: linmath.Mat = linmath.MatIdentity;
+                    var matrix: Mat = linmath.identity(Mat);
                     matrix[0][0] = @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
                     matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
                     matrix[1][1] = @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;
@@ -442,7 +445,7 @@ pub const RenderSystem = struct {
                     state.render.rect.mesh.draw();
 
                     const text_pos = pos + (@divTrunc(button.rect.size() - button.text.size, Point{ 2, 2 })) * Point{ state.scale, state.scale };
-                    var matrix_text: linmath.Mat = linmath.MatIdentity;
+                    var matrix_text: Mat = linmath.identity(Mat);
                     matrix_text[0][0] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0;
                     matrix_text[0][3] = @as(f32, @floatFromInt(text_pos[0])) / @as(f32, @floatFromInt(state.vpsize[0])) * 2.0 - 1.0;
                     matrix_text[1][1] = @as(f32, @floatFromInt(state.scale)) / @as(f32, @floatFromInt(state.vpsize[1])) * 2.0;

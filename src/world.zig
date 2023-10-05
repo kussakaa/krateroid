@@ -2,29 +2,33 @@ const c = @import("c.zig");
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 const linmath = @import("linmath.zig");
+const ChunkPos = @Vector(3, i32);
 const Vec3 = linmath.F32x3;
-const I32x2 = linmath.I32x2;
 
-pub const Component = union(enum) {
-    position: Vec3,
-    rotation: Vec3,
-    velocity: Vec3,
+pub const State = struct {
+    allocator: Allocator,
+    chunks: std.ArrayListUnmanaged(Chunk),
+
+    pub const Chunk = struct {
+        blocks: [width * width * width]Block,
+        pub const width = 32;
+
+        pub const Block = enum {
+            air,
+            stone,
+        };
+    };
 };
 
-pub const Entity = std.ArrayListUnmanaged(Component);
-pub const Entities = std.ArrayList(Entity);
+pub const RenderSystem = struct {};
 
 pub const World = struct {
-    allocator: Allocator,
     seed: u32 = 0,
-    chunks: std.ArrayList(Chunk) = std.ArrayList(Chunk).init(std.heap.page_allocator),
-    entities: Entities,
 
     pub fn init(allocator: Allocator) World {
         return World{
             .allocator = allocator,
             .chunks = std.ArrayList(Chunk).init(allocator),
-            .entities = Entities.init(allocator),
         };
     }
 

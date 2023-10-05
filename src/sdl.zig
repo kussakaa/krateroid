@@ -1,6 +1,6 @@
 const c = @import("c.zig");
 const std = @import("std");
-const I32x2 = @import("linmath.zig").I32x2;
+const Point = @Vector(2, i32);
 const Event = @import("input.zig").Event;
 
 pub fn init() !void {
@@ -21,7 +21,7 @@ pub const Window = struct {
     handle: ?*c.SDL_Window,
     context: c.SDL_GLContext,
     title: [*c]const u8,
-    size: I32x2,
+    size: Point,
 
     pub fn init(title: [*c]const u8, width: i32, height: i32) !Window {
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_FLAGS, c.SDL_GL_CONTEXT_PROFILE_CORE);
@@ -55,7 +55,7 @@ pub const Window = struct {
 
         c.glViewport(0, 0, width, height);
 
-        const window = Window{ .handle = handle, .context = context, .title = title, .size = I32x2{ width, height } };
+        const window = Window{ .handle = handle, .context = context, .title = title, .size = Point{ width, height } };
         std.log.debug("init window = {}", .{window});
         return window;
     }
@@ -80,9 +80,9 @@ pub fn pollEvent() Event {
         c.SDL_KEYUP => Event{ .keyboard_key_up = sdl_event.key.keysym.scancode },
         c.SDL_MOUSEBUTTONDOWN => Event{ .mouse_button_down = sdl_event.button.button },
         c.SDL_MOUSEBUTTONUP => Event{ .mouse_button_up = sdl_event.button.button },
-        c.SDL_MOUSEMOTION => Event{ .mouse_motion = I32x2{ sdl_event.motion.x, sdl_event.motion.y } },
+        c.SDL_MOUSEMOTION => Event{ .mouse_motion = Point{ sdl_event.motion.x, sdl_event.motion.y } },
         c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
-            c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window_size = I32x2{ sdl_event.window.data1, sdl_event.window.data2 } },
+            c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window_size = Point{ sdl_event.window.data1, sdl_event.window.data2 } },
             else => .none,
         },
         else => .none,

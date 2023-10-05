@@ -1,102 +1,44 @@
-const math = @import("std").math;
+pub const Vec = @Vector(4, f32);
+pub const VecComponent = enum { x, y, z, w };
+pub const Mat = [4]Vec;
+pub const Quat = Vec;
 
-pub const F32x4 = @Vector(4, f32);
-pub const F32x3 = @Vector(3, f32);
-pub const F32x2 = @Vector(2, f32);
-pub const I32x4 = @Vector(4, i32);
-pub const I32x3 = @Vector(3, i32);
-pub const I32x2 = @Vector(2, i32);
-pub const Mat = [4]F32x4;
-pub const MatIdentity = Mat{
-    .{ 1.0, 0.0, 0.0, 0.0 },
-    .{ 0.0, 1.0, 0.0, 0.0 },
-    .{ 0.0, 0.0, 1.0, 0.0 },
-    .{ 0.0, 0.0, 0.0, 1.0 },
-};
-pub const Quat = F32x4;
-
-// нормализовывание вектора
-pub fn normalize(v: F32x3) F32x3 {
-    const len = math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
-    return .{ v[0] / len, v[1] / len, v[2] / len };
-}
-
-// векторное произведение
-pub fn cross(v1: F32x3, v2: F32x3) F32x3 {
-    return F32x3{
-        v1[1] * v2[2] - v1[2] * v2[1],
-        v1[0] * v2[2] - v1[2] * v2[0],
-        v1[0] * v2[1] - v1[1] * v2[0],
+pub inline fn identity(comptime T: type) T {
+    return switch (T) {
+        Mat => .{
+            .{ 1.0, 0.0, 0.0, 0.0 },
+            .{ 0.0, 1.0, 0.0, 0.0 },
+            .{ 0.0, 0.0, 1.0, 0.0 },
+            .{ 0.0, 0.0, 0.0, 1.0 },
+        },
+        Vec => .{ 0.0, 0.0, 0.0, 1.0 },
+        else => T{},
     };
 }
 
-// матрица поворота по оси X на градус f
-pub fn RotX(f: f32) Mat {
-    return Mat{
-        .{ 1.0, 0.0, 0.0, 0.0 },
-        .{ 0.0, math.cos(f), -math.sin(f), 0.0 },
-        .{ 0.0, math.sin(f), math.cos(f), 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    };
+pub inline fn swizzle(
+    v: Vec,
+    comptime x: VecComponent,
+    comptime y: VecComponent,
+    comptime z: VecComponent,
+    comptime w: VecComponent,
+) Vec {
+    return @shuffle(f32, v, undefined, [4]i32{ @intFromEnum(x), @intFromEnum(y), @intFromEnum(z), @intFromEnum(w) });
 }
 
-// матрица поворота по оси Y на градус f
-pub fn RotY(f: f32) Mat {
-    return Mat{
-        .{ math.cos(f), 0.0, math.sin(f), 0.0 },
-        .{ 0.0, 1.0, 0.0, 0.0 },
-        .{ -math.sin(f), 0.0, math.cos(f), 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    };
-}
+//pub fn mul(a: anytype, b: anytype) anytype {
+//
+//}
 
-// матрица поворота по оси Z на градус f
-pub fn RotZ(f: f32) Mat {
-    return Mat{
-        .{ math.cos(f), -math.sin(f), 0.0, 0.0 },
-        .{ math.sin(f), math.cos(f), 0.0, 0.0 },
-        .{ 0.0, 0.0, 1.0, 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    };
-}
-
-// матрица поворота по всем осям на градусы f
-pub fn Rot(f: F32x3) Mat {
-    var mat = MatIdentity;
-    mat = mul(mat, RotX(f[0]));
-    mat = mul(mat, RotZ(f[2]));
-    return mat;
-}
-
-pub fn Pos(pos: F32x3) Mat {
-    return Mat{
-        .{ 1.0, 0.0, 0.0, pos[0] },
-        .{ 0.0, 1.0, 0.0, pos[1] },
-        .{ 0.0, 0.0, 1.0, pos[2] },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    };
-}
-
-pub fn Scale(scale: F32x3) Mat {
-    return Mat{
-        .{ scale[0], 0.0, 0.0, 0.0 },
-        .{ 0.0, scale[1], 0.0, 0.0 },
-        .{ 0.0, 0.0, scale[2], 0.0 },
-        .{ 0.0, 0.0, 0.0, 1.0 },
-    };
-}
-
-// перемножение матриц
-pub fn mul(m1: Mat, m2: Mat) Mat {
+fn mulMat(m0: Mat, m1: Mat) Mat {
     var result: Mat = undefined;
-    comptime var i = 0;
-    inline while (i < 4) {
-        comptime var j = 0;
-        inline while (j < 4) {
-            result[i][j] = m1[i][0] * m2[0][j] + m1[i][1] * m2[1][j] + m1[i][2] * m2[2][j] + m1[i][3] * m2[3][j];
-            j += 1;
-        }
-        i += 1;
+    comptime var row: u32 = 0;
+    inline while (row < 4) : (row += 1) {
+        const vx = swizzle(m0[row], .x, .x, .x, .x);
+        const vy = swizzle(m0[row], .y, .y, .y, .y);
+        const vz = swizzle(m0[row], .z, .z, .z, .z);
+        const vw = swizzle(m0[row], .w, .w, .w, .w);
+        result[row] = @mulAdd(f32, vx, m1[0], vz * m1[2]) + @mulAdd(f32, vy, m1[1], vw * m1[3]);
     }
     return result;
 }

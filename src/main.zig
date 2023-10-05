@@ -6,7 +6,6 @@ const sdl = @import("sdl.zig");
 const gui = @import("gui.zig");
 const input = @import("input.zig");
 const shape = @import("shape.zig");
-const world = @import("world.zig");
 
 const WINDOW_WIDTH = 1200;
 const WINDOW_HEIGHT = 900;
@@ -39,21 +38,21 @@ pub fn main() !void {
         gui_state,
         .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .{ .horizontal = .center, .vertical = .center },
-        std.unicode.utf8ToUtf16LeStringLiteral("<играть>"),
+        std.unicode.utf8ToUtf16LeStringLiteral("играть"),
     ) });
 
     _ = try gui_state.addControl(gui.Control{ .button = try gui.Control.Button.init(
         gui_state,
         .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .{ .horizontal = .center, .vertical = .center },
-        std.unicode.utf8ToUtf16LeStringLiteral("$настройки$"),
+        std.unicode.utf8ToUtf16LeStringLiteral("настройки"),
     ) });
 
     _ = try gui_state.addControl(gui.Control{ .button = try gui.Control.Button.init(
         gui_state,
         .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .{ .horizontal = .center, .vertical = .center },
-        std.unicode.utf8ToUtf16LeStringLiteral("!exit!"),
+        std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ) });
 
     _ = try gui_state.addControl(gui.Control{ .text = try gui.Control.Text.init(
