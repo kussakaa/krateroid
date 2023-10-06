@@ -34,30 +34,31 @@ pub fn main() !void {
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Control.Button.init(
+    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
         gui_state,
         .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .{ .horizontal = .center, .vertical = .center },
         std.unicode.utf8ToUtf16LeStringLiteral("играть"),
     ) });
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Control.Button.init(
+    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
         gui_state,
         .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .{ .horizontal = .center, .vertical = .center },
         std.unicode.utf8ToUtf16LeStringLiteral("настройки"),
     ) });
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Control.Button.init(
+    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
         gui_state,
         .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .{ .horizontal = .center, .vertical = .center },
         std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ) });
 
-    _ = try gui_state.addControl(gui.Control{ .text = try gui.Control.Text.init(
+    _ = try gui_state.addControl(gui.Control{ .text = try gui.Text.init(
         gui_state,
-        .{ 2, 1 },
+        .{ 2, -9 },
+        .{ .horizontal = .left, .vertical = .top },
         .{ 1.0, 1.0, 1.0, 1.0 },
         std.unicode.utf8ToUtf16LeStringLiteral("krateroid prototype gui"),
     ) });
