@@ -72,6 +72,113 @@ pub const Alignment = struct {
     }
 };
 
+pub const Font = struct {
+    pub const file = "data/gui/text/font.png";
+    pub const chars = [_]Char{
+        .{ .code = ' ' },
+        .{ .code = '!', .pos = 3, .width = 1 },
+        .{ .code = '"', .pos = 4 },
+        .{ .code = '#', .pos = 7, .width = 5 },
+        .{ .code = '$', .pos = 12 },
+        .{ .code = '\'', .pos = 15, .width = 1 },
+        .{ .code = '(', .pos = 16, .width = 1 },
+        .{ .code = ')', .pos = 18, .width = 1 },
+        .{ .code = '*', .pos = 20 },
+        .{ .code = '+', .pos = 23 },
+        .{ .code = ',', .pos = 26, .width = 1 },
+        .{ .code = '-', .pos = 27, .width = 2 },
+        .{ .code = '.', .pos = 29, .width = 1 },
+        .{ .code = '/', .pos = 30 },
+        .{ .code = '0', .pos = 33 },
+        .{ .code = '1', .pos = 36 },
+        .{ .code = '2', .pos = 38 },
+        .{ .code = '3', .pos = 41 },
+        .{ .code = '4', .pos = 44 },
+        .{ .code = '5', .pos = 47 },
+        .{ .code = '6', .pos = 50 },
+        .{ .code = '7', .pos = 53 },
+        .{ .code = '8', .pos = 56 },
+        .{ .code = '9', .pos = 59 },
+        .{ .code = ':', .pos = 62, .width = 1 },
+        .{ .code = ';', .pos = 63, .width = 1 },
+        .{ .code = '<', .pos = 64 },
+        .{ .code = '=', .pos = 67 },
+        .{ .code = '>', .pos = 70 },
+        .{ .code = '?', .pos = 73 },
+        .{ .code = '@', .pos = 76, .width = 5 },
+        .{ .code = 'a', .pos = 81 },
+        .{ .code = 'b', .pos = 84 },
+        .{ .code = 'c', .pos = 87 },
+        .{ .code = 'd', .pos = 90 },
+        .{ .code = 'e', .pos = 93 },
+        .{ .code = 'f', .pos = 96 },
+        .{ .code = 'g', .pos = 99 },
+        .{ .code = 'h', .pos = 102 },
+        .{ .code = 'i', .pos = 105, .width = 1 },
+        .{ .code = 'j', .pos = 106 },
+        .{ .code = 'k', .pos = 109 },
+        .{ .code = 'l', .pos = 112 },
+        .{ .code = 'm', .pos = 115 },
+        .{ .code = 'n', .pos = 120 },
+        .{ .code = 'o', .pos = 124 },
+        .{ .code = 'p', .pos = 127 },
+        .{ .code = 'q', .pos = 130 },
+        .{ .code = 'r', .pos = 133 },
+        .{ .code = 's', .pos = 136 },
+        .{ .code = 't', .pos = 139 },
+        .{ .code = 'u', .pos = 142 },
+        .{ .code = 'v', .pos = 145 },
+        .{ .code = 'w', .pos = 148 },
+        .{ .code = 'x', .pos = 153 },
+        .{ .code = 'y', .pos = 156 },
+        .{ .code = 'z', .pos = 159 },
+        .{ .code = '[', .pos = 162, .width = 2 },
+        .{ .code = '\\', .pos = 164, .width = 3 },
+        .{ .code = ']', .pos = 167, .width = 2 },
+        .{ .code = '^', .pos = 169 },
+        .{ .code = '_', .pos = 172 },
+        .{ .code = 'а', .pos = 175 },
+        .{ .code = 'б', .pos = 178 },
+        .{ .code = 'в', .pos = 181 },
+        .{ .code = 'г', .pos = 184 },
+        .{ .code = 'д', .pos = 187, .width = 5 },
+        .{ .code = 'е', .pos = 192 },
+        .{ .code = 'ё', .pos = 195 },
+        .{ .code = 'ж', .pos = 198, .width = 5 },
+        .{ .code = 'з', .pos = 203 },
+        .{ .code = 'и', .pos = 206, .width = 4 },
+        .{ .code = 'й', .pos = 210, .width = 4 },
+        .{ .code = 'к', .pos = 214 },
+        .{ .code = 'л', .pos = 217 },
+        .{ .code = 'м', .pos = 220, .width = 5 },
+        .{ .code = 'н', .pos = 225 },
+        .{ .code = 'о', .pos = 228 },
+        .{ .code = 'п', .pos = 231 },
+        .{ .code = 'р', .pos = 234 },
+        .{ .code = 'с', .pos = 237 },
+        .{ .code = 'т', .pos = 240 },
+        .{ .code = 'у', .pos = 243 },
+        .{ .code = 'ф', .pos = 246, .width = 5 },
+        .{ .code = 'х', .pos = 251 },
+        .{ .code = 'ц', .pos = 254 },
+        .{ .code = 'ч', .pos = 257 },
+        .{ .code = 'ш', .pos = 260, .width = 5 },
+        .{ .code = 'щ', .pos = 265, .width = 5 },
+        .{ .code = 'ъ', .pos = 270, .width = 4 },
+        .{ .code = 'ы', .pos = 274, .width = 5 },
+        .{ .code = 'ь', .pos = 279 },
+        .{ .code = 'э', .pos = 282, .width = 4 },
+        .{ .code = 'ю', .pos = 286, .width = 5 },
+        .{ .code = 'я', .pos = 291 },
+    };
+
+    pub const Char = struct {
+        code: u16,
+        pos: i32 = 0,
+        width: i32 = 3,
+    };
+};
+
 pub const Text = struct {
     pos: Point,
     size: Point,
@@ -193,132 +300,12 @@ pub const State = struct {
 
     pub fn init(allocator: std.mem.Allocator, vpsize: Point) !State {
         var widths: [2048]i32 = [1]i32{3} ** 2048;
-        widths['!'] = 1;
-        widths['#'] = 5;
-        widths['\''] = 1;
-        widths['('] = 2;
-        widths[')'] = 2;
-        widths[','] = 1;
-        widths['-'] = 2;
-        widths['.'] = 1;
-        widths['1'] = 2;
-        widths[':'] = 1;
-        widths[';'] = 1;
-        widths['@'] = 4;
-        widths['i'] = 1;
-        widths['m'] = 5;
-        widths['n'] = 4;
-        widths['['] = 2;
-        widths[']'] = 2;
-        widths['д'] = 5;
-        widths['ж'] = 5;
-        widths['и'] = 4;
-        widths['й'] = 4;
-        widths['м'] = 5;
-        widths['ф'] = 4;
-        widths['ц'] = 4;
-        widths['ш'] = 5;
-        widths['щ'] = 5;
-        widths['ъ'] = 4;
-        widths['ы'] = 5;
-        widths['э'] = 4;
-        widths['ю'] = 5;
-
         var positions: [2048]i32 = [1]i32{0} ** 2048;
-        positions['!'] = 3;
-        positions['"'] = 4;
-        positions['#'] = 7;
-        positions['$'] = 12;
-        positions['\''] = 15;
-        positions['('] = 16;
-        positions[')'] = 18;
-        positions['*'] = 20;
-        positions['+'] = 23;
-        positions[','] = 26;
-        positions['-'] = 27;
-        positions['.'] = 29;
-        positions['/'] = 30;
-        positions['0'] = 33;
-        positions['1'] = 36;
-        positions['2'] = 38;
-        positions['3'] = 41;
-        positions['4'] = 44;
-        positions['5'] = 47;
-        positions['6'] = 50;
-        positions['7'] = 53;
-        positions['8'] = 56;
-        positions['9'] = 59;
-        positions[':'] = 62;
-        positions[';'] = 63;
-        positions['<'] = 64;
-        positions['='] = 67;
-        positions['>'] = 70;
-        positions['?'] = 73;
-        positions['@'] = 76;
-        positions['a'] = 81;
-        positions['b'] = 84;
-        positions['c'] = 87;
-        positions['d'] = 90;
-        positions['e'] = 93;
-        positions['f'] = 96;
-        positions['g'] = 99;
-        positions['h'] = 102;
-        positions['i'] = 105;
-        positions['j'] = 106;
-        positions['k'] = 109;
-        positions['l'] = 112;
-        positions['m'] = 115;
-        positions['n'] = 120;
-        positions['o'] = 124;
-        positions['p'] = 127;
-        positions['q'] = 130;
-        positions['r'] = 133;
-        positions['s'] = 136;
-        positions['t'] = 139;
-        positions['u'] = 142;
-        positions['v'] = 145;
-        positions['w'] = 148;
-        positions['x'] = 153;
-        positions['y'] = 156;
-        positions['z'] = 159;
-        positions['['] = 162;
-        positions['\\'] = 164;
-        positions[']'] = 167;
-        positions['^'] = 169;
-        positions['_'] = 172;
-        positions['а'] = 81;
-        positions['б'] = 175;
-        positions['в'] = 84;
-        positions['г'] = 178;
-        positions['д'] = 181;
-        positions['е'] = 93;
-        positions['ё'] = 186;
-        positions['ж'] = 189;
-        positions['з'] = 194;
-        positions['и'] = 197;
-        positions['й'] = 201;
-        positions['к'] = 109;
-        positions['л'] = 205;
-        positions['м'] = 115;
-        positions['н'] = 102;
-        positions['о'] = 124;
-        positions['п'] = 208;
-        positions['р'] = 127;
-        positions['с'] = 87;
-        positions['т'] = 139;
-        positions['у'] = 156;
-        positions['ф'] = 211;
-        positions['х'] = 153;
-        positions['ц'] = 216;
-        positions['ч'] = 220;
-        positions['ш'] = 223;
-        positions['щ'] = 228;
-        positions['ъ'] = 233;
-        positions['ы'] = 237;
-        positions['ь'] = 242;
-        positions['э'] = 245;
-        positions['ю'] = 249;
-        positions['я'] = 25;
+
+        for (Font.chars) |char| {
+            positions[char.code] = char.pos;
+            widths[char.code] = char.width;
+        }
 
         const text_vertex = try gl.Shader.initFormFile(
             allocator,
@@ -366,7 +353,7 @@ pub const State = struct {
                         &.{ text_vertex, text_fragment },
                         &.{ "matrix", "color" },
                     ),
-                    .texture = try gl.Texture.init("data/gui/text/font.png"),
+                    .texture = try gl.Texture.init(Font.file),
                     .positions = positions,
                     .widths = widths,
                 },
