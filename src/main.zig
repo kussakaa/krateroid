@@ -36,7 +36,7 @@ pub fn main() !void {
 
     _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
         gui_state,
-        .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
+        .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .{ .horizontal = .center, .vertical = .center },
         std.unicode.utf8ToUtf16LeStringLiteral("играть"),
     ) });
@@ -50,15 +50,15 @@ pub fn main() !void {
 
     _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
         gui_state,
-        .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
+        .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .{ .horizontal = .center, .vertical = .center },
         std.unicode.utf8ToUtf16LeStringLiteral("выход"),
     ) });
 
     _ = try gui_state.addControl(gui.Control{ .text = try gui.Text.init(
         gui_state,
-        .{ 2, -9 },
-        .{ .horizontal = .left, .vertical = .top },
+        .{ 2, 1 },
+        .{},
         .{ 1.0, 1.0, 1.0, 1.0 },
         std.unicode.utf8ToUtf16LeStringLiteral("krateroid prototype gui"),
     ) });

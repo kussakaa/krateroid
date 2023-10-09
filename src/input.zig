@@ -51,7 +51,7 @@ pub const State = struct {
             .keyboard_key_up => |key| self.keyboard.keys[@intCast(key)] = false,
             .mouse_button_down => |button| self.mouse.buttons[@intCast(button)] = true,
             .mouse_button_up => |button| self.mouse.buttons[@intCast(button)] = false,
-            .mouse_motion => |pos| self.cursor.pos = .{ pos[0], self.viewport.size[1] - pos[1] },
+            .mouse_motion => |pos| self.cursor.pos = pos,
             .window_size => |size| self.viewport.size = size,
             else => {},
         }

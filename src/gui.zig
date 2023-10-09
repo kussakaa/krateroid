@@ -43,7 +43,7 @@ pub const Rect = struct {
 
 pub const Alignment = struct {
     horizontal: enum { left, center, right } = .left,
-    vertical: enum { bottom, center, top } = .bottom,
+    vertical: enum { bottom, center, top } = .top,
 
     pub fn transform(self: Alignment, obj: anytype, vpsize: Point) @TypeOf(obj) {
         return switch (comptime @TypeOf(obj)) {
@@ -64,9 +64,9 @@ pub const Alignment = struct {
             .right => result[0] = vpsize[0] + point[0],
         }
         switch (self.vertical) {
-            .bottom => {},
+            .top => {},
             .center => result[1] = @divTrunc(vpsize[1], 2) + point[1],
-            .top => result[1] = vpsize[1] + point[1],
+            .bottom => result[1] = vpsize[1] + point[1],
         }
         return result;
     }
@@ -203,32 +203,32 @@ pub const Text = struct {
             vertices[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(advance)); // X
             vertices[i * 24 + (4 * 0) + 1] = 0.0; // Y
             vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 0) + 3] = 1.0; // V
+            vertices[i * 24 + (4 * 0) + 3] = 0.0; // V
 
-            vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 1) + 1] = 0.0; // Y
-            vertices[i * 24 + (4 * 1) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
+            vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)); // X
+            vertices[i * 24 + (4 * 1) + 1] = -8.0; // Y
+            vertices[i * 24 + (4 * 1) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
             vertices[i * 24 + (4 * 1) + 3] = 1.0; // V
 
             vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 2) + 1] = 8.0; // Y
+            vertices[i * 24 + (4 * 2) + 1] = -8.0; // Y
             vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 2) + 3] = 0.0; // V
+            vertices[i * 24 + (4 * 2) + 3] = 1.0; // V
 
             vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 3) + 1] = 8.0; // Y
+            vertices[i * 24 + (4 * 3) + 1] = -8.0; // Y
             vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 3) + 3] = 0.0; // V
+            vertices[i * 24 + (4 * 3) + 3] = 1.0; // V
 
-            vertices[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(advance)); // X
-            vertices[i * 24 + (4 * 4) + 1] = 8.0; // Y
-            vertices[i * 24 + (4 * 4) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
+            vertices[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
+            vertices[i * 24 + (4 * 4) + 1] = 0.0; // Y
+            vertices[i * 24 + (4 * 4) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
             vertices[i * 24 + (4 * 4) + 3] = 0.0; // V
 
             vertices[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(advance)); // X
             vertices[i * 24 + (4 * 5) + 1] = 0.0; // Y
             vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 5) + 3] = 1.0; // V
+            vertices[i * 24 + (4 * 5) + 3] = 0.0; // V
 
             advance += char_width + 1;
             i += 1;
@@ -342,7 +342,7 @@ pub const State = struct {
             .render = .{
                 .rect = .{
                     .mesh = try gl.Mesh.init(
-                        &.{ 0.0, 0.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0 },
+                        &.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 0.0 },
                         &.{2},
                         .{},
                     ),
@@ -361,7 +361,7 @@ pub const State = struct {
                     .program = try gl.Program.init(
                         allocator,
                         &.{ button_vertex, button_fragment },
-                        &.{ "matrix", "scale", "rect", "texsize" },
+                        &.{ "matrix", "vpsize", "scale", "rect", "texsize" },
                     ),
                     .textures = .{
                         try gl.Texture.init("data/gui/button/empty.png"),
@@ -425,10 +425,11 @@ pub const RenderSystem = struct {
         const matrix: Mat = trasformMatrix(pos, size, state.vpsize);
         state.render.button.program.use();
         state.render.button.program.setUniform(0, matrix);
-        state.render.button.program.setUniform(1, state.scale);
-        state.render.button.program.setUniform(2, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
+        state.render.button.program.setUniform(1, state.vpsize);
+        state.render.button.program.setUniform(2, state.scale);
+        state.render.button.program.setUniform(3, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
         state.render.button.textures[@intFromEnum(button.state)].use();
-        state.render.button.program.setUniform(3, state.render.button.textures[@intFromEnum(button.state)].size);
+        state.render.button.program.setUniform(4, state.render.button.textures[@intFromEnum(button.state)].size);
         state.render.rect.mesh.draw();
 
         var text: Text = button.text;
@@ -442,7 +443,7 @@ pub const RenderSystem = struct {
         matrix[0][0] = @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(vpsize[0])) * 2.0;
         matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(vpsize[0])) * 2.0 - 1.0;
         matrix[1][1] = @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(vpsize[1])) * 2.0;
-        matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(vpsize[1])) * 2.0 - 1.0;
+        matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(vpsize[1])) * -2.0 + 1.0;
         return matrix;
     }
 };
