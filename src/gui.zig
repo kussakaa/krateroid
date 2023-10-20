@@ -186,7 +186,17 @@ pub const Text = struct {
     color: Color,
     mesh: gl.Mesh,
 
-    pub fn init(state: State, pos: Point, alignment: Alignment, color: Color, data: []const u16) !Text {
+    pub const Params = struct {
+        pos: Point = .{ 0, 0 },
+        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
+        alignment: Alignment = .{},
+        usage: enum {
+            static,
+            dynamic,
+        } = .static,
+    };
+
+    pub fn init(state: State, data: []const u16, params: Params) !Text {
         var advance: i32 = 0;
         if (data.len > 512) return error.TextSizeOverflow;
         var i: usize = 0;
@@ -235,17 +245,21 @@ pub const Text = struct {
         }
 
         return Text{
-            .pos = pos,
+            .pos = params.pos,
             .size = .{ advance - 1, 8 },
-            .alignment = alignment,
-            .color = color,
-            .mesh = try gl.Mesh.init(vertices[0..(i * 24)], &.{ 2, 2 }, .{ .usage = .static }),
+            .alignment = params.alignment,
+            .color = params.color,
+            .mesh = try gl.Mesh.init(vertices[0..(i * 24)], .{ .attrs = &.{ 2, 2 }, .usage = @enumFromInt(@intFromEnum(params.usage)) }),
         };
     }
 
     pub fn deinit(self: Text) void {
         self.mesh.deinit();
     }
+
+    //pub fn subdata(self: Text, data: []const u16) void {
+    //
+    //}
 
     var vertices: [9216]f32 = [1]f32{0.0} ** 9216;
 };
@@ -261,7 +275,9 @@ pub const Button = struct {
             .rect = rect,
             .alignment = alignment,
             .state = .empty,
-            .text = try Text.init(state, .{ 0, 0 }, alignment, .{ 1.0, 1.0, 1.0, 1.0 }, text),
+            .text = try Text.init(state, text, .{
+                .alignment = alignment,
+            }),
         };
     }
 
@@ -341,11 +357,9 @@ pub const State = struct {
             .scale = 3,
             .render = .{
                 .rect = .{
-                    .mesh = try gl.Mesh.init(
-                        &.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 0.0 },
-                        &.{2},
-                        .{},
-                    ),
+                    .mesh = try gl.Mesh.init(&.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 0.0 }, .{
+                        .attrs = &.{2},
+                    }),
                 },
                 .text = .{
                     .program = try gl.Program.init(

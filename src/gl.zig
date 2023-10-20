@@ -1,26 +1,39 @@
 const c = @import("c.zig");
 const std = @import("std");
 
+pub fn getError() !void {
+    switch (c.glGetError()) {
+        0 => {},
+        else => return error.GLError,
+    }
+}
+
 pub const Mesh = struct {
     vbo: u32, // Объект буфера вершин
     vao: u32, // Объект аттрибутов вершин
     len: usize, // Количество вершин
-    params: Params,
+    usage: Usage,
+    mode: Mode,
 
-    const Params = struct {
-        usage: enum {
-            static,
-            dynamic,
-        } = .static,
-        mode: enum {
-            triangles,
-            lines,
-        } = .triangles,
+    const Usage = enum {
+        static,
+        dynamic,
     };
 
-    pub fn init(vertices: []const f32, attrs: []const u32, params: Params) !Mesh {
+    const Mode = enum {
+        triangles,
+        lines,
+    };
+
+    const Params = struct {
+        attrs: []const u32 = &.{ 3, 3, 3, 2 }, // position, color, normal, texture
+        usage: Usage = .static,
+        mode: Mode = .triangles,
+    };
+
+    pub fn init(data: []const f32, params: Params) !Mesh {
         var vertex_size: u32 = 0;
-        for (attrs) |i| {
+        for (params.attrs) |i| {
             vertex_size += i;
         }
 
@@ -41,17 +54,19 @@ pub const Mesh = struct {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
         c.glBufferData(
             c.GL_ARRAY_BUFFER,
-            @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
-            @as(*const anyopaque, &vertices[0]),
+            @as(c_long, @intCast(data.len * @sizeOf(f32))),
+            @as(*const anyopaque, &data[0]),
             switch (params.usage) {
                 .static => c.GL_STATIC_DRAW,
                 .dynamic => c.GL_STATIC_DRAW,
             },
         );
 
+        try getError();
+
         var offset: u32 = 0;
-        for (attrs, 0..) |_, i| {
-            const size = attrs[i];
+        for (params.attrs, 0..) |_, i| {
+            const size = params.attrs[i];
             c.glVertexAttribPointer(
                 @as(c_uint, @intCast(i)),
                 @as(c_int, @intCast(size)),
@@ -64,14 +79,17 @@ pub const Mesh = struct {
             offset += size;
         }
 
+        try getError();
+
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
         c.glBindVertexArray(0);
 
         const mesh = Mesh{
             .vbo = vbo,
             .vao = vao,
-            .len = vertices.len / vertex_size,
-            .params = params,
+            .len = data.len / vertex_size,
+            .usage = params.usage,
+            .mode = params.mode,
         };
         std.log.debug("init mesh = {}", .{mesh});
         return mesh;
@@ -83,7 +101,8 @@ pub const Mesh = struct {
         c.glDeleteBuffers(1, &self.vbo);
     }
 
-    pub fn update(self: Mesh, vertices: []const f32) !void {
+    pub fn subdata(self: Mesh, vertices: []const f32) !void {
+        if (self.usage == .static) return error.InvalidDynamicMesh;
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
         c.glBufferSubData(
             c.GL_ARRAY_BUFFER,
@@ -91,12 +110,13 @@ pub const Mesh = struct {
             @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
             @as(*const anyopaque, &vertices[0]),
         );
+        try getError();
         c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
     }
 
     pub fn draw(self: Mesh) void {
         c.glBindVertexArray(self.vao);
-        const mode = switch (self.params.mode) {
+        const mode = switch (self.mode) {
             .triangles => c.GL_TRIANGLES,
             .lines => c.GL_LINES,
         };
@@ -236,6 +256,10 @@ pub const Program = struct {
             c.glGetProgramInfoLog(id, info_log_len, null, info_log.ptr);
             std.log.err("program {} linkage: {s}", .{ id, info_log });
             return error.ShaderProgramLinkage;
+        }
+
+        for (shaders) |shader| {
+            c.glDetachShader(id, shader.id);
         }
 
         var uniforms: [16]Uniform = [1]Uniform{0} ** 16;

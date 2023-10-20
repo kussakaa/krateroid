@@ -57,10 +57,8 @@ pub fn main() !void {
 
     _ = try gui_state.addControl(gui.Control{ .text = try gui.Text.init(
         gui_state,
-        .{ 2, 1 },
-        .{},
-        .{ 1.0, 1.0, 1.0, 1.0 },
         std.unicode.utf8ToUtf16LeStringLiteral("krateroid prototype gui"),
+        .{ .pos = .{ 2, 1 }, .color = .{ 1.0, 1.0, 1.0, 1.0 }, .usage = .dynamic },
     ) });
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
