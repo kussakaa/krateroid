@@ -8,12 +8,11 @@
 
 ## Сборка
 
-Должны быть установлены следующие пакеты: zig, SDL2, freetype2, glibc  
+Требуеться сам компилятор zig  
+Компилятор C (gcc или clang)  
+А также зависимости: SDL2, libc  
 
-Также скачате библиотеку [glad](https://glad.dav1d.de)  
-
-Выполните следующие команды:
+Для запуска выполните следующие команды:
 1. git clone https://github.com/kussakaa/krateroid.git
-2. распакуйте glad в krateroid/deps/glad
-3. cd krateroid
-4. zig build run
+2. cd krateroid
+3. zig build run
