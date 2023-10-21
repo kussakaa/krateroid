@@ -90,7 +90,7 @@ pub const Font = struct {
         .{ .code = '.', .pos = 29, .width = 1 },
         .{ .code = '/', .pos = 30 },
         .{ .code = '0', .pos = 33 },
-        .{ .code = '1', .pos = 36 },
+        .{ .code = '1', .pos = 36, .width = 2 },
         .{ .code = '2', .pos = 38 },
         .{ .code = '3', .pos = 41 },
         .{ .code = '4', .pos = 44 },
@@ -197,6 +197,27 @@ pub const Text = struct {
     };
 
     pub fn init(state: State, data: []const u16, params: Params) !Text {
+        const text_params = try initVertices(state, data);
+        return Text{
+            .pos = params.pos,
+            .size = .{ text_params.advance - 1, 8 },
+            .alignment = params.alignment,
+            .color = params.color,
+            .mesh = try gl.Mesh.init(text_params.vertices, .{ .attrs = &.{ 2, 2 }, .usage = @enumFromInt(@intFromEnum(params.usage)) }),
+        };
+    }
+
+    pub fn deinit(self: Text) void {
+        self.mesh.deinit();
+    }
+
+    pub fn subdata(self: *Text, state: State, data: []const u16) !void {
+        const text_params = try initVertices(state, data);
+        self.size[0] = text_params.advance;
+        try self.mesh.subdata(text_params.vertices);
+    }
+
+    pub fn initVertices(state: State, data: []const u16) !struct { vertices: []const f32, advance: i32 } {
         var advance: i32 = 0;
         if (data.len > 512) return error.TextSizeOverflow;
         var i: usize = 0;
@@ -243,25 +264,13 @@ pub const Text = struct {
             advance += char_width + 1;
             i += 1;
         }
-
-        return Text{
-            .pos = params.pos,
-            .size = .{ advance - 1, 8 },
-            .alignment = params.alignment,
-            .color = params.color,
-            .mesh = try gl.Mesh.init(vertices[0..(i * 24)], .{ .attrs = &.{ 2, 2 }, .usage = @enumFromInt(@intFromEnum(params.usage)) }),
+        return .{
+            .vertices = vertices[0..(i * 24)],
+            .advance = advance,
         };
     }
 
-    pub fn deinit(self: Text) void {
-        self.mesh.deinit();
-    }
-
-    //pub fn subdata(self: Text, data: []const u16) void {
-    //
-    //}
-
-    var vertices: [9216]f32 = [1]f32{0.0} ** 9216;
+    var vertices: [12288]f32 = [1]f32{0.0} ** 12288;
 };
 
 pub const Button = struct {
