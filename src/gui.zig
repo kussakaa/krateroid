@@ -274,18 +274,21 @@ pub const Text = struct {
 };
 
 pub const Button = struct {
+    id: u32,
     rect: Rect,
     text: Text,
     alignment: Alignment,
     state: enum(u8) { empty, focus, press },
 
     const Params = struct {
+        id: u32 = 0,
         text: []const u16 = &.{'-'},
         alignment: Alignment = .{},
     };
 
     pub fn init(state: State, rect: Rect, params: Params) !Button {
         return Button{
+            .id = params.id,
             .rect = rect,
             .text = try Text.init(state, params.text, .{
                 .alignment = params.alignment,
@@ -429,7 +432,12 @@ pub const State = struct {
     }
 
     pub fn button(self: *State, rect: Rect, params: Button.Params) !*Control {
-        return try self.append(.{ .button = try Button.init(self.*, rect, params) });
+        const fullparams = Button.Params{
+            .id = @as(u32, @intCast(self.controls.items.len)),
+            .text = params.text,
+            .alignment = params.alignment,
+        };
+        return try self.append(.{ .button = try Button.init(self.*, rect, fullparams) });
     }
 };
 
@@ -504,8 +512,8 @@ pub const InputSystem = struct {
 };
 
 pub const Event = union(enum) {
-    press: usize,
-    unpress: usize,
+    press: u32,
+    unpress: u32,
     none,
 };
 
@@ -513,14 +521,14 @@ pub const EventSystem = struct {
     pub fn process(state: State, input_state: input.State, event: input.Event) Event {
         switch (event) {
             .mouse_button_down => |mouse_button_code| if (mouse_button_code == 1) {
-                for (state.controls.items, 0..) |control, i| {
+                for (state.controls.items) |control| {
                     switch (control) {
                         .button => |button| {
                             if (button.alignment.transform(
                                 button.rect.scale(state.scale),
                                 state.vpsize,
                             ).isAroundPoint(input_state.cursor.pos)) {
-                                return .{ .press = i };
+                                return .{ .press = button.id };
                             }
                         },
                         else => {},
@@ -528,14 +536,14 @@ pub const EventSystem = struct {
                 }
             },
             .mouse_button_up => |mouse_button_code| if (mouse_button_code == 1) {
-                for (state.controls.items, 0..) |control, i| {
+                for (state.controls.items) |control| {
                     switch (control) {
                         .button => |button| {
                             if (button.alignment.transform(
                                 button.rect.scale(state.scale),
                                 state.vpsize,
                             ).isAroundPoint(input_state.cursor.pos)) {
-                                return .{ .unpress = i };
+                                return .{ .unpress = button.id };
                             }
                         },
                         else => {},

@@ -39,23 +39,20 @@ pub fn main() !void {
         .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .{ .text = U16("играть"), .alignment = .{ .horizontal = .center, .vertical = .center } },
     );
-
     _ = try gui_state.button(
         .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .{ .text = U16("настройки"), .alignment = .{ .horizontal = .center, .vertical = .center } },
     );
-
     _ = try gui_state.button(
         .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .{ .text = U16("выход"), .alignment = .{ .horizontal = .center, .vertical = .center } },
     );
-
     _ = try gui_state.text(
         U16("krateroid prototype gui"),
         .{ .pos = .{ 2, 1 }, .color = .{ 1.0, 1.0, 1.0, 1.0 } },
     );
 
-    const fps_label = try gui_state.text(
+    const text_fps = try gui_state.text(
         U16("fps:$$$$$$"),
         .{ .pos = .{ 2, 9 }, .color = .{ 1.0, 1.0, 1.0, 1.0 }, .usage = .dynamic },
     );
@@ -82,7 +79,7 @@ pub fn main() !void {
             _ = try std.fmt.bufPrint(&buf, "fps:{}", .{fps});
             var buf16: [10]u16 = [1]u16{'$'} ** 10;
             const len16 = try std.unicode.utf8ToUtf16Le(buf16[0..], buf[0..]);
-            try fps_label.text.subdata(gui_state, buf16[0..len16]);
+            try text_fps.text.subdata(gui_state, buf16[0..len16]);
         }
 
         while (true) {
