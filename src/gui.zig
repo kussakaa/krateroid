@@ -275,18 +275,23 @@ pub const Text = struct {
 
 pub const Button = struct {
     rect: Rect,
+    text: Text,
     alignment: Alignment,
     state: enum(u8) { empty, focus, press },
-    text: Text,
 
-    pub fn init(state: State, rect: Rect, alignment: Alignment, text: []const u16) !Button {
+    const Params = struct {
+        text: []const u16 = &.{'-'},
+        alignment: Alignment = .{},
+    };
+
+    pub fn init(state: State, rect: Rect, params: Params) !Button {
         return Button{
             .rect = rect,
-            .alignment = alignment,
-            .state = .empty,
-            .text = try Text.init(state, text, .{
-                .alignment = alignment,
+            .text = try Text.init(state, params.text, .{
+                .alignment = params.alignment,
             }),
+            .alignment = params.alignment,
+            .state = .empty,
         };
     }
 
@@ -299,9 +304,7 @@ pub const Control = union(enum) {
     text: Text,
     button: Button,
 };
-
 pub const Controls = std.ArrayList(Control);
-pub const ControlId = usize;
 
 pub const State = struct {
     controls: std.ArrayList(Control),
@@ -416,9 +419,17 @@ pub const State = struct {
         self.controls.deinit();
     }
 
-    pub fn addControl(self: *State, control: Control) !ControlId {
+    fn append(self: *State, control: Control) !*Control {
         try self.controls.append(control);
-        return self.controls.items.len - 1;
+        return &self.controls.items[self.controls.items.len - 1];
+    }
+
+    pub fn text(self: *State, data: []const u16, params: Text.Params) !*Control {
+        return try self.append(.{ .text = try Text.init(self.*, data, params) });
+    }
+
+    pub fn button(self: *State, rect: Rect, params: Button.Params) !*Control {
+        return try self.append(.{ .button = try Button.init(self.*, rect, params) });
     }
 };
 

@@ -35,38 +35,30 @@ pub fn main() !void {
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
-        gui_state,
+    _ = try gui_state.button(
         .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
-        .{ .horizontal = .center, .vertical = .center },
-        U16("играть"),
-    ) });
+        .{ .text = U16("играть"), .alignment = .{ .horizontal = .center, .vertical = .center } },
+    );
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
-        gui_state,
+    _ = try gui_state.button(
         .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
-        .{ .horizontal = .center, .vertical = .center },
-        U16("настройки"),
-    ) });
+        .{ .text = U16("настройки"), .alignment = .{ .horizontal = .center, .vertical = .center } },
+    );
 
-    _ = try gui_state.addControl(gui.Control{ .button = try gui.Button.init(
-        gui_state,
+    _ = try gui_state.button(
         .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
-        .{ .horizontal = .center, .vertical = .center },
-        U16("выход"),
-    ) });
+        .{ .text = U16("выход"), .alignment = .{ .horizontal = .center, .vertical = .center } },
+    );
 
-    _ = try gui_state.addControl(gui.Control{ .text = try gui.Text.init(
-        gui_state,
+    _ = try gui_state.text(
         U16("krateroid prototype gui"),
         .{ .pos = .{ 2, 1 }, .color = .{ 1.0, 1.0, 1.0, 1.0 } },
-    ) });
+    );
 
-    const fps_label = try gui_state.addControl(gui.Control{ .text = try gui.Text.init(
-        gui_state,
+    const fps_label = try gui_state.text(
         U16("fps:$$$$$$"),
         .{ .pos = .{ 2, 9 }, .color = .{ 1.0, 1.0, 1.0, 1.0 }, .usage = .dynamic },
-    ) });
+    );
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
@@ -90,7 +82,7 @@ pub fn main() !void {
             _ = try std.fmt.bufPrint(&buf, "fps:{}", .{fps});
             var buf16: [10]u16 = [1]u16{'$'} ** 10;
             const len16 = try std.unicode.utf8ToUtf16Le(buf16[0..], buf[0..]);
-            try gui_state.controls.items[fps_label].text.subdata(gui_state, buf16[0..len16]);
+            try fps_label.text.subdata(gui_state, buf16[0..len16]);
         }
 
         while (true) {
