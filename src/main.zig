@@ -3,9 +3,11 @@ const std = @import("std");
 const linmath = @import("linmath.zig");
 const Mat = linmath.Mat;
 const sdl = @import("sdl.zig");
+const gl = @import("gl.zig");
 const gui = @import("gui.zig");
 const input = @import("input.zig");
 const shape = @import("shape.zig");
+
 const U16 = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const WINDOW_WIDTH = 1200;
@@ -35,26 +37,50 @@ pub fn main() !void {
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
 
+    const gui_text_style = gui.Text.Style{
+        .color = .{ 1.0, 1.0, 1.0, 1.0 },
+    };
+
+    const gui_button_style = gui.Button.Style{
+        .states = .{
+            .{ .text = .{ .color = .{ 0.7, 0.7, 0.7, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/empty.png") },
+            .{ .text = .{ .color = .{ 0.8, 0.8, 0.8, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/focus.png") },
+            .{ .text = .{ .color = .{ 1.0, 1.0, 1.0, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/press.png") },
+        },
+    };
+
+    // кнопка играть
     _ = try gui_state.button(
-        .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
+        .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
         .{ .text = U16("играть"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-    );
-    _ = try gui_state.button(
-        .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
-        .{ .text = U16("настройки"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-    );
-    _ = try gui_state.button(
-        .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
-        .{ .text = U16("выход"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-    );
-    _ = try gui_state.text(
-        U16("krateroid prototype gui"),
-        .{ .pos = .{ 2, 1 }, .color = .{ 1.0, 1.0, 1.0, 1.0 } },
+        gui_button_style,
     );
 
+    // кнопка настройки
+    //_ = try gui_state.button(
+    //    .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
+    //    .{ .text = U16("настройки"), .alignment = .{ .horizontal = .center, .vertical = .center } },
+    //);
+
+    // кнопка выход
+    const control_exit = try gui_state.button(
+        .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
+        .{ .text = U16("выход"), .alignment = .{ .horizontal = .center, .vertical = .center } },
+        gui_button_style,
+    );
+
+    // F3
+    _ = try gui_state.text(
+        U16("krateroid prototype gui"),
+        .{ .pos = .{ 2, 1 } },
+        gui_text_style,
+    );
+
+    // счётчик кадров в секунду
     const text_fps = try gui_state.text(
         U16("fps:$$$$$$"),
-        .{ .pos = .{ 2, 9 }, .color = .{ 1.0, 1.0, 1.0, 1.0 }, .usage = .dynamic },
+        .{ .pos = .{ 2, 9 }, .usage = .dynamic },
+        gui_text_style,
     );
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
@@ -108,9 +134,8 @@ pub fn main() !void {
             if (gui_event != .none) std.log.debug("gui event: {}", .{gui_event});
 
             switch (gui_event) {
-                .unpress => |id| switch (id) {
-                    2 => run = false,
-                    else => {},
+                .unpress => |id| {
+                    if (id == control_exit.button.id) run = false;
                 },
                 else => {},
             }
@@ -122,14 +147,11 @@ pub fn main() !void {
         c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
         c.glClearColor(0.0, 0.0, 0.0, 1.0);
         c.glEnable(c.GL_DEPTH_TEST);
-        // 3D
-
         c.glDisable(c.GL_DEPTH_TEST);
 
         gui.RenderSystem.draw(gui_state);
 
         frame += 1;
-
         window.swap();
     }
 }

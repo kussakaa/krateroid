@@ -183,12 +183,11 @@ pub const Text = struct {
     pos: Point,
     size: Point,
     alignment: Alignment,
-    color: Color,
     mesh: gl.Mesh,
+    style: Style,
 
     pub const Params = struct {
         pos: Point = .{ 0, 0 },
-        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
         alignment: Alignment = .{},
         usage: enum {
             static,
@@ -196,14 +195,18 @@ pub const Text = struct {
         } = .static,
     };
 
-    pub fn init(state: State, data: []const u16, params: Params) !Text {
+    pub const Style = struct {
+        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
+    };
+
+    pub fn init(state: State, data: []const u16, params: Params, style: Style) !Text {
         const text_params = try initVertices(state, data);
         return Text{
             .pos = params.pos,
             .size = .{ text_params.advance - 1, 8 },
             .alignment = params.alignment,
-            .color = params.color,
             .mesh = try gl.Mesh.init(text_params.vertices, .{ .attrs = &.{ 2, 2 }, .usage = @enumFromInt(@intFromEnum(params.usage)) }),
+            .style = style,
         };
     }
 
@@ -276,9 +279,10 @@ pub const Text = struct {
 pub const Button = struct {
     id: u32,
     rect: Rect,
-    text: Text,
     alignment: Alignment,
     state: enum(u8) { empty, focus, press },
+    style: Style,
+    text: Text,
 
     const Params = struct {
         id: u32 = 0,
@@ -286,15 +290,26 @@ pub const Button = struct {
         alignment: Alignment = .{},
     };
 
-    pub fn init(state: State, rect: Rect, params: Params) !Button {
+    pub const Style = struct {
+        states: [3]struct {
+            texture: gl.Texture,
+            text: Text.Style,
+        },
+    };
+
+    pub fn init(state: State, rect: Rect, params: Params, style: Style) !Button {
         return Button{
             .id = params.id,
             .rect = rect,
-            .text = try Text.init(state, params.text, .{
-                .alignment = params.alignment,
-            }),
             .alignment = params.alignment,
             .state = .empty,
+            .style = style,
+            .text = try Text.init(
+                state,
+                params.text,
+                .{ .alignment = params.alignment },
+                .{},
+            ),
         };
     }
 
@@ -325,7 +340,6 @@ pub const State = struct {
         },
         button: struct {
             program: gl.Program,
-            textures: [3]gl.Texture,
         },
     },
 
@@ -392,11 +406,6 @@ pub const State = struct {
                         &.{ button_vertex, button_fragment },
                         &.{ "matrix", "vpsize", "scale", "rect", "texsize" },
                     ),
-                    .textures = .{
-                        try gl.Texture.init("data/gui/button/empty.png"),
-                        try gl.Texture.init("data/gui/button/focus.png"),
-                        try gl.Texture.init("data/gui/button/press.png"),
-                    },
                 },
             },
         };
@@ -406,9 +415,6 @@ pub const State = struct {
 
     pub fn deinit(self: State) void {
         std.log.debug("gui deinit state = {}", .{self});
-        for (self.render.button.textures) |texture| {
-            texture.deinit();
-        }
         self.render.button.program.deinit();
         self.render.text.texture.deinit();
         self.render.text.program.deinit();
@@ -427,17 +433,17 @@ pub const State = struct {
         return &self.controls.items[self.controls.items.len - 1];
     }
 
-    pub fn text(self: *State, data: []const u16, params: Text.Params) !*Control {
-        return try self.append(.{ .text = try Text.init(self.*, data, params) });
+    pub fn text(self: *State, data: []const u16, params: Text.Params, style: Text.Style) !*Control {
+        return try self.append(.{ .text = try Text.init(self.*, data, params, style) });
     }
 
-    pub fn button(self: *State, rect: Rect, params: Button.Params) !*Control {
+    pub fn button(self: *State, rect: Rect, params: Button.Params, style: Button.Style) !*Control {
         const fullparams = Button.Params{
             .id = @as(u32, @intCast(self.controls.items.len)),
             .text = params.text,
             .alignment = params.alignment,
         };
-        return try self.append(.{ .button = try Button.init(self.*, rect, fullparams) });
+        return try self.append(.{ .button = try Button.init(self.*, rect, fullparams, style) });
     }
 };
 
@@ -456,7 +462,7 @@ pub const RenderSystem = struct {
         const matrix = trasformMatrix(pos, .{ state.scale, state.scale }, state.vpsize);
         state.render.text.program.use();
         state.render.text.program.setUniform(0, matrix);
-        state.render.text.program.setUniform(1, text.color);
+        state.render.text.program.setUniform(1, text.style.color);
         state.render.text.texture.use();
         text.mesh.draw();
     }
@@ -470,13 +476,13 @@ pub const RenderSystem = struct {
         state.render.button.program.setUniform(1, state.vpsize);
         state.render.button.program.setUniform(2, state.scale);
         state.render.button.program.setUniform(3, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
-        state.render.button.textures[@intFromEnum(button.state)].use();
-        state.render.button.program.setUniform(4, state.render.button.textures[@intFromEnum(button.state)].size);
+        state.render.button.program.setUniform(4, button.style.states[@intFromEnum(button.state)].texture.size);
+        button.style.states[@intFromEnum(button.state)].texture.use();
         state.render.rect.mesh.draw();
 
         var text: Text = button.text;
         text.pos = button.rect.min + @divTrunc(button.rect.size() - button.text.size, Point{ 2, 2 });
-
+        text.style = button.style.states[@intFromEnum(button.state)].text;
         drawText(state, text);
     }
 
