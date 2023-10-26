@@ -72,6 +72,16 @@ pub const Alignment = struct {
     }
 };
 
+pub const Control = union(enum) {
+    text: Text,
+    button: Button,
+};
+
+pub const Panel = struct {
+    rect: Rect,
+    controls: std.ArrayList(Control),
+};
+
 pub const Font = struct {
     pub const file = "data/gui/text/font.png";
     pub const chars = [_]Char{
@@ -318,12 +328,6 @@ pub const Button = struct {
     }
 };
 
-pub const Control = union(enum) {
-    text: Text,
-    button: Button,
-};
-pub const Controls = std.ArrayList(Control);
-
 pub const State = struct {
     controls: std.ArrayList(Control),
     vpsize: Point,
@@ -381,7 +385,7 @@ pub const State = struct {
         defer button_fragment.deinit();
 
         const state = State{
-            .controls = Controls.init(allocator),
+            .controls = std.ArrayList(Control).init(allocator),
             .vpsize = vpsize,
             .scale = 3,
             .render = .{

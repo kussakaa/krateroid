@@ -7,11 +7,12 @@ const gl = @import("gl.zig");
 const gui = @import("gui.zig");
 const input = @import("input.zig");
 const shape = @import("shape.zig");
+const world = @import("world.zig");
 
 const U16 = std.unicode.utf8ToUtf16LeStringLiteral;
 
-const WINDOW_WIDTH = 1200;
-const WINDOW_HEIGHT = 900;
+const WINDOW_WIDTH = 800;
+const WINDOW_HEIGHT = 600;
 
 pub fn main() !void {
     std.debug.print("\n", .{});
@@ -43,11 +44,14 @@ pub fn main() !void {
 
     const gui_button_style = gui.Button.Style{
         .states = .{
-            .{ .text = .{ .color = .{ 0.7, 0.7, 0.7, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/empty.png") },
-            .{ .text = .{ .color = .{ 0.8, 0.8, 0.8, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/focus.png") },
-            .{ .text = .{ .color = .{ 1.0, 1.0, 1.0, 1.0 } }, .texture = try gl.Texture.init("data/gui/button/press.png") },
+            .{ .text = gui_text_style, .texture = try gl.Texture.init("data/gui/button/empty.png") },
+            .{ .text = gui_text_style, .texture = try gl.Texture.init("data/gui/button/focus.png") },
+            .{ .text = gui_text_style, .texture = try gl.Texture.init("data/gui/button/press.png") },
         },
     };
+    defer gui_button_style.states[0].texture.deinit();
+    defer gui_button_style.states[1].texture.deinit();
+    defer gui_button_style.states[2].texture.deinit();
 
     // кнопка играть
     _ = try gui_state.button(
@@ -55,12 +59,6 @@ pub fn main() !void {
         .{ .text = U16("играть"), .alignment = .{ .horizontal = .center, .vertical = .center } },
         gui_button_style,
     );
-
-    // кнопка настройки
-    //_ = try gui_state.button(
-    //    .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
-    //    .{ .text = U16("настройки"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-    //);
 
     // кнопка выход
     const control_exit = try gui_state.button(
@@ -82,6 +80,9 @@ pub fn main() !void {
         .{ .pos = .{ 2, 9 }, .usage = .dynamic },
         gui_text_style,
     );
+
+    var chunk = try world.Chunk.init(.{ 0, 0 });
+    chunk.blocks[10][5][5] = .stone;
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
