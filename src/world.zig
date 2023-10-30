@@ -1,5 +1,7 @@
-const c = @import("c.zig");
 const std = @import("std");
+const c = @import("c.zig");
+const gl = @import("gl.zig");
+
 const Allocator = std.mem.Allocator;
 
 const ChunkPos = @Vector(2, i32);

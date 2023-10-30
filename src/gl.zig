@@ -9,120 +9,183 @@ pub fn getError() !void {
 }
 
 pub const Mesh = struct {
-    vbo: u32, // Объект буфера вершин
-    vao: u32, // Объект аттрибутов вершин
-    len: usize, // Количество вершин
-    usage: Usage,
-    mode: Mode,
+    vertices: Vertices,
+    elements: Elements,
 
-    const Usage = enum {
-        static,
-        dynamic,
+    const Usage = enum(u32) {
+        static = c.GL_STATIC_DRAW,
+        dynamic = c.GL_DYNAMIC_DRAW,
     };
 
-    const Mode = enum {
-        triangles,
-        lines,
+    const Mode = enum(u32) {
+        triangles = c.GL_TRIANGLES,
+        lines = c.GL_LINES,
     };
 
-    const Params = struct {
-        attrs: []const u32 = &.{ 3, 3, 3, 2 }, // position, color, normal, texture
-        usage: Usage = .static,
-        mode: Mode = .triangles,
-    };
+    pub fn draw(self: Mesh) !void {
+        try self.elements.draw(self.vertices);
+    }
 
-    pub fn init(data: []const f32, params: Params) !Mesh {
-        var vertex_size: u32 = 0;
-        for (params.attrs) |i| {
-            vertex_size += i;
-        }
+    pub const Vertices = struct {
+        vao: u32 = 0, // объект аттрибутов вершин
+        vbo: u32 = 0, // объект буфера вершин
+        len: u32 = 0, // количество отрисовавыемых вершин
+        mode: Mode = .triangles, // Режим отрисовки
 
-        var vao: u32 = 0;
-        c.glGenVertexArrays(1, &vao);
-        if (vao < 0) {
-            std.log.err("failed VAO generate");
-            return error.GenerateVAO;
-        }
-        c.glBindVertexArray(vao);
+        const InitInfo = struct {
+            data: []const f32, // массив вершин
+            attrs: []const u32, // аттрибуты вершин
+            usage: Usage = .static, // режим использования
+            mode: Mode = .triangles, // режим отрисовки
+        };
 
-        var vbo: u32 = 0;
-        c.glCreateBuffers(1, &vbo);
-        if (vbo < 0) {
-            std.log.err("failed VBO create");
-            return error.CreateVBO;
-        }
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
-        c.glBufferData(
-            c.GL_ARRAY_BUFFER,
-            @as(c_long, @intCast(data.len * @sizeOf(f32))),
-            @as(*const anyopaque, &data[0]),
-            switch (params.usage) {
-                .static => c.GL_STATIC_DRAW,
-                .dynamic => c.GL_STATIC_DRAW,
-            },
-        );
+        pub fn init(info: InitInfo) !Vertices {
+            var vao: u32 = 0;
+            var vbo: u32 = 0;
 
-        try getError();
+            // создание объекта аттрибутов вершин
+            c.glGenVertexArrays(1, &vao);
+            c.glBindVertexArray(vao);
 
-        var offset: u32 = 0;
-        for (params.attrs, 0..) |_, i| {
-            const size = params.attrs[i];
-            c.glVertexAttribPointer(
-                @as(c_uint, @intCast(i)),
-                @as(c_int, @intCast(size)),
-                c.GL_FLOAT,
-                c.GL_FALSE,
-                @as(c_int, @intCast(vertex_size * @sizeOf(f32))),
-                @as(?*anyopaque, @ptrFromInt(offset * @sizeOf(f32))),
+            // создание объекта буфера вершин
+            c.glCreateBuffers(1, &vbo);
+            c.glBindBuffer(c.GL_ARRAY_BUFFER, vbo);
+
+            // инициализация данных вершин
+            c.glBufferData(
+                c.GL_ARRAY_BUFFER,
+                @as(c_long, @intCast(info.data.len * @sizeOf(f32))),
+                @as(*const anyopaque, &info.data[0]),
+                @intFromEnum(info.usage),
             );
-            c.glEnableVertexAttribArray(@as(c_uint, @intCast(i)));
-            offset += size;
+
+            try getError();
+
+            var offset: u32 = 0;
+            var vertex_size: u32 = 0;
+            for (info.attrs) |i| {
+                vertex_size += i;
+            }
+
+            // инициализация аттрибутов
+            for (info.attrs, 0..) |size, i| {
+                c.glVertexAttribPointer(
+                    @as(c_uint, @intCast(i)),
+                    @as(c_int, @intCast(size)),
+                    c.GL_FLOAT,
+                    c.GL_FALSE,
+                    @as(c_int, @intCast(vertex_size * @sizeOf(f32))),
+                    @as(?*anyopaque, @ptrFromInt(offset * @sizeOf(f32))),
+                );
+                c.glEnableVertexAttribArray(@as(c_uint, @intCast(i)));
+                offset += size;
+            }
+
+            c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
+            c.glBindVertexArray(0);
+
+            try getError();
+
+            const vertices = Vertices{
+                .vbo = vbo,
+                .vao = vao,
+                .len = @as(u32, @intCast(info.data.len)) / vertex_size,
+                .mode = info.mode,
+            };
+
+            std.log.debug("init vertices = {}", .{vertices});
+            return vertices;
         }
 
-        try getError();
+        pub fn deinit(self: Vertices) void {
+            std.log.debug("deinit vertices = {}", .{self});
+            c.glDeleteVertexArrays(1, &self.vao);
+            c.glDeleteBuffers(1, &self.vbo);
+        }
 
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
-        c.glBindVertexArray(0);
+        pub fn subdata(self: Vertices, data: []const f32) !void {
+            c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
+            c.glBufferSubData(
+                c.GL_ARRAY_BUFFER,
+                0,
+                @as(c_long, @intCast(data.len * @sizeOf(f32))),
+                @as(*const anyopaque, &data[0]),
+            );
+            c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
+            try getError();
+        }
 
-        const mesh = Mesh{
-            .vbo = vbo,
-            .vao = vao,
-            .len = data.len / vertex_size,
-            .usage = params.usage,
-            .mode = params.mode,
+        pub fn draw(self: Vertices) !void {
+            c.glBindVertexArray(self.vao);
+            c.glDrawArrays(@intCast(@intFromEnum(self.mode)), 0, @intCast(self.len));
+            c.glBindVertexArray(0);
+            try getError();
+        }
+    };
+
+    pub const Elements = struct {
+        ebo: u32 = 0, // объект буфера индексов вершин
+        len: u32 = 0, // количество отрисовываемых элементов
+        mode: Mode = .triangles, // Режим отрисовки
+
+        const InitInfo = struct {
+            data: []const u32, // массив индексов
+            usage: Usage = .static, // режим использования
+            mode: Mode = .triangles, // режим отрисовки
         };
-        std.log.debug("init mesh = {}", .{mesh});
-        return mesh;
-    }
 
-    pub fn deinit(self: Mesh) void {
-        std.log.debug("deinit mesh = {}", .{self});
-        c.glDeleteVertexArrays(1, &self.vao);
-        c.glDeleteBuffers(1, &self.vbo);
-    }
+        pub fn init(info: InitInfo) !Elements {
+            var ebo: u32 = 0;
+            // создание объекта буфера индексов
+            c.glCreateBuffers(1, &ebo);
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, ebo);
+            c.glBufferData(
+                c.GL_ELEMENT_ARRAY_BUFFER,
+                @as(c_long, @intCast(info.data.len * @sizeOf(u32))),
+                @as(*const anyopaque, &info.data[0]),
+                @intFromEnum(info.usage),
+            );
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, 0);
 
-    pub fn subdata(self: Mesh, vertices: []const f32) !void {
-        if (self.usage == .static) return error.InvalidDynamicMesh;
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
-        c.glBufferSubData(
-            c.GL_ARRAY_BUFFER,
-            0,
-            @as(c_long, @intCast(vertices.len * @sizeOf(f32))),
-            @as(*const anyopaque, &vertices[0]),
-        );
-        try getError();
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
-    }
+            try getError();
 
-    pub fn draw(self: Mesh) void {
-        c.glBindVertexArray(self.vao);
-        const mode = switch (self.mode) {
-            .triangles => c.GL_TRIANGLES,
-            .lines => c.GL_LINES,
-        };
-        c.glDrawArrays(@intCast(mode), 0, @as(i32, @intCast(self.len)));
-        c.glBindVertexArray(0);
-    }
+            const elements = Elements{
+                .ebo = ebo,
+                .len = @as(u32, @intCast(info.data.len)),
+                .mode = info.mode,
+            };
+
+            std.log.debug("init elements = {}", .{elements});
+            return elements;
+        }
+
+        pub fn deinit(self: Elements) void {
+            std.log.debug("deinit elements = {}", .{self});
+            c.glDeleteBuffers(1, &self.ebo);
+        }
+
+        // изменение дынных буфера (не выделение памяти)
+        pub fn subdata(self: Elements, data: []const u32) !void {
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.ebo);
+            c.glBufferSubData(
+                c.GL_ELEMENT_ARRAY_BUFFER,
+                0,
+                @as(c_long, @intCast(data.len * @sizeOf(f32))),
+                @as(*const anyopaque, &data[0]),
+            );
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, 0);
+            try getError();
+        }
+
+        pub fn draw(self: Elements, vertices: Vertices) !void {
+            c.glBindVertexArray(vertices.vao);
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.ebo);
+            c.glDrawElements(@intCast(@intFromEnum(self.mode)), @intCast(self.len), c.GL_UNSIGNED_INT, null);
+            c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, 0);
+            c.glBindVertexArray(0);
+            try getError();
+        }
+    };
 };
 
 pub const Texture = struct {

@@ -54,32 +54,35 @@ pub fn main() !void {
     defer gui_button_style.states[2].texture.deinit();
 
     // кнопка играть
-    _ = try gui_state.button(
-        .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
-        .{ .text = U16("играть"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-        gui_button_style,
-    );
+    _ = try gui_state.button(.{
+        .rect = .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+        .text = U16("играть"),
+        .style = gui_button_style,
+    });
 
     // кнопка выход
-    const control_exit = try gui_state.button(
-        .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
-        .{ .text = U16("выход"), .alignment = .{ .horizontal = .center, .vertical = .center } },
-        gui_button_style,
-    );
+    const control_exit = try gui_state.button(.{
+        .rect = .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+        .text = U16("выход"),
+        .style = gui_button_style,
+    });
 
     // F3
-    _ = try gui_state.text(
-        U16("krateroid prototype gui"),
-        .{ .pos = .{ 2, 1 } },
-        gui_text_style,
-    );
+    _ = try gui_state.text(.{
+        .data = U16("krateroid prototype gui"),
+        .pos = .{ 2, 1 },
+        .style = gui_text_style,
+    });
 
     // счётчик кадров в секунду
-    const text_fps = try gui_state.text(
-        U16("fps:$$$$$$"),
-        .{ .pos = .{ 2, 9 }, .usage = .dynamic },
-        gui_text_style,
-    );
+    const text_fps = try gui_state.text(.{
+        .data = U16("fps:$$$$$$"),
+        .pos = .{ 2, 9 },
+        .usage = .dynamic,
+        .style = gui_text_style,
+    });
 
     var chunk = try world.Chunk.init(.{ 0, 0 });
     chunk.blocks[10][5][5] = .stone;
@@ -150,7 +153,7 @@ pub fn main() !void {
         c.glEnable(c.GL_DEPTH_TEST);
         c.glDisable(c.GL_DEPTH_TEST);
 
-        gui.RenderSystem.draw(gui_state);
+        try gui.RenderSystem.draw(gui_state);
 
         frame += 1;
         window.swap();

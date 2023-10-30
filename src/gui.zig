@@ -193,97 +193,102 @@ pub const Text = struct {
     pos: Point,
     size: Point,
     alignment: Alignment,
-    mesh: gl.Mesh,
+    vertices: gl.Mesh.Vertices,
     style: Style,
-
-    pub const Params = struct {
-        pos: Point = .{ 0, 0 },
-        alignment: Alignment = .{},
-        usage: enum {
-            static,
-            dynamic,
-        } = .static,
-    };
 
     pub const Style = struct {
         color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
     };
 
-    pub fn init(state: State, data: []const u16, params: Params, style: Style) !Text {
-        const text_params = try initVertices(state, data);
+    pub const InitInfo = struct {
+        state: State = undefined,
+        data: []const u16,
+        pos: Point = .{ 0, 0 },
+        alignment: Alignment = .{},
+        usage: enum { static, dynamic } = .static,
+        style: Style,
+    };
+
+    pub fn init(info: InitInfo) !Text {
+        const vertices = try initVertices(info.state, info.data);
         return Text{
-            .pos = params.pos,
-            .size = .{ text_params.advance - 1, 8 },
-            .alignment = params.alignment,
-            .mesh = try gl.Mesh.init(text_params.vertices, .{ .attrs = &.{ 2, 2 }, .usage = @enumFromInt(@intFromEnum(params.usage)) }),
-            .style = style,
+            .pos = info.pos,
+            .size = .{ vertices.width - 1, 8 },
+            .alignment = info.alignment,
+            .vertices = try gl.Mesh.Vertices.init(.{
+                .data = vertices.data,
+                .attrs = &.{ 2, 2 },
+                .usage = .dynamic,
+            }),
+            .style = info.style,
         };
     }
 
     pub fn deinit(self: Text) void {
-        self.mesh.deinit();
+        self.vertices.deinit();
     }
 
     pub fn subdata(self: *Text, state: State, data: []const u16) !void {
-        const text_params = try initVertices(state, data);
-        self.size[0] = text_params.advance;
-        try self.mesh.subdata(text_params.vertices);
+        const vertices = try initVertices(state, data);
+        self.size[0] = vertices.width;
+        try self.vertices.subdata(vertices.data);
     }
 
-    pub fn initVertices(state: State, data: []const u16) !struct { vertices: []const f32, advance: i32 } {
-        var advance: i32 = 0;
+    pub fn initVertices(state: State, data: []const u16) !struct { data: []const f32, width: i32 } {
+        var width: i32 = 0;
         if (data.len > 512) return error.TextSizeOverflow;
         var i: usize = 0;
         for (data) |c| {
             if (c == ' ') {
-                advance += 3;
+                width += 3;
                 continue;
             }
 
             const char_pos = state.render.text.positions[c];
             const char_width = state.render.text.widths[c];
-            const tex_width = state.render.text.texture.size[0];
+            const texture_width = state.render.text.texture.size[0];
 
-            vertices[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(advance)); // X
-            vertices[i * 24 + (4 * 0) + 1] = 0.0; // Y
-            vertices[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 0) + 3] = 0.0; // V
+            vertices_data[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(width)); // X
+            vertices_data[i * 24 + (4 * 0) + 1] = 0.0; // Y
+            vertices_data[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 0) + 3] = 0.0; // V
 
-            vertices[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(advance)); // X
-            vertices[i * 24 + (4 * 1) + 1] = -8.0; // Y
-            vertices[i * 24 + (4 * 1) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 1) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(width)); // X
+            vertices_data[i * 24 + (4 * 1) + 1] = -8.0; // Y
+            vertices_data[i * 24 + (4 * 1) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 1) + 3] = 1.0; // V
 
-            vertices[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 2) + 1] = -8.0; // Y
-            vertices[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 2) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
+            vertices_data[i * 24 + (4 * 2) + 1] = -8.0; // Y
+            vertices_data[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 2) + 3] = 1.0; // V
 
-            vertices[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 3) + 1] = -8.0; // Y
-            vertices[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 3) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
+            vertices_data[i * 24 + (4 * 3) + 1] = -8.0; // Y
+            vertices_data[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 3) + 3] = 1.0; // V
 
-            vertices[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(advance)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices[i * 24 + (4 * 4) + 1] = 0.0; // Y
-            vertices[i * 24 + (4 * 4) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 4) + 3] = 0.0; // V
+            vertices_data[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
+            vertices_data[i * 24 + (4 * 4) + 1] = 0.0; // Y
+            vertices_data[i * 24 + (4 * 4) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 4) + 3] = 0.0; // V
 
-            vertices[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(advance)); // X
-            vertices[i * 24 + (4 * 5) + 1] = 0.0; // Y
-            vertices[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(tex_width)); // U
-            vertices[i * 24 + (4 * 5) + 3] = 0.0; // V
+            vertices_data[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(width)); // X
+            vertices_data[i * 24 + (4 * 5) + 1] = 0.0; // Y
+            vertices_data[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
+            vertices_data[i * 24 + (4 * 5) + 3] = 0.0; // V
 
-            advance += char_width + 1;
+            width += char_width + 1;
             i += 1;
         }
+
         return .{
-            .vertices = vertices[0..(i * 24)],
-            .advance = advance,
+            .data = vertices_data[0..(i * 24)],
+            .width = width,
         };
     }
 
-    var vertices: [12288]f32 = [1]f32{0.0} ** 12288;
+    var vertices_data: [12288]f32 = [1]f32{0.0} ** 12288;
 };
 
 pub const Button = struct {
@@ -291,14 +296,8 @@ pub const Button = struct {
     rect: Rect,
     alignment: Alignment,
     state: enum(u8) { empty, focus, press },
-    style: Style,
     text: Text,
-
-    const Params = struct {
-        id: u32 = 0,
-        text: []const u16 = &.{'-'},
-        alignment: Alignment = .{},
-    };
+    style: Style,
 
     pub const Style = struct {
         states: [3]struct {
@@ -307,19 +306,28 @@ pub const Button = struct {
         },
     };
 
-    pub fn init(state: State, rect: Rect, params: Params, style: Style) !Button {
+    const InitInfo = struct {
+        state: State = undefined,
+        id: u32 = 0,
+        rect: Rect,
+        alignment: Alignment = .{},
+        text: []const u16 = &.{'-'},
+        style: Style,
+    };
+
+    pub fn init(info: InitInfo) !Button {
         return Button{
-            .id = params.id,
-            .rect = rect,
-            .alignment = params.alignment,
+            .id = info.id,
+            .rect = info.rect,
+            .alignment = info.alignment,
             .state = .empty,
-            .style = style,
-            .text = try Text.init(
-                state,
-                params.text,
-                .{ .alignment = params.alignment },
-                .{},
-            ),
+            .style = info.style,
+            .text = try Text.init(.{
+                .state = info.state,
+                .data = info.text,
+                .alignment = info.alignment,
+                .style = info.style.states[0].text,
+            }),
         };
     }
 
@@ -390,10 +398,17 @@ pub const State = struct {
             .scale = 3,
             .render = .{
                 .rect = .{
-                    .mesh = try gl.Mesh.init(&.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, -1.0, 1.0, 0.0, 0.0, 0.0 }, .{
-                        .attrs = &.{2},
-                    }),
+                    .mesh = .{
+                        .vertices = try gl.Mesh.Vertices.init(.{
+                            .data = &.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, 0.0 },
+                            .attrs = &.{2},
+                        }),
+                        .elements = try gl.Mesh.Elements.init(.{
+                            .data = &.{ 0, 1, 2, 2, 3, 0 },
+                        }),
+                    },
                 },
+
                 .text = .{
                     .program = try gl.Program.init(
                         allocator,
@@ -422,7 +437,8 @@ pub const State = struct {
         self.render.button.program.deinit();
         self.render.text.texture.deinit();
         self.render.text.program.deinit();
-        self.render.rect.mesh.deinit();
+        self.render.rect.mesh.vertices.deinit();
+        self.render.rect.mesh.elements.deinit();
         for (self.controls.items) |control| {
             switch (control) {
                 .text => control.text.deinit(),
@@ -437,41 +453,41 @@ pub const State = struct {
         return &self.controls.items[self.controls.items.len - 1];
     }
 
-    pub fn text(self: *State, data: []const u16, params: Text.Params, style: Text.Style) !*Control {
-        return try self.append(.{ .text = try Text.init(self.*, data, params, style) });
+    pub fn text(self: *State, info: Text.InitInfo) !*Control {
+        var text_init_info: Text.InitInfo = info;
+        text_init_info.state = self.*;
+        return try self.append(.{ .text = try Text.init(text_init_info) });
     }
 
-    pub fn button(self: *State, rect: Rect, params: Button.Params, style: Button.Style) !*Control {
-        const fullparams = Button.Params{
-            .id = @as(u32, @intCast(self.controls.items.len)),
-            .text = params.text,
-            .alignment = params.alignment,
-        };
-        return try self.append(.{ .button = try Button.init(self.*, rect, fullparams, style) });
+    pub fn button(self: *State, info: Button.InitInfo) !*Control {
+        var button_init_info: Button.InitInfo = info;
+        button_init_info.state = self.*;
+        button_init_info.id = @as(u32, @intCast(self.controls.items.len));
+        return try self.append(.{ .button = try Button.init(button_init_info) });
     }
 };
 
 pub const RenderSystem = struct {
-    pub fn draw(state: State) void {
+    pub fn draw(state: State) !void {
         for (state.controls.items) |control| {
             switch (control) {
-                .text => |text| drawText(state, text),
-                .button => |button| drawButton(state, button),
+                .text => |text| try drawText(state, text),
+                .button => |button| try drawButton(state, button),
             }
         }
     }
 
-    pub fn drawText(state: State, text: Text) void {
+    pub fn drawText(state: State, text: Text) !void {
         const pos = text.alignment.transform(text.pos * Point{ state.scale, state.scale }, state.vpsize);
         const matrix = trasformMatrix(pos, .{ state.scale, state.scale }, state.vpsize);
         state.render.text.program.use();
         state.render.text.program.setUniform(0, matrix);
         state.render.text.program.setUniform(1, text.style.color);
         state.render.text.texture.use();
-        text.mesh.draw();
+        try text.vertices.draw();
     }
 
-    pub fn drawButton(state: State, button: Button) void {
+    pub fn drawButton(state: State, button: Button) !void {
         const pos = button.alignment.transform(button.rect.scale(state.scale), state.vpsize).min;
         const size = button.rect.scale(state.scale).size();
         const matrix: Mat = trasformMatrix(pos, size, state.vpsize);
@@ -482,12 +498,12 @@ pub const RenderSystem = struct {
         state.render.button.program.setUniform(3, button.alignment.transform(button.rect.scale(state.scale), state.vpsize).vector());
         state.render.button.program.setUniform(4, button.style.states[@intFromEnum(button.state)].texture.size);
         button.style.states[@intFromEnum(button.state)].texture.use();
-        state.render.rect.mesh.draw();
+        try state.render.rect.mesh.draw();
 
         var text: Text = button.text;
         text.pos = button.rect.min + @divTrunc(button.rect.size() - button.text.size, Point{ 2, 2 });
         text.style = button.style.states[@intFromEnum(button.state)].text;
-        drawText(state, text);
+        try drawText(state, text);
     }
 
     pub inline fn trasformMatrix(pos: Point, size: Point, vpsize: Point) Mat {
