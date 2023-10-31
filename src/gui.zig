@@ -42,8 +42,11 @@ pub const Rect = struct {
 };
 
 pub const Alignment = struct {
-    horizontal: enum { left, center, right } = .left,
-    vertical: enum { bottom, center, top } = .top,
+    const Horizontal = enum { left, center, right };
+    const Vertical = enum { bottom, center, top };
+
+    horizontal: Horizontal = .left,
+    vertical: Vertical = .top,
 
     pub fn transform(self: Alignment, obj: anytype, vpsize: Point) @TypeOf(obj) {
         return switch (comptime @TypeOf(obj)) {
@@ -244,41 +247,51 @@ pub const Text = struct {
                 continue;
             }
 
-            const char_pos = state.render.text.positions[c];
-            const char_width = state.render.text.widths[c];
-            const texture_width = state.render.text.texture.size[0];
+            const rect = Vec{
+                @as(f32, @floatFromInt(width)),
+                0.0,
+                @as(f32, @floatFromInt(width + state.render.text.widths[c])),
+                -8.0,
+            };
 
-            vertices_data[i * 24 + (4 * 0) + 0] = @as(f32, @floatFromInt(width)); // X
-            vertices_data[i * 24 + (4 * 0) + 1] = 0.0; // Y
-            vertices_data[i * 24 + (4 * 0) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 0) + 3] = 0.0; // V
+            const uvrect = Vec{
+                @as(f32, @floatFromInt(state.render.text.positions[c])) / @as(f32, @floatFromInt(state.render.text.texture.size[0])),
+                0.0,
+                @as(f32, @floatFromInt(state.render.text.positions[c] + state.render.text.widths[c])) / @as(f32, @floatFromInt(state.render.text.texture.size[0])),
+                1.0,
+            };
 
-            vertices_data[i * 24 + (4 * 1) + 0] = @as(f32, @floatFromInt(width)); // X
-            vertices_data[i * 24 + (4 * 1) + 1] = -8.0; // Y
-            vertices_data[i * 24 + (4 * 1) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 1) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 0) + 0] = rect[0];
+            vertices_data[i * 24 + (4 * 0) + 1] = rect[1];
+            vertices_data[i * 24 + (4 * 0) + 2] = uvrect[0];
+            vertices_data[i * 24 + (4 * 0) + 3] = uvrect[1];
 
-            vertices_data[i * 24 + (4 * 2) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices_data[i * 24 + (4 * 2) + 1] = -8.0; // Y
-            vertices_data[i * 24 + (4 * 2) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 2) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 1) + 0] = rect[0];
+            vertices_data[i * 24 + (4 * 1) + 1] = rect[3];
+            vertices_data[i * 24 + (4 * 1) + 2] = uvrect[0];
+            vertices_data[i * 24 + (4 * 1) + 3] = uvrect[3];
 
-            vertices_data[i * 24 + (4 * 3) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices_data[i * 24 + (4 * 3) + 1] = -8.0; // Y
-            vertices_data[i * 24 + (4 * 3) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 3) + 3] = 1.0; // V
+            vertices_data[i * 24 + (4 * 2) + 0] = rect[2];
+            vertices_data[i * 24 + (4 * 2) + 1] = rect[3];
+            vertices_data[i * 24 + (4 * 2) + 2] = uvrect[2];
+            vertices_data[i * 24 + (4 * 2) + 3] = uvrect[3];
 
-            vertices_data[i * 24 + (4 * 4) + 0] = @as(f32, @floatFromInt(width)) + @as(f32, @floatFromInt(char_width)); // X
-            vertices_data[i * 24 + (4 * 4) + 1] = 0.0; // Y
-            vertices_data[i * 24 + (4 * 4) + 2] = (@as(f32, @floatFromInt(char_pos)) + @as(f32, @floatFromInt(char_width))) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 4) + 3] = 0.0; // V
+            vertices_data[i * 24 + (4 * 3) + 0] = rect[2];
+            vertices_data[i * 24 + (4 * 3) + 1] = rect[3];
+            vertices_data[i * 24 + (4 * 3) + 2] = uvrect[2];
+            vertices_data[i * 24 + (4 * 3) + 3] = uvrect[3];
 
-            vertices_data[i * 24 + (4 * 5) + 0] = @as(f32, @floatFromInt(width)); // X
-            vertices_data[i * 24 + (4 * 5) + 1] = 0.0; // Y
-            vertices_data[i * 24 + (4 * 5) + 2] = @as(f32, @floatFromInt(char_pos)) / @as(f32, @floatFromInt(texture_width)); // U
-            vertices_data[i * 24 + (4 * 5) + 3] = 0.0; // V
+            vertices_data[i * 24 + (4 * 4) + 0] = rect[2];
+            vertices_data[i * 24 + (4 * 4) + 1] = rect[1];
+            vertices_data[i * 24 + (4 * 4) + 2] = uvrect[2];
+            vertices_data[i * 24 + (4 * 4) + 3] = uvrect[1];
 
-            width += char_width + 1;
+            vertices_data[i * 24 + (4 * 5) + 0] = rect[0];
+            vertices_data[i * 24 + (4 * 5) + 1] = rect[1];
+            vertices_data[i * 24 + (4 * 5) + 2] = uvrect[0];
+            vertices_data[i * 24 + (4 * 5) + 3] = uvrect[1];
+
+            width += state.render.text.widths[c] + 1;
             i += 1;
         }
 
@@ -292,10 +305,10 @@ pub const Text = struct {
 };
 
 pub const Button = struct {
-    id: u32,
+    id: u32 = 0,
     rect: Rect,
     alignment: Alignment,
-    state: enum(u8) { empty, focus, press },
+    state: enum(u8) { empty, focus, press } = .empty,
     text: Text,
     style: Style,
 
@@ -364,34 +377,6 @@ pub const State = struct {
             widths[char.code] = char.width;
         }
 
-        const text_vertex = try gl.Shader.initFormFile(
-            allocator,
-            "data/shader/gui/text/vertex.glsl",
-            gl.Shader.Type.vertex,
-        );
-        defer text_vertex.deinit();
-
-        const text_fragment = try gl.Shader.initFormFile(
-            allocator,
-            "data/shader/gui/text/fragment.glsl",
-            gl.Shader.Type.fragment,
-        );
-        defer text_fragment.deinit();
-
-        const button_vertex = try gl.Shader.initFormFile(
-            allocator,
-            "data/shader/gui/button/vertex.glsl",
-            gl.Shader.Type.vertex,
-        );
-        defer button_vertex.deinit();
-
-        const button_fragment = try gl.Shader.initFormFile(
-            allocator,
-            "data/shader/gui/button/fragment.glsl",
-            gl.Shader.Type.fragment,
-        );
-        defer button_fragment.deinit();
-
         const state = State{
             .controls = std.ArrayList(Control).init(allocator),
             .vpsize = vpsize,
@@ -412,7 +397,18 @@ pub const State = struct {
                 .text = .{
                     .program = try gl.Program.init(
                         allocator,
-                        &.{ text_vertex, text_fragment },
+                        &.{
+                            try gl.Shader.initFormFile(
+                                allocator,
+                                "data/shader/gui/text/vertex.glsl",
+                                gl.Shader.Type.vertex,
+                            ),
+                            try gl.Shader.initFormFile(
+                                allocator,
+                                "data/shader/gui/text/fragment.glsl",
+                                gl.Shader.Type.fragment,
+                            ),
+                        },
                         &.{ "matrix", "color" },
                     ),
                     .texture = try gl.Texture.init(Font.file),
@@ -422,18 +418,29 @@ pub const State = struct {
                 .button = .{
                     .program = try gl.Program.init(
                         allocator,
-                        &.{ button_vertex, button_fragment },
+                        &.{
+                            try gl.Shader.initFormFile(
+                                allocator,
+                                "data/shader/gui/button/vertex.glsl",
+                                gl.Shader.Type.vertex,
+                            ),
+                            try gl.Shader.initFormFile(
+                                allocator,
+                                "data/shader/gui/button/fragment.glsl",
+                                gl.Shader.Type.fragment,
+                            ),
+                        },
                         &.{ "matrix", "vpsize", "scale", "rect", "texsize" },
                     ),
                 },
             },
         };
-        std.log.debug("gui init state = {}", .{state});
+        std.log.debug("init gui state = {}", .{state});
         return state;
     }
 
     pub fn deinit(self: State) void {
-        std.log.debug("gui deinit state = {}", .{self});
+        std.log.debug("deinit gui state = {}", .{self});
         self.render.button.program.deinit();
         self.render.text.texture.deinit();
         self.render.text.program.deinit();
@@ -448,22 +455,23 @@ pub const State = struct {
         self.controls.deinit();
     }
 
-    fn append(self: *State, control: Control) !*Control {
-        try self.controls.append(control);
-        return &self.controls.items[self.controls.items.len - 1];
-    }
-
-    pub fn text(self: *State, info: Text.InitInfo) !*Control {
+    pub fn text(self: *State, info: Text.InitInfo) !*Text {
         var text_init_info: Text.InitInfo = info;
         text_init_info.state = self.*;
-        return try self.append(.{ .text = try Text.init(text_init_info) });
+        const ctext = try Text.init(text_init_info); // инициализация константы текста
+        std.log.debug("init gui text = {}", .{ctext});
+        try self.controls.append(.{ .text = ctext });
+        return &self.controls.items[self.controls.items.len - 1].text;
     }
 
-    pub fn button(self: *State, info: Button.InitInfo) !*Control {
+    pub fn button(self: *State, info: Button.InitInfo) !*Button {
         var button_init_info: Button.InitInfo = info;
         button_init_info.state = self.*;
         button_init_info.id = @as(u32, @intCast(self.controls.items.len));
-        return try self.append(.{ .button = try Button.init(button_init_info) });
+        const cbutton = try Button.init(button_init_info); // инициализация константы кнопки
+        std.log.debug("init gui button = {}", .{cbutton});
+        try self.controls.append(.{ .button = cbutton });
+        return &self.controls.items[self.controls.items.len - 1].button;
     }
 };
 

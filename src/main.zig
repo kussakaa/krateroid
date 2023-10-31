@@ -15,8 +15,6 @@ const WINDOW_WIDTH = 800;
 const WINDOW_HEIGHT = 600;
 
 pub fn main() !void {
-    std.debug.print("\n", .{});
-
     try sdl.init();
     defer sdl.deinit();
 
@@ -33,7 +31,7 @@ pub fn main() !void {
     c.glLineWidth(1);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
 
-    var input_state = input.State.init();
+var input_state = input.State.init();
 
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();
@@ -62,7 +60,7 @@ pub fn main() !void {
     });
 
     // кнопка выход
-    const control_exit = try gui_state.button(.{
+    const button_exit = try gui_state.button(.{
         .rect = .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
         .alignment = .{ .horizontal = .center, .vertical = .center },
         .text = U16("выход"),
@@ -84,8 +82,14 @@ pub fn main() !void {
         .style = gui_text_style,
     });
 
-    var chunk = try world.Chunk.init(.{ 0, 0 });
-    chunk.blocks[10][5][5] = .stone;
+    var chunk = try world.Chunk.init(.{
+        .pos = .{ 0, 0 },
+    });
+
+    chunk.hmap[4][4] = 64;
+    chunk.hmap[4][5] = 64;
+    chunk.hmap[5][4] = 64;
+    chunk.hmap[5][5] = 64;
 
     var last_time = @as(i32, @intCast(c.SDL_GetTicks()));
     var run = true;
@@ -109,7 +113,7 @@ pub fn main() !void {
             _ = try std.fmt.bufPrint(&buf, "fps:{}", .{fps});
             var buf16: [10]u16 = [1]u16{'$'} ** 10;
             const len16 = try std.unicode.utf8ToUtf16Le(buf16[0..], buf[0..]);
-            try text_fps.text.subdata(gui_state, buf16[0..len16]);
+            try text_fps.subdata(gui_state, buf16[0..len16]);
         }
 
         while (true) {
@@ -118,16 +122,16 @@ pub fn main() !void {
             input_state.process(event);
             //std.log.debug("event: {}", .{event.?});
             switch (event) {
-                input.Event.quit => run = false,
-                input.Event.window_size => |size| {
+                .quit => run = false,
+                .window_size => |size| {
                     window.size = size;
                     gui_state.vpsize = size;
                     c.glViewport(0, 0, size[0], size[1]);
                 },
-                input.Event.keyboard_key_down => |key| {
+                .keyboard_key_down => |key| {
                     switch (key) {
-                        c.SDL_SCANCODE_W => gui_state.scale += 1,
-                        c.SDL_SCANCODE_S => gui_state.scale -= 1,
+                        c.SDL_SCANCODE_P => gui_state.scale += 1,
+                        c.SDL_SCANCODE_O => gui_state.scale -= 1,
                         else => {},
                     }
                 },
@@ -139,7 +143,7 @@ pub fn main() !void {
 
             switch (gui_event) {
                 .unpress => |id| {
-                    if (id == control_exit.button.id) run = false;
+                    if (id == button_exit.id) run = false;
                 },
                 else => {},
             }

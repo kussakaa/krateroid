@@ -287,11 +287,6 @@ pub const Shader = struct {
         std.log.debug("init shader = {}", .{shader});
         return shader;
     }
-
-    pub fn deinit(self: Shader) void {
-        std.log.debug("deinit shader = {}", .{self});
-        c.glDeleteShader(self.id);
-    }
 };
 
 pub const Program = struct {
@@ -323,6 +318,8 @@ pub const Program = struct {
 
         for (shaders) |shader| {
             c.glDetachShader(id, shader.id);
+            std.log.debug("deinit shader = {}", .{shader});
+            c.glDeleteShader(shader.id);
         }
 
         var uniforms: [16]Uniform = [1]Uniform{0} ** 16;
