@@ -30,15 +30,18 @@ pub const Chunk = struct {
 
     const InitInfo = struct {
         pos: Pos,
+        seed: i32 = 1337,
     };
 
     pub fn init(info: InitInfo) !Chunk {
         var hmap: HMap = undefined;
 
         var noise_value = c.fnlCreateState();
-        var noise_cellular = c.fnlCreateState();
         noise_value.noise_type = c.FNL_NOISE_VALUE;
+        noise_value.seed = info.seed;
+        var noise_cellular = c.fnlCreateState();
         noise_cellular.noise_type = c.FNL_NOISE_CELLULAR;
+        noise_cellular.seed = info.seed;
 
         for (0..width) |y| {
             for (0..width) |x| {

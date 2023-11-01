@@ -31,7 +31,7 @@ pub fn main() !void {
     c.glLineWidth(1);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
 
-var input_state = input.State.init();
+    var input_state = input.State.init();
 
     var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
     defer gui_state.deinit();

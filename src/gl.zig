@@ -253,10 +253,13 @@ pub const Shader = struct {
     id: u32, // индекс шейдера
 
     pub fn initFormFile(allocator: std.mem.Allocator, shader_path: []const u8, shader_type: Type) !Shader {
-        const file = try std.fs.cwd().openFile(shader_path, .{ .mode = .read_only });
-        var buffer: [10000]u8 = undefined;
-        const bytes_read = try file.readAll(&buffer);
-        return Shader.init(allocator, buffer[0..bytes_read], shader_type);
+        const cwd = std.fs.cwd();
+        var file = try cwd.openFile(shader_path, .{});
+        defer file.close();
+        const reader = file.reader();
+        var buffer: [8192]u8 = undefined;
+        const len = try reader.readAll(&buffer);
+        return Shader.init(allocator, buffer[0..len], shader_type);
     }
 
     pub fn init(allocator: std.mem.Allocator, shader_source: []const u8, shader_type: Type) !Shader {
@@ -265,8 +268,7 @@ pub const Shader = struct {
             Type.fragment => c.glCreateShader(c.GL_FRAGMENT_SHADER),
         };
 
-        const shader_source_ptr: ?[*]const u8 = shader_source.ptr;
-        c.glShaderSource(id, 1, &shader_source_ptr, null);
+        c.glShaderSource(id, 1, &shader_source.ptr, @ptrCast(&.{@as(c.GLint, @intCast(shader_source.len))}));
         c.glCompileShader(id);
 
         var succes: i32 = 1;
@@ -309,7 +311,7 @@ pub const Program = struct {
         if (succes <= 0) {
             var info_log_len: i32 = 0;
             c.glGetProgramiv(id, c.GL_INFO_LOG_LENGTH, &info_log_len);
-            const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
+            const info_log = try allocator.alloc(u8, @intCast(info_log_len));
             defer allocator.free(info_log);
             c.glGetProgramInfoLog(id, info_log_len, null, info_log.ptr);
             std.log.err("program {} linkage: {s}", .{ id, info_log });
@@ -318,7 +320,6 @@ pub const Program = struct {
 
         for (shaders) |shader| {
             c.glDetachShader(id, shader.id);
-            std.log.debug("deinit shader = {}", .{shader});
             c.glDeleteShader(shader.id);
         }
 

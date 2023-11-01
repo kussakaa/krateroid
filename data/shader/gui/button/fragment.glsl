@@ -22,4 +22,4 @@ void main()
     if (f_coord.y < rect.w && f_coord.y > rect.w - tex_size.y/2) tex_coord.y = float(f_coord.y - rect.y) / float(tex_size.y);
 
     f_color = texture(button, tex_coord);
-};
+}

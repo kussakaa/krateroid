@@ -9,4 +9,4 @@ void main()
 {
     v_tex = a_tex;
     gl_Position = matrix*vec4(a_pos, 0.0, 1.0);
-};
+}
