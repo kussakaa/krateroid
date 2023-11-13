@@ -11,14 +11,28 @@ const world = @import("world.zig");
 
 const U16 = std.unicode.utf8ToUtf16LeStringLiteral;
 
-const WINDOW_WIDTH = 800;
-const WINDOW_HEIGHT = 600;
-
 pub fn main() !void {
+    var lua_state: ?*c.lua_State = c.luaL_newstate();
+
+    if (c.luaL_loadfilex(lua_state, "data/settings.lua", null) != 0 or c.lua_pcallk(lua_state, 0, 0, 0, 0, null) != 0) {
+        return error.LuaLoad;
+    }
+
+    _ = c.lua_getglobal(lua_state, "width");
+    _ = c.lua_getglobal(lua_state, "height");
+
+    if (c.lua_isnumber(lua_state, -2) == 0)
+        return error.WidthNotNumber;
+    if (c.lua_isnumber(lua_state, -1) == 0)
+        return error.HeightNotNumber;
+
+    const window_width = @as(i32, @intCast(c.lua_tointegerx(lua_state, -2, null)));
+    const window_height = @as(i32, @intCast(c.lua_tointegerx(lua_state, -1, null)));
+
     try sdl.init();
     defer sdl.deinit();
 
-    var window = try sdl.Window.init("krateroid", WINDOW_WIDTH, WINDOW_HEIGHT);
+    var window = try sdl.Window.init("krateroid", window_width, window_height);
     defer window.deinit();
 
     c.glEnable(c.GL_DEPTH_TEST);
@@ -33,7 +47,7 @@ pub fn main() !void {
 
     var input_state = input.State.init();
 
-    var gui_state = try gui.State.init(std.heap.page_allocator, .{ WINDOW_WIDTH, WINDOW_HEIGHT });
+    var gui_state = try gui.State.init(std.heap.page_allocator, .{ window_width, window_height });
     defer gui_state.deinit();
 
     const gui_text_style = gui.Text.Style{
@@ -47,6 +61,7 @@ pub fn main() !void {
             .{ .text = gui_text_style, .texture = try gl.Texture.init("data/gui/button/press.png") },
         },
     };
+
     defer gui_button_style.states[0].texture.deinit();
     defer gui_button_style.states[1].texture.deinit();
     defer gui_button_style.states[2].texture.deinit();

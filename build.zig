@@ -13,7 +13,8 @@ pub fn build(b: *std.Build) void {
 
     exe.linkSystemLibrary("c");
     exe.linkSystemLibrary("SDL2");
-    //exe.linkSystemLibrary("freetype2");
+    exe.linkSystemLibrary("lua5.4");
+
     exe.addCSourceFile(.{ .file = .{ .path = "deps/fnl/fnl.c" }, .flags = &.{
         "-std=c99",
         "-fno-sanitize=undefined",
