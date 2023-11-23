@@ -103,4 +103,7 @@ pub fn deinit(self: Drawer) void {
     self.gui.text.program.deinit();
     self.gui.text.texture.deinit();
     self.gui.button.program.deinit();
+    self.gui.button.texture.empty.deinit();
+    self.gui.button.texture.focus.deinit();
+    self.gui.button.texture.press.deinit();
 }

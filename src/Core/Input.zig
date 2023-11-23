@@ -8,12 +8,28 @@ const Input = @This();
 pub const Event = union(enum) {
     none,
     quit,
-    keyboard_key_down: u32,
-    keyboard_key_up: u32,
-    mouse_button_down: u32,
-    mouse_button_up: u32,
-    mouse_motion: Point,
-    window_size: Point,
+    keyboard: Keyboard,
+    mouse: Mouse,
+    window: Window,
+
+    const Keyboard = union(enum) {
+        down: u32,
+        up: u32,
+    };
+
+    const Mouse = union(enum) {
+        button: Button,
+        motion: Point,
+
+        const Button = union(enum) {
+            down: u32,
+            up: u32,
+        };
+    };
+
+    pub const Window = union(enum) {
+        size: Point,
+    };
 };
 
 pub fn pollevents(self: Input) Event {
@@ -22,13 +38,13 @@ pub fn pollevents(self: Input) Event {
     if (c.SDL_PollEvent(&sdl_event) <= 0) return .none;
     return switch (sdl_event.type) {
         c.SDL_QUIT => Event.quit,
-        c.SDL_KEYDOWN => Event{ .keyboard_key_down = sdl_event.key.keysym.scancode },
-        c.SDL_KEYUP => Event{ .keyboard_key_up = sdl_event.key.keysym.scancode },
-        c.SDL_MOUSEBUTTONDOWN => Event{ .mouse_button_down = sdl_event.button.button },
-        c.SDL_MOUSEBUTTONUP => Event{ .mouse_button_up = sdl_event.button.button },
-        c.SDL_MOUSEMOTION => Event{ .mouse_motion = Point{ sdl_event.motion.x, sdl_event.motion.y } },
+        c.SDL_KEYDOWN => Event{ .keyboard = .{ .down = sdl_event.key.keysym.scancode } },
+        c.SDL_KEYUP => Event{ .keyboard = .{ .up = sdl_event.key.keysym.scancode } },
+        c.SDL_MOUSEBUTTONDOWN => Event{ .mouse = .{ .button = .{ .down = sdl_event.button.button } } },
+        c.SDL_MOUSEBUTTONUP => Event{ .mouse = .{ .button = .{ .up = sdl_event.button.button } } },
+        c.SDL_MOUSEMOTION => Event{ .mouse = .{ .motion = Point{ sdl_event.motion.x, sdl_event.motion.y } } },
         c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
-            c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window_size = Point{ sdl_event.window.data1, sdl_event.window.data2 } },
+            c.SDL_WINDOWEVENT_SIZE_CHANGED => Event{ .window = .{ .size = .{ sdl_event.window.data1, sdl_event.window.data2 } } },
             else => .none,
         },
         else => .none,

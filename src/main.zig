@@ -56,11 +56,16 @@ pub fn main() !void {
 
     var run = true;
     loop: while (run) {
-        events: while (true) {
+        event: while (true) {
             const event = game.core.input.pollevents();
             switch (event) {
-                .none => break :events,
+                .none => break :event,
                 .quit => break :loop,
+                .window => |window| switch (window) {
+                    .size => |size| {
+                        std.debug.print("{}\n", .{size});
+                    },
+                },
                 else => {},
             }
         }
