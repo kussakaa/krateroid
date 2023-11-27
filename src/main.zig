@@ -11,36 +11,23 @@ pub fn main() !void {
 
     var game = try Game.init(.{
         .allocator = allocator,
-        .core = .{
-            .window = .{
-                .title = "krateroid",
-                .size = .{ 800, 600 },
-            },
+        .window = .{
+            .title = "krateroid",
         },
     });
     defer game.deinit();
 
-    c.glEnable(c.GL_DEPTH_TEST);
-    c.glEnable(c.GL_CULL_FACE);
-    c.glEnable(c.GL_BLEND);
-    c.glEnable(c.GL_MULTISAMPLE);
-    c.glCullFace(c.GL_FRONT);
-    c.glFrontFace(c.GL_CW);
-    c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_FILL);
-    c.glLineWidth(1);
-    c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
+    try game.gui.button(.{
+        .text = U16("играть"),
+        .rect = .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+    });
 
-    //_ = try game.gui.button(.{
-    //    .text = U16("играть"),
-    //    .rect = .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
-    //    .alignment = .{ .horizontal = .center, .vertical = .center },
-    //});
-
-    //_ = try game.gui.button(.{
-    //    .text = U16("выход"),
-    //    .rect = .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
-    //    .alignment = .{ .horizontal = .center, .vertical = .center },
-    //});
+    _ = try game.gui.button(.{
+        .text = U16("выход"),
+        .rect = .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
+        .alignment = .{ .horizontal = .center, .vertical = .center },
+    });
 
     //_ = try game.gui.text(.{
     //    .data = U16("krateroid prototype gui"),
@@ -57,14 +44,12 @@ pub fn main() !void {
     var run = true;
     loop: while (run) {
         event: while (true) {
-            const event = game.core.input.pollevents();
+            const event = game.input.pollevents();
             switch (event) {
                 .none => break :event,
                 .quit => break :loop,
                 .window => |window| switch (window) {
-                    .size => |size| {
-                        std.debug.print("{}\n", .{size});
-                    },
+                    .size => |size| game.window.resize(size),
                 },
                 else => {},
             }

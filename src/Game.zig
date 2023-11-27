@@ -1,39 +1,41 @@
 const std = @import("std");
 const Allocator = std.mem.Allocator;
 
-const Core = @import("Core.zig");
-const Drawer = @import("Drawer.zig");
-const Gui = @import("Gui.zig");
+const Window = @import("Game/Window.zig");
+const Input = @import("Game/Input.zig");
+const Drawer = @import("Game/Drawer.zig");
+const Gui = @import("Game/Gui.zig");
 
 const Game = @This();
-
 allocator: Allocator,
-core: Core,
+window: Window,
+input: Input,
 drawer: Drawer,
 gui: Gui,
 
 pub const InitInfo = struct {
     allocator: Allocator,
-    core: Core.InitInfo,
+    window: Window.InitInfo,
 };
 
 pub fn init(info: InitInfo) !Game {
     const allocator = info.allocator;
-
-    return Game{
+    return .{
         .allocator = allocator,
-        .core = try Core.init(info.core),
+        .window = try Window.init(info.window),
+        .input = .{},
         .drawer = try Drawer.init(.{ .allocator = allocator }),
         .gui = try Gui.init(.{ .allocator = allocator }),
     };
 }
 
-pub fn deinit(self: Game) void {
-    self.core.deinit();
-    self.drawer.deinit();
-    self.gui.deinit();
+pub fn deinit(game: Game) void {
+    game.window.deinit();
+    game.drawer.deinit();
+    game.gui.deinit();
 }
 
-pub fn draw(self: Game) !void {
-    _ = self;
+pub fn draw(game: *Game) !void {
+    try game.drawer.draw(game.window, game.gui);
+    game.window.swap();
 }
