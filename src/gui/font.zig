@@ -1,15 +1,9 @@
-const Char = packed struct { pos: u16 = 0, width: u16 = 3 };
-const Font = @This();
-
-chars: [2048]Char,
-
-pub fn init() Font {
-    var chars: [2048]Char = undefined;
-
-    for (chars, 0..) |_, i| {
-        chars[i] = .{ .pos = 0, .width = 3 };
-    }
-
+pub var chars: [2048]packed struct {
+    pos: u16 = 0,
+    width: u16 = 3,
+} = undefined;
+pub fn init() void {
+    for (chars, 0..) |_, i| chars[i] = .{ .pos = 0, .width = 3 };
     chars['!'] = .{ .pos = 3, .width = 1 };
     chars['"'] = .{ .pos = 4 };
     chars['#'] = .{ .pos = 7, .width = 5 };
@@ -104,8 +98,4 @@ pub fn init() Font {
     chars['э'] = .{ .pos = 281, .width = 4 };
     chars['ю'] = .{ .pos = 285, .width = 5 };
     chars['я'] = .{ .pos = 290 };
-
-    return .{
-        .chars = chars,
-    };
 }

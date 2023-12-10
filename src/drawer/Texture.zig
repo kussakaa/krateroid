@@ -1,15 +1,8 @@
 const std = @import("std");
 const log = std.log.scoped(.Texture);
-const c = @import("../../c.zig");
+const c = @import("../c.zig");
 
 const Texture = @This();
-
-fn glGetError() !void {
-    switch (c.glGetError()) {
-        0 => {},
-        else => return error.GLError,
-    }
-}
 
 id: u32 = 0,
 size: @Vector(2, i32),

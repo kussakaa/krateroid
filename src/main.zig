@@ -1,79 +1,69 @@
 const std = @import("std");
+const log = std.log.scoped(.main);
 const c = @import("c.zig");
-const U16 = std.unicode.utf8ToUtf16LeStringLiteral;
+const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
-const Game = @import("Game.zig");
+const window = @import("window.zig");
+const input = @import("input.zig");
+const drawer = @import("drawer.zig");
+const gui = @import("gui.zig");
+//const world = @import("world.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    var game = try Game.init(.{
-        .allocator = allocator,
-        .window = .{
-            .title = "krateroid",
-        },
-    });
-    defer game.deinit();
+    try window.init(.{ .title = "krateroid" });
+    try gui.init(.{ .allocator = allocator });
+    try drawer.init(.{ .allocator = allocator });
 
-    try game.gui.button(.{
-        .text = U16("играть"),
-        .rect = .{ .min = .{ -32, -17 }, .max = .{ 32, -1 } },
-        .alignment = .{ .horizontal = .center, .vertical = .center },
-    });
+    defer window.deinit();
+    defer drawer.deinit();
+    defer gui.deinit();
 
-    _ = try game.gui.button(.{
-        .text = U16("выход"),
-        .rect = .{ .min = .{ -32, 1 }, .max = .{ 32, 17 } },
-        .alignment = .{ .horizontal = .center, .vertical = .center },
+    try gui.button(.{
+        .text = W("выход"),
+        .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
+        .alignment = .{ .v = .center, .h = .center },
     });
 
-    //_ = try game.gui.text(.{
-    //    .data = U16("krateroid prototype gui"),
-    //    .pos = .{ 2, 1 },
-    //});
+    try gui.button(.{
+        .text = W("настройки"),
+        .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
 
-    // счётчик кадров в секунду
-    //_ = try game.gui.text(.{
-    //    .data = U16("fps:$$$$$$"),
-    //    .pos = .{ 2, 9 },
-    //    .usage = .dynamic,
-    //});
+    try gui.button(.{
+        .text = W("играть"),
+        .rect = .{ .min = .{ -32, 10 }, .max = .{ 32, 26 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
 
-    var run = true;
-    loop: while (run) {
-        event: while (true) {
-            const event = game.input.pollevents();
-            switch (event) {
-                .none => break :event,
+    try gui.text(.{
+        .data = W("krateroid prototype gui"),
+        .pos = .{ 2, 1 },
+    });
+
+    loop: while (true) {
+        inputproc: while (true) {
+            switch (input.pollEvent()) {
+                .none => break :inputproc,
                 .quit => break :loop,
-                .window => |window| switch (window) {
-                    .size => |size| game.window.resize(size),
+                .key => |k| switch (k) {
+                    .press => |id| {
+                        if (id == c.SDL_SCANCODE_ESCAPE) break :loop;
+                    },
+                    .unpress => |_| {},
                 },
                 else => {},
             }
         }
 
-        //if (@divTrunc(c.SDL_GetTicks(), 1000) > seconds) {
-        //    seconds = @divTrunc(c.SDL_GetTicks(), 1000);
-        //    fps = frame;
-        //    frame = 0;
-        //    var buf: [10]u8 = [1]u8{'$'} ** 10;
-        //    _ = try std.fmt.bufPrint(&buf, "fps:{}", .{fps});
-        //    var buf16: [10]u16 = [1]u16{'$'} ** 10;
-        //    const len16 = try std.unicode.utf8ToUtf16Le(buf16[0..], buf[0..]);
-        //    try text_fps.subdata(gui_state, buf16[0..len16]);
-        //}
-
-        // Рисование
-        c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
-        c.glClearColor(0.0, 0.0, 0.0, 1.0);
-        c.glEnable(c.GL_DEPTH_TEST);
-        c.glDisable(c.GL_DEPTH_TEST);
-
-        try game.draw();
-
-        //frame += 1;
+        window.clear(.{
+            .color = .{ 0.1, 0.1, 0.1, 1.0 },
+        });
+        try drawer.draw();
+        window.swap();
     }
 }
