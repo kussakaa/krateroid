@@ -23,7 +23,7 @@ pub fn main() !void {
     defer gui.deinit();
 
     try gui.button(.{
-        .text = W("выход"),
+        .text = W("играть"),
         .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
         .alignment = .{ .v = .center, .h = .center },
     });
@@ -35,7 +35,7 @@ pub fn main() !void {
     });
 
     try gui.button(.{
-        .text = W("играть"),
+        .text = W("выход"),
         .rect = .{ .min = .{ -32, 10 }, .max = .{ 32, 26 } },
         .alignment = .{ .v = .center, .h = .center },
     });
@@ -56,7 +56,30 @@ pub fn main() !void {
                     },
                     .unpress => |_| {},
                 },
+                .mouse => |m| switch (m) {
+                    .button => |b| switch (b) {
+                        .press => |id| {
+                            if (id == 1) gui.cursor_press();
+                        },
+                        .unpress => |id| {
+                            if (id == 1) gui.cursor_unpress();
+                        },
+                    },
+                    .pos => |pos| gui.cursor_pos(pos),
+                },
                 else => {},
+            }
+        }
+
+        guiproc: while (true) {
+            switch (gui.pollEvent()) {
+                .none => break :guiproc,
+                .button => |b| switch (b) {
+                    .press => |_| {},
+                    .unpress => |id| {
+                        if (id == 2) break :loop;
+                    },
+                },
             }
         }
 

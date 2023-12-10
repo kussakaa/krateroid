@@ -110,6 +110,7 @@ pub fn deinit() void {
 }
 
 pub fn draw() !void {
+    button.program.use();
     for (gui.buttons.items) |b| {
         const pos = b.alignment.transform(b.rect.scale(gui.scale), window.size).min;
         const size = b.rect.scale(gui.scale).size();
@@ -118,21 +119,24 @@ pub fn draw() !void {
         matrix[0][3] = @as(f32, @floatFromInt(pos[0])) / @as(f32, @floatFromInt(window.size[0])) * 2.0 - 1.0;
         matrix[1][1] = @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(window.size[1])) * 2.0;
         matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(window.size[1])) * -2.0 + 1.0;
-        button.program.use();
-        button.program.uniform(0, matrix);
-        button.program.uniform(1, window.size);
-        button.program.uniform(2, gui.scale);
-        button.program.uniform(3, b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
+
         const texture = switch (b.state) {
             .empty => button.empty,
             .focus => button.focus,
             .press => button.press,
         };
-        button.program.uniform(4, texture.size);
         texture.use();
+
+        button.program.uniform(0, matrix);
+        button.program.uniform(1, window.size);
+        button.program.uniform(2, gui.scale);
+        button.program.uniform(3, b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
+        button.program.uniform(4, texture.size);
         rect.ebo.draw(rect.vao, .triangle_strip);
     }
 
+    text.program.use();
+    text.font.use();
     for (gui.texts.items, 0..) |t, i| {
         if (i == text.vao.items.len) {
             const s = struct {
@@ -201,10 +205,8 @@ pub fn draw() !void {
         matrix[1][1] = @as(f32, @floatFromInt(size[1])) / @as(f32, @floatFromInt(window.size[1])) * 2.0;
         matrix[1][3] = @as(f32, @floatFromInt(pos[1])) / @as(f32, @floatFromInt(window.size[1])) * -2.0 + 1.0;
 
-        text.program.use();
         text.program.uniform(0, matrix);
         text.program.uniform(1, Color{ 1.0, 1.0, 1.0, 1.0 });
-        text.font.use();
         text.ebo.items[i].draw(text.vao.items[i], .triangles);
     }
 }
