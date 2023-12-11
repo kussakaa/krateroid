@@ -15,12 +15,11 @@ pub fn main() !void {
     defer _ = gpa.deinit();
 
     try window.init(.{ .title = "krateroid" });
-    try gui.init(.{ .allocator = allocator });
-    try drawer.init(.{ .allocator = allocator });
-
     defer window.deinit();
-    defer drawer.deinit();
+    try gui.init(.{ .allocator = allocator });
     defer gui.deinit();
+    try drawer.init(.{ .allocator = allocator });
+    defer drawer.deinit();
 
     try gui.button(.{
         .text = W("играть"),
@@ -59,13 +58,13 @@ pub fn main() !void {
                 .mouse => |m| switch (m) {
                     .button => |b| switch (b) {
                         .press => |id| {
-                            if (id == 1) gui.cursor_press();
+                            if (id == 1) gui.cursor.press();
                         },
                         .unpress => |id| {
-                            if (id == 1) gui.cursor_unpress();
+                            if (id == 1) gui.cursor.unpress();
                         },
                     },
-                    .pos => |pos| gui.cursor_pos(pos),
+                    .pos => |pos| gui.cursor.pos(pos),
                 },
                 else => {},
             }

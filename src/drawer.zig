@@ -27,6 +27,12 @@ const rect = struct {
     var vao: Vao = undefined;
     var ebo: Ebo = undefined;
 };
+const button = struct {
+    var program: Program = undefined;
+    var empty: Texture = undefined;
+    var focus: Texture = undefined;
+    var press: Texture = undefined;
+};
 const text = struct {
     var program: Program = undefined;
     var vbo_pos: Array(Vbo) = undefined;
@@ -34,12 +40,6 @@ const text = struct {
     var vao: Array(Vao) = undefined;
     var ebo: Array(Ebo) = undefined;
     var font: Texture = undefined;
-};
-const button = struct {
-    var program: Program = undefined;
-    var empty: Texture = undefined;
-    var focus: Texture = undefined;
-    var press: Texture = undefined;
 };
 
 pub fn init(info: struct {
@@ -49,10 +49,26 @@ pub fn init(info: struct {
 
     { // прямоугольник
         rect.vbo = try Vbo.init(f32, &.{ 0.0, 0.0, 0.0, -1.0, 1.0, -1.0, 1.0, 0.0 }, .static);
-        rect.vao = try Vao.init(.{ .attributes = &.{2}, .vbo = &.{rect.vbo} });
+        rect.vao = try Vao.init(&.{
+            .{ .size = 2, .vbo = rect.vbo },
+        });
         rect.ebo = try Ebo.init(&.{ 0, 1, 3, 2 }, .static);
     }
+    { // кнопка
+        const vertex = try Shader.initFormFile("core/gui/button/vertex.glsl", .vertex, _allocator);
+        const fragment = try Shader.initFormFile("core/gui/button/fragment.glsl", .fragment, _allocator);
+        defer vertex.deinit();
+        defer fragment.deinit();
+        button.program = try Program.init(
+            &.{ vertex, fragment },
+            &.{ "model", "vpsize", "scale", "rect", "texsize" },
+            _allocator,
+        );
 
+        button.empty = try Texture.init("core/gui/button/empty.png");
+        button.focus = try Texture.init("core/gui/button/focus.png");
+        button.press = try Texture.init("core/gui/button/press.png");
+    }
     { // текст
         const vertex = try Shader.initFormFile("core/gui/text/vertex.glsl", .vertex, _allocator);
         const fragment = try Shader.initFormFile("core/gui/text/fragment.glsl", .fragment, _allocator);
@@ -70,39 +86,23 @@ pub fn init(info: struct {
         text.ebo = try Array(Ebo).initCapacity(_allocator, 32);
         text.font = try Texture.init("core/gui/text/font.png");
     }
-
-    { // кнопка
-        const vertex = try Shader.initFormFile("core/gui/button/vertex.glsl", .vertex, _allocator);
-        const fragment = try Shader.initFormFile("core/gui/button/fragment.glsl", .fragment, _allocator);
-        defer vertex.deinit();
-        defer fragment.deinit();
-        button.program = try Program.init(
-            &.{ vertex, fragment },
-            &.{ "model", "vpsize", "scale", "rect", "texsize" },
-            _allocator,
-        );
-
-        button.empty = try Texture.init("core/gui/button/empty.png");
-        button.focus = try Texture.init("core/gui/button/focus.png");
-        button.press = try Texture.init("core/gui/button/press.png");
-    }
 }
 
 pub fn deinit() void {
-    button.empty.deinit();
-    button.focus.deinit();
-    button.press.deinit();
-    button.program.deinit();
-
-    for (text.vbo_pos.items) |item| item.deinit();
-    for (text.vbo_tex.items) |item| item.deinit();
-    for (text.vao.items) |item| item.deinit();
     for (text.ebo.items) |item| item.deinit();
+    for (text.vao.items) |item| item.deinit();
+    for (text.vbo_tex.items) |item| item.deinit();
+    for (text.vbo_pos.items) |item| item.deinit();
     text.vbo_pos.deinit(_allocator);
     text.vbo_tex.deinit(_allocator);
     text.vao.deinit(_allocator);
     text.ebo.deinit(_allocator);
     text.program.deinit();
+
+    button.empty.deinit();
+    button.focus.deinit();
+    button.press.deinit();
+    button.program.deinit();
 
     rect.ebo.deinit();
     rect.vao.deinit();
@@ -188,7 +188,10 @@ pub fn draw() !void {
 
             const vbo_pos = try Vbo.init(f32, s.vbo_pos_data[0..(cnt * 8)], .static);
             const vbo_tex = try Vbo.init(f32, s.vbo_tex_data[0..(cnt * 8)], .static);
-            const vao = try Vao.init(.{ .attributes = &.{ 2, 2 }, .vbo = &.{ vbo_pos, vbo_tex } });
+            const vao = try Vao.init(&.{
+                .{ .size = 2, .vbo = vbo_pos },
+                .{ .size = 2, .vbo = vbo_tex },
+            });
             const ebo = try Ebo.init(s.ebo_data[0..(cnt * 6)], .static);
 
             try text.vbo_pos.append(_allocator, vbo_pos);

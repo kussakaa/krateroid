@@ -45,7 +45,6 @@ pub fn init(info: struct {
         log.err("init {s}", .{c.SDL_GetError()});
         return error.WINDOW_INIT;
     }
-
     _context = c.SDL_GL_CreateContext(_handle);
     _ = c.SDL_GL_MakeCurrent(_handle, _context);
     if (c.gladLoadGLLoader(@as(c.GLADloadproc, @ptrCast(&c.SDL_GL_GetProcAddress))) == 0) {
@@ -53,7 +52,7 @@ pub fn init(info: struct {
         return error.GL_INIT;
     }
 
-    _ = c.SDL_GL_SetSwapInterval(0);
+    _ = c.SDL_GL_SetSwapInterval(1);
 
     c.glViewport(0, 0, size[0], size[1]);
     c.glEnable(c.GL_DEPTH_TEST);

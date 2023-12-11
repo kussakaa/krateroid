@@ -41,6 +41,7 @@ pub fn draw(
     mode: enum(u32) {
         triangles = c.GL_TRIANGLES,
         triangle_strip = c.GL_TRIANGLE_STRIP,
+        lines = c.GL_LINES,
     },
 ) void {
     c.glBindVertexArray(vao.id);

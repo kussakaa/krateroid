@@ -23,9 +23,48 @@ pub const font = @import("gui/font.zig");
 pub var scale: i32 = undefined;
 pub var texts: Array(Text) = undefined;
 pub var buttons: Array(Button) = undefined;
-const cursor = struct {
-    var pos: Pos = .{ 0, 0 };
-    var press: bool = false;
+pub const cursor = struct {
+    var _pos: Pos = .{ 0, 0 };
+    var _press: bool = false;
+
+    pub fn pos(p: Pos) void {
+        _pos = p;
+        for (buttons.items, 0..) |b, i| {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
+                if (_press) {
+                    buttons.items[i].state = .press;
+                } else {
+                    buttons.items[i].state = .focus;
+                }
+            } else {
+                buttons.items[i].state = .empty;
+            }
+        }
+    }
+
+    pub fn press() void {
+        _press = true;
+        for (buttons.items, 0..) |b, i| {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
+                buttons.items[i].state = .press;
+                pushEvent(Event{ .button = .{ .press = @intCast(i) } });
+            } else {
+                buttons.items[i].state = .empty;
+            }
+        }
+    }
+
+    pub fn unpress() void {
+        _press = false;
+        for (buttons.items, 0..) |b, i| {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
+                buttons.items[i].state = .focus;
+                pushEvent(Event{ .button = .{ .unpress = @intCast(i) } });
+            } else {
+                buttons.items[i].state = .empty;
+            }
+        }
+    }
 };
 const events = struct {
     var len: usize = 0;
@@ -53,22 +92,8 @@ pub fn deinit() void {
     buttons.deinit(_allocator);
 }
 
-pub fn text(info: struct {
-    data: []const u16,
-    pos: Pos,
-    alignment: Alignment = .{},
-}) !void {
-    const size = calcTextSize(info.data);
-    const t = Text{
-        .data = info.data,
-        .rect = .{ .min = info.pos, .max = info.pos + size },
-        .alignment = info.alignment,
-    };
-    try texts.append(_allocator, t);
-}
-
 pub fn button(info: struct {
-    text: []const u16 = &.{ 't', 'e', 'x', 't' },
+    text: []const u16,
     rect: Rect,
     alignment: Alignment = .{},
 }) !void {
@@ -88,6 +113,20 @@ pub fn button(info: struct {
     try texts.append(_allocator, t);
 }
 
+pub fn text(info: struct {
+    data: []const u16,
+    pos: Pos,
+    alignment: Alignment = .{},
+}) !void {
+    const size = calcTextSize(info.data);
+    const t = Text{
+        .data = info.data,
+        .rect = .{ .min = info.pos, .max = info.pos + size },
+        .alignment = info.alignment,
+    };
+    try texts.append(_allocator, t);
+}
+
 fn calcTextSize(data: []const u16) Size {
     var width: i32 = 0;
     for (data) |c| {
@@ -95,53 +134,6 @@ fn calcTextSize(data: []const u16) Size {
     }
     width -= 1;
     return .{ width, 8 };
-}
-
-pub fn cursor_pos(pos: Pos) void {
-    cursor.pos = pos;
-    for (buttons.items, 0..) |b, i| {
-        if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(cursor.pos)) {
-            if (cursor.press) {
-                buttons.items[i].state = .press;
-            } else {
-                buttons.items[i].state = .focus;
-            }
-        } else {
-            buttons.items[i].state = .empty;
-        }
-    }
-}
-
-pub fn cursor_press() void {
-    cursor.press = true;
-    for (buttons.items, 0..) |b, i| {
-        if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(cursor.pos)) {
-            pushEvent(Event{ .button = .{ .press = @intCast(i) } });
-            if (cursor.press) {
-                buttons.items[i].state = .press;
-            } else {
-                buttons.items[i].state = .focus;
-            }
-        } else {
-            buttons.items[i].state = .empty;
-        }
-    }
-}
-
-pub fn cursor_unpress() void {
-    cursor.press = false;
-    for (buttons.items, 0..) |b, i| {
-        if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(cursor.pos)) {
-            pushEvent(Event{ .button = .{ .unpress = @intCast(i) } });
-            if (cursor.press) {
-                buttons.items[i].state = .press;
-            } else {
-                buttons.items[i].state = .focus;
-            }
-        } else {
-            buttons.items[i].state = .empty;
-        }
-    }
 }
 
 fn pushEvent(event: Event) void {
