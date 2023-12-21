@@ -2,14 +2,18 @@ const std = @import("std");
 const log = std.log.scoped(.drawer);
 const c = @import("../c.zig");
 
+const Type = @import("util.zig").Type;
+const Usage = @import("util.zig").Usage;
+
 const Self = @This();
 id: u32,
 len: u32,
+type: Type,
 
 pub fn init(
     comptime T: type,
     data: []const T,
-    usage: enum(u32) { static = c.GL_STATIC_DRAW, dynamic = c.GL_DYNAMIC_DRAW },
+    usage: Usage,
 ) !Self {
     var id: u32 = undefined;
     c.glGenBuffers(1, &id);
@@ -24,6 +28,7 @@ pub fn init(
     const self = Self{
         .id = id,
         .len = @as(u32, @intCast(data.len)),
+        .type = Type.from(T),
     };
     log.debug("init {}", .{self});
     return self;

@@ -50,10 +50,7 @@ pub fn initFormFile(
     allocator: std.mem.Allocator,
 ) !Self {
     const cwd = std.fs.cwd();
-    var file = try cwd.openFile(shader_path, .{});
-    defer file.close();
-    const reader = file.reader();
-    var buffer: [8192]u8 = undefined;
-    const len = try reader.readAll(&buffer);
-    return Self.init(buffer[0..len], shader_type, allocator);
+    const data = try cwd.readFileAlloc(allocator, shader_path, 100_000_000);
+    defer allocator.free(data);
+    return Self.init(data[0..], shader_type, allocator);
 }

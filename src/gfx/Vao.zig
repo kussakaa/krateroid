@@ -16,7 +16,7 @@ pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
     for (attribs, 0..) |attrib, i| {
         c.glBindBuffer(c.GL_ARRAY_BUFFER, attrib.vbo.id);
         c.glEnableVertexAttribArray(@intCast(i));
-        c.glVertexAttribPointer(@intCast(i), @intCast(attrib.size), c.GL_FLOAT, c.GL_FALSE, 0, null);
+        c.glVertexAttribPointer(@intCast(i), @intCast(attrib.size), @intFromEnum(attrib.vbo.type), c.GL_FALSE, 0, null);
     }
 
     const self = Self{

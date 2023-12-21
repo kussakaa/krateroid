@@ -2,22 +2,27 @@ const std = @import("std");
 const log = std.log.scoped(.drawer);
 const c = @import("../c.zig");
 
+const Type = @import("util.zig").Type;
+const Mode = @import("util.zig").Mode;
+const Usage = @import("util.zig").Usage;
 const Vao = @import("Vao.zig");
 
 const Self = @This();
 id: u32,
 len: u32,
+type: Type,
 
 pub fn init(
-    data: []const u32,
-    usage: enum(u32) { static = c.GL_STATIC_DRAW, dynamic = c.GL_DYNAMIC_DRAW },
+    comptime T: type,
+    data: []const T,
+    usage: Usage,
 ) !Self {
     var id: u32 = undefined;
     c.glGenBuffers(1, &id);
     c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, id);
     c.glBufferData(
         c.GL_ELEMENT_ARRAY_BUFFER,
-        @intCast(data.len * @sizeOf(u32)),
+        @intCast(data.len * @sizeOf(T)),
         @as(*const anyopaque, &data[0]),
         @intFromEnum(usage),
     );
@@ -25,6 +30,7 @@ pub fn init(
     const self = Self{
         .id = id,
         .len = @as(u32, @intCast(data.len)),
+        .type = Type.from(T),
     };
     log.debug("init {}", .{self});
     return self;
@@ -38,15 +44,11 @@ pub fn deinit(self: Self) void {
 pub fn draw(
     self: Self,
     vao: Vao,
-    mode: enum(u32) {
-        triangles = c.GL_TRIANGLES,
-        triangle_strip = c.GL_TRIANGLE_STRIP,
-        lines = c.GL_LINES,
-    },
+    mode: Mode,
 ) void {
     c.glBindVertexArray(vao.id);
     c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.id);
-    c.glDrawElements(@intCast(@intFromEnum(mode)), @intCast(self.len), c.GL_UNSIGNED_INT, null);
+    c.glDrawElements(@intCast(@intFromEnum(mode)), @intCast(self.len), @intFromEnum(self.type), null);
 }
 
 //pub fn subdata(self: Verts, data: []const f32) !void {

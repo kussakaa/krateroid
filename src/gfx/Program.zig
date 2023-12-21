@@ -41,12 +41,7 @@ pub fn init(
 
     var uniforms: [16]Uniform = [1]Uniform{0} ** 16;
     for (uniform_names, 0..) |name, i| {
-        const location = @as(i32, @intCast(c.glGetUniformLocation(id, name)));
-        if (location < 0) {
-            log.err("{} failed finding uniform {s}", .{ id, name });
-            return error.UniformNotFound;
-        }
-        uniforms[i] = location;
+        uniforms[i] = @intCast(c.glGetUniformLocation(id, name));
     }
 
     const program = Program{ .id = id, .uniforms = uniforms };

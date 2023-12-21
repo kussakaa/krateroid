@@ -7,7 +7,6 @@ const window = @import("window.zig");
 const input = @import("input.zig");
 const drawer = @import("drawer.zig");
 const gui = @import("gui.zig");
-//const world = @import("world.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
