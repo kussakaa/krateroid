@@ -39,14 +39,12 @@ pub fn deinit(self: Self) void {
     c.glDeleteBuffers(1, &self.id);
 }
 
-//pub fn subdata(self: Verts, data: []const f32) !void {
-//    c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo);
-//    c.glBufferSubData(
-//        c.GL_ARRAY_BUFFER,
-//        0,
-//        @as(c_long, @intCast(data.len * @sizeOf(f32))),
-//        @as(*const anyopaque, &data[0]),
-//    );
-//    c.glBindBuffer(c.GL_ARRAY_BUFFER, 0);
-//    try glGetError();
-//}
+pub fn subdata(self: Self, comptime T: type, data: []const T) !void {
+    c.glBindBuffer(c.GL_ARRAY_BUFFER, self.id);
+    c.glBufferSubData(
+        c.GL_ARRAY_BUFFER,
+        0,
+        @intCast(data.len * @sizeOf(T)),
+        @as(*const anyopaque, &data[0]),
+    );
+}

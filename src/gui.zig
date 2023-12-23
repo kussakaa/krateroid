@@ -19,6 +19,7 @@ const Event = union(enum) {
     },
 };
 
+var _allocator: Allocator = undefined;
 pub const font = @import("gui/font.zig");
 pub var scale: i32 = undefined;
 pub var texts: Array(Text) = undefined;
@@ -70,14 +71,13 @@ const events = struct {
     var len: usize = 0;
     var items: [16]Event = undefined;
 };
-var _allocator: Allocator = undefined;
 
 pub fn init(info: struct {
-    scale: i32 = 3,
     allocator: Allocator = std.heap.page_allocator,
+    scale: i32 = 3,
 }) !void {
-    scale = info.scale;
     _allocator = info.allocator;
+    scale = info.scale;
     font.init();
     texts = try Array(Text).initCapacity(_allocator, 32);
     buttons = try Array(Button).initCapacity(_allocator, 32);
@@ -96,7 +96,7 @@ pub fn button(info: struct {
     text: []const u16,
     rect: Rect,
     alignment: Alignment = .{},
-}) !void {
+}) !u32 {
     const b = Button{
         .rect = info.rect,
         .alignment = info.alignment,
@@ -108,23 +108,28 @@ pub fn button(info: struct {
         .data = info.text,
         .rect = .{ .min = tp, .max = tp + ts },
         .alignment = info.alignment,
+        .usage = .static,
     };
     try buttons.append(_allocator, b);
     try texts.append(_allocator, t);
+    return @intCast(buttons.items.len - 1);
 }
 
 pub fn text(info: struct {
     data: []const u16,
     pos: Pos,
     alignment: Alignment = .{},
-}) !void {
+    usage: Text.Usage = .static,
+}) !u32 {
     const size = calcTextSize(info.data);
     const t = Text{
         .data = info.data,
         .rect = .{ .min = info.pos, .max = info.pos + size },
         .alignment = info.alignment,
+        .usage = info.usage,
     };
     try texts.append(_allocator, t);
+    return @intCast(texts.items.len - 1);
 }
 
 fn calcTextSize(data: []const u16) Size {

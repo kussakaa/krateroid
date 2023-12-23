@@ -6,6 +6,9 @@ const c = @import("c.zig");
 const window = @import("window.zig");
 const gui = @import("gui.zig");
 
+const gfx = struct {
+    const util = @import("gfx/util.zig");
+};
 const Vbo = @import("gfx/Vbo.zig");
 const Vao = @import("gfx/Vao.zig");
 const Ebo = @import("gfx/Ebo.zig");
@@ -20,7 +23,7 @@ const Size = @Vector(2, i32);
 const linmath = @import("linmath.zig");
 const Mat = linmath.Mat;
 const Vec = linmath.Vec;
-const Color = Vec;
+const Color = Vec(4);
 
 var _allocator: Allocator = undefined;
 const rect = struct {
@@ -147,10 +150,10 @@ pub fn draw() !void {
     text.program.use();
     text.texture.use();
     for (gui.texts.items, 0..) |t, i| {
-        if (i == text.vao.items.len) {
+        if (i == text.vao.items.len or t.usage == .dynamic) {
             const s = struct {
                 var vbo_pos_data: [1024]u16 = [1]u16{0} ** 1024;
-                var vbo_tex_data: [1024]u16 = [1]u16{0} ** 1024;
+                var vbo_tex_data: [512]u16 = [1]u16{0} ** 512;
                 var ebo_data: [1024]u16 = [1]u16{0} ** 1024;
             };
 
@@ -191,18 +194,29 @@ pub fn draw() !void {
                 cnt += 1;
             }
 
-            const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 8)], .static);
-            const vbo_tex = try Vbo.init(u16, s.vbo_tex_data[0..(cnt * 8)], .static);
-            const vao = try Vao.init(&.{
-                .{ .size = 2, .vbo = vbo_pos },
-                .{ .size = 1, .vbo = vbo_tex },
-            });
-            const ebo = try Ebo.init(u16, s.ebo_data[0..(cnt * 6)], .static);
+            if (i == text.vao.items.len) {
+                const usage = switch (t.usage) {
+                    .static => gfx.util.Usage.static,
+                    .dynamic => gfx.util.Usage.dynamic,
+                };
 
-            try text.vbo_pos.append(_allocator, vbo_pos);
-            try text.vbo_tex.append(_allocator, vbo_pos);
-            try text.vao.append(_allocator, vao);
-            try text.ebo.append(_allocator, ebo);
+                const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 8)], usage);
+                const vbo_tex = try Vbo.init(u16, s.vbo_tex_data[0..(cnt * 4)], usage);
+                const vao = try Vao.init(&.{
+                    .{ .size = 2, .vbo = vbo_pos },
+                    .{ .size = 1, .vbo = vbo_tex },
+                });
+                const ebo = try Ebo.init(u16, s.ebo_data[0..(cnt * 6)], usage);
+
+                try text.vbo_pos.append(_allocator, vbo_pos);
+                try text.vbo_tex.append(_allocator, vbo_tex);
+                try text.vao.append(_allocator, vao);
+                try text.ebo.append(_allocator, ebo);
+            } else {
+                try text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 8)]);
+                try text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 4)]);
+                //try text.ebo.items[i].subdata(u16, s.ebo_data[0..(cnt * 6)]);
+            }
         }
 
         const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);

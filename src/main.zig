@@ -15,32 +15,50 @@ pub fn main() !void {
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
-    try gui.init(.{ .allocator = allocator });
+    try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
 
-    try gui.button(.{
-        .text = W("играть"),
+    _ = try gui.button(.{
+        .text = W("<играть>"),
         .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
-    try gui.button(.{
-        .text = W("настройки"),
+    _ = try gui.button(.{
+        .text = W("<настройки>"),
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
-    try gui.button(.{
-        .text = W("выход"),
+    const button_exit = try gui.button(.{
+        .text = W("<выход>"),
         .rect = .{ .min = .{ -32, 10 }, .max = .{ 32, 26 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
-    try gui.text(.{
-        .data = W("krateroid prototype gui"),
+    _ = try gui.text(.{
+        .data = W("krateroid prototype 1"),
         .pos = .{ 2, 1 },
+    });
+
+    _ = try gui.text(.{
+        .data = W("fps:"),
+        .pos = .{ 2, 9 },
+    });
+
+    var fps_str = [1]u16{'0'} ** 6;
+    _ = try gui.text(.{
+        .data = &fps_str,
+        .pos = .{ 16, 9 },
+        .usage = .dynamic,
+    });
+
+    _ = try gui.text(.{
+        .data = W("gitlab.com/kussakaa/krateroid"),
+        .pos = .{ 2, -8 },
+        .alignment = .{ .v = .bottom },
     });
 
     loop: while (true) {
@@ -51,6 +69,8 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .press => |id| {
                         if (id == c.SDL_SCANCODE_ESCAPE) break :loop;
+                        if (id == c.SDL_SCANCODE_O) gui.scale += 1;
+                        if (id == c.SDL_SCANCODE_P) gui.scale -= 1;
                     },
                     .unpress => |_| {},
                 },
@@ -75,10 +95,16 @@ pub fn main() !void {
                 .button => |b| switch (b) {
                     .press => |_| {},
                     .unpress => |id| {
-                        if (id == 2) break :loop;
+                        if (id == button_exit) break :loop;
                     },
                 },
             }
+        }
+
+        { // обновление fps счётчика
+            var fps_str_buf = [1]u8{'$'} ** 6;
+            _ = try std.fmt.bufPrint(&fps_str_buf, "{}", .{window.fps});
+            _ = try std.unicode.utf8ToUtf16Le(&fps_str, &fps_str_buf);
         }
 
         window.clear(.{

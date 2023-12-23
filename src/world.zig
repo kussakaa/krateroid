@@ -1,37 +1,21 @@
 const std = @import("std");
+const log = std.log.scoped(.world);
 const c = @import("c.zig");
-const gl = @import("gl.zig");
 
 const Allocator = std.mem.Allocator;
+const Array = std.ArrayListUnmanaged;
 
-pub const State = struct {
-    allocator: Allocator,
-    chunks: std.ArrayListUnmanaged(Chunk),
-    seed: u32 = 0,
+var _allocator: Allocator = undefined,
+var _seed: u32 = 0,
+var chunks: std.Array(Chunk) = undefined,
 
-    pub fn init(allocator: Allocator) State {
-        return State{
-            .allocator = allocator,
-            .chunks = std.ArrayListUnmanaged(Chunk).init(allocator),
-        };
-    }
-};
+pub fn init(info: struct { allocator: Allocator, seed: u32 = 0 }) !void {
+    _allocator = info.allocator;
+    _seed = info.seed;
+    chunks = std.Array(Chunk).initCapacity(_allocator, 16);
+}
 
 pub const Chunk = struct {
-    pos: Pos = .{ 0, 0 },
-    edit: u32 = 0,
-    update: u32 = 0,
-    hmap: HMap,
-
-    pub const width = 32;
-
-    const Pos = @Vector(2, i32);
-    const HMap = [width][width]u8;
-
-    const InitInfo = struct {
-        pos: Pos,
-        seed: i32 = 1337,
-    };
 
     pub fn init(info: InitInfo) !Chunk {
         var hmap: HMap = undefined;
@@ -66,9 +50,4 @@ pub const Chunk = struct {
             .hmap = hmap,
         };
     }
-};
-
-pub const RenderSystem = struct {
-    // pub fn render(state: *State) !void {}
-    // pub fn draw(state: State) !void {}
 };

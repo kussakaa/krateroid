@@ -10,8 +10,9 @@ var _handle: ?*c.SDL_Window = undefined;
 var _context: c.SDL_GLContext = undefined;
 var _title: []const u8 = undefined;
 pub var size: Size = undefined;
-//last_time: f32 = 0.0,
-//dt: f32 = 1.0,
+pub var time: u32 = 0;
+pub var frame: u32 = 0;
+pub var fps: u32 = 0;
 
 pub fn init(info: struct {
     title: []const u8 = "window",
@@ -83,9 +84,21 @@ pub fn clear(info: struct {
 }
 
 pub fn swap() void {
-    //const current_time = @as(f32, @floatFromInt(c.SDL_GetTicks()));
-    //const dt: f32 = (current_time - self.last_time) / 1000.0;
-    //self.last_time = current_time;
-    //self.dt = dt;
+    time = c.SDL_GetTicks();
+    frame += 1;
+
+    const s = struct {
+        var sec_cntr: u32 = 0;
+        var fps_cntr: u32 = 0;
+    };
+
+    s.fps_cntr += 1;
+
+    if (time - s.sec_cntr * 1000 > 1000) {
+        fps = s.fps_cntr;
+        s.fps_cntr = 0;
+        s.sec_cntr += 1;
+    }
+
     c.SDL_GL_SwapWindow(_handle);
 }

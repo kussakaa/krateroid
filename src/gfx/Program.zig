@@ -16,6 +16,7 @@ pub fn init(
     for (shaders) |shader| {
         c.glAttachShader(id, shader.id);
     }
+
     // компоновка шейдерной программы
     c.glLinkProgram(id);
 
