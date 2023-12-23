@@ -134,6 +134,7 @@ pub fn deinit() void {
 }
 
 pub fn draw() !void {
+    // gui
     button.program.use();
     for (gui.buttons.items) |b| {
         switch (b.state) {
@@ -215,7 +216,7 @@ pub fn draw() !void {
             } else {
                 try text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 8)]);
                 try text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 4)]);
-                //try text.ebo.items[i].subdata(u16, s.ebo_data[0..(cnt * 6)]);
+                try text.ebo.items[i].subdata(u16, s.ebo_data[0..(cnt * 6)]);
             }
         }
 
@@ -227,4 +228,7 @@ pub fn draw() !void {
         text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
         text.ebo.items[i].draw(text.vao.items[i], .triangles);
     }
+
+    // world
+    //world.program.use();
 }

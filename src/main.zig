@@ -69,8 +69,8 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .press => |id| {
                         if (id == c.SDL_SCANCODE_ESCAPE) break :loop;
-                        if (id == c.SDL_SCANCODE_O) gui.scale += 1;
-                        if (id == c.SDL_SCANCODE_P) gui.scale -= 1;
+                        if (id == c.SDL_SCANCODE_O) gui.scale -= 1;
+                        if (id == c.SDL_SCANCODE_P) gui.scale += 1;
                     },
                     .unpress => |_| {},
                 },

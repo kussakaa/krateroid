@@ -16,7 +16,6 @@ pub fn init(info: struct { allocator: Allocator, seed: u32 = 0 }) !void {
 }
 
 pub const Chunk = struct {
-
     pub fn init(info: InitInfo) !Chunk {
         var hmap: HMap = undefined;
 
