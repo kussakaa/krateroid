@@ -5,9 +5,10 @@ const Array = std.ArrayListUnmanaged;
 const c = @import("c.zig");
 const window = @import("window.zig");
 const gui = @import("gui.zig");
+const world = @import("world.zig");
 
-const gfx = struct {
-    const util = @import("gfx/util.zig");
+const util = struct {
+    usingnamespace @import("gfx/util.zig");
 };
 const Vbo = @import("gfx/Vbo.zig");
 const Vao = @import("gfx/Vao.zig");
@@ -21,137 +22,127 @@ const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 
 const linmath = @import("linmath.zig");
-const Mat = linmath.Mat;
-const Vec = linmath.Vec;
-const Color = Vec(4);
+const Mat4 = linmath.Mat(4);
+const Vec4 = linmath.Vec(4);
+const Color = Vec4;
 
-var _allocator: Allocator = undefined;
-const rect = struct {
-    var vbo: Vbo = undefined;
-    var vao: Vao = undefined;
-    var ebo: Ebo = undefined;
-};
-const button = struct {
-    var program: Program = undefined;
-    const uniform = struct {
-        var vpsize: Uniform = undefined;
-        var scale: Uniform = undefined;
-        var rect: Uniform = undefined;
+var allocator: Allocator = undefined;
+const data = struct {
+    const gui = struct {
+        const button = struct {
+            var program: Program = undefined;
+            const uniform = struct {
+                var vpsize: Uniform = undefined;
+                var scale: Uniform = undefined;
+                var rect: Uniform = undefined;
+            };
+            const texture = struct {
+                var empty: Texture = undefined;
+                var focus: Texture = undefined;
+                var press: Texture = undefined;
+            };
+            var vbo: Vbo = undefined;
+            var vao: Vao = undefined;
+            var ebo: Ebo = undefined;
+        };
+        const text = struct {
+            var program: Program = undefined;
+            const uniform = struct {
+                var vpsize: Uniform = undefined;
+                var scale: Uniform = undefined;
+                var pos: Uniform = undefined;
+                var color: Uniform = undefined;
+            };
+            var texture: Texture = undefined;
+            var vbo_pos: Array(Vbo) = undefined;
+            var vbo_tex: Array(Vbo) = undefined;
+            var vao: Array(Vao) = undefined;
+            var ebo: Array(Ebo) = undefined;
+        };
     };
-    const texture = struct {
-        var empty: Texture = undefined;
-        var focus: Texture = undefined;
-        var press: Texture = undefined;
-    };
-};
-const text = struct {
-    var program: Program = undefined;
-    const uniform = struct {
-        var vpsize: Uniform = undefined;
-        var scale: Uniform = undefined;
-        var pos: Uniform = undefined;
-        var color: Uniform = undefined;
-    };
-    var texture: Texture = undefined;
-    var vbo_pos: Array(Vbo) = undefined;
-    var vbo_tex: Array(Vbo) = undefined;
-    var vao: Array(Vao) = undefined;
-    var ebo: Array(Ebo) = undefined;
+    //const world = struct {
+    //    var program: Program = undefined;
+    //};
 };
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
 }) !void {
-    _allocator = info.allocator;
+    allocator = info.allocator;
 
-    { // прямоугольник
-        rect.vbo = try Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-        rect.vao = try Vao.init(&.{
-            .{ .size = 2, .vbo = rect.vbo },
-        });
-        rect.ebo = try Ebo.init(u8, &.{ 0, 1, 2, 3 }, .static);
-    }
     { // кнопка
-        const vertex = try Shader.initFormFile("core/gui/button/vertex.glsl", .vertex, _allocator);
-        const fragment = try Shader.initFormFile("core/gui/button/fragment.glsl", .fragment, _allocator);
+        const vertex = try Shader.initFormFile("data/gui/button/vertex.glsl", .vertex, allocator);
+        const fragment = try Shader.initFormFile("data/gui/button/fragment.glsl", .fragment, allocator);
         defer vertex.deinit();
         defer fragment.deinit();
-        button.program = try Program.init(
-            &.{ vertex, fragment },
-            _allocator,
-        );
-        button.uniform.vpsize = try Uniform.init(button.program, "vpsize");
-        button.uniform.scale = try Uniform.init(button.program, "scale");
-        button.uniform.rect = try Uniform.init(button.program, "rect");
-
-        button.texture.empty = try Texture.init("core/gui/button/empty.png");
-        button.texture.focus = try Texture.init("core/gui/button/focus.png");
-        button.texture.press = try Texture.init("core/gui/button/press.png");
+        data.gui.button.program = try Program.init(&.{ vertex, fragment }, allocator);
+        data.gui.button.uniform.vpsize = try Uniform.init(data.gui.button.program, "vpsize");
+        data.gui.button.uniform.scale = try Uniform.init(data.gui.button.program, "scale");
+        data.gui.button.uniform.rect = try Uniform.init(data.gui.button.program, "rect");
+        data.gui.button.texture.empty = try Texture.init("data/gui/button/empty.png");
+        data.gui.button.texture.focus = try Texture.init("data/gui/button/focus.png");
+        data.gui.button.texture.press = try Texture.init("data/gui/button/press.png");
+        data.gui.button.vbo = try Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
+        data.gui.button.vao = try Vao.init(&.{.{ .size = 2, .vbo = data.gui.button.vbo }});
+        data.gui.button.ebo = try Ebo.init(u8, &.{ 0, 1, 2, 3 }, .static);
     }
     { // текст
-        const vertex = try Shader.initFormFile("core/gui/text/vertex.glsl", .vertex, _allocator);
-        const fragment = try Shader.initFormFile("core/gui/text/fragment.glsl", .fragment, _allocator);
+        const vertex = try Shader.initFormFile("data/gui/text/vertex.glsl", .vertex, allocator);
+        const fragment = try Shader.initFormFile("data/gui/text/fragment.glsl", .fragment, allocator);
         defer vertex.deinit();
         defer fragment.deinit();
-        text.program = try Program.init(
-            &.{ vertex, fragment },
-            _allocator,
-        );
-
-        text.uniform.vpsize = try Uniform.init(text.program, "vpsize");
-        text.uniform.scale = try Uniform.init(text.program, "scale");
-        text.uniform.pos = try Uniform.init(text.program, "pos");
-        text.uniform.color = try Uniform.init(text.program, "color");
-
-        text.texture = try Texture.init("core/gui/text/font.png");
-
-        text.vbo_pos = try Array(Vbo).initCapacity(_allocator, 32);
-        text.vbo_tex = try Array(Vbo).initCapacity(_allocator, 32);
-        text.vao = try Array(Vao).initCapacity(_allocator, 32);
-        text.ebo = try Array(Ebo).initCapacity(_allocator, 32);
+        data.gui.text.program = try Program.init(&.{ vertex, fragment }, allocator);
+        data.gui.text.uniform.vpsize = try Uniform.init(data.gui.text.program, "vpsize");
+        data.gui.text.uniform.scale = try Uniform.init(data.gui.text.program, "scale");
+        data.gui.text.uniform.pos = try Uniform.init(data.gui.text.program, "pos");
+        data.gui.text.uniform.color = try Uniform.init(data.gui.text.program, "color");
+        data.gui.text.texture = try Texture.init("data/gui/text/font.png");
+        data.gui.text.vbo_pos = try Array(Vbo).initCapacity(allocator, 32);
+        data.gui.text.vbo_tex = try Array(Vbo).initCapacity(allocator, 32);
+        data.gui.text.vao = try Array(Vao).initCapacity(allocator, 32);
+        data.gui.text.ebo = try Array(Ebo).initCapacity(allocator, 32);
     }
 }
 
 pub fn deinit() void {
-    for (text.ebo.items) |item| item.deinit();
-    for (text.vao.items) |item| item.deinit();
-    for (text.vbo_tex.items) |item| item.deinit();
-    for (text.vbo_pos.items) |item| item.deinit();
-    text.vbo_pos.deinit(_allocator);
-    text.vbo_tex.deinit(_allocator);
-    text.vao.deinit(_allocator);
-    text.ebo.deinit(_allocator);
-    text.program.deinit();
+    for (data.gui.text.ebo.items) |item| item.deinit();
+    for (data.gui.text.vao.items) |item| item.deinit();
+    for (data.gui.text.vbo_tex.items) |item| item.deinit();
+    for (data.gui.text.vbo_pos.items) |item| item.deinit();
+    data.gui.text.vbo_pos.deinit(allocator);
+    data.gui.text.vbo_tex.deinit(allocator);
+    data.gui.text.vao.deinit(allocator);
+    data.gui.text.ebo.deinit(allocator);
+    data.gui.text.program.deinit();
 
-    button.texture.empty.deinit();
-    button.texture.focus.deinit();
-    button.texture.press.deinit();
-    button.program.deinit();
-
-    rect.ebo.deinit();
-    rect.vao.deinit();
-    rect.vbo.deinit();
+    data.gui.button.ebo.deinit();
+    data.gui.button.vao.deinit();
+    data.gui.button.vbo.deinit();
+    data.gui.button.texture.empty.deinit();
+    data.gui.button.texture.focus.deinit();
+    data.gui.button.texture.press.deinit();
+    data.gui.button.program.deinit();
 }
 
 pub fn draw() !void {
     // gui
-    button.program.use();
+    data.gui.button.program.use();
     for (gui.buttons.items) |b| {
         switch (b.state) {
-            .empty => button.texture.empty.use(),
-            .focus => button.texture.focus.use(),
-            .press => button.texture.press.use(),
+            .empty => data.gui.button.texture.empty.use(),
+            .focus => data.gui.button.texture.focus.use(),
+            .press => data.gui.button.texture.press.use(),
         }
-        button.uniform.vpsize.set(window.size);
-        button.uniform.scale.set(gui.scale);
-        button.uniform.rect.set(b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
-        rect.ebo.draw(rect.vao, .triangle_strip);
+        data.gui.button.uniform.vpsize.set(window.size);
+        data.gui.button.uniform.scale.set(gui.scale);
+        data.gui.button.uniform.rect.set(b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
+        data.gui.button.ebo.draw(data.gui.button.vao, .triangle_strip);
     }
 
-    text.program.use();
-    text.texture.use();
+    data.gui.text.program.use();
+    data.gui.text.texture.use();
     for (gui.texts.items, 0..) |t, i| {
-        if (i == text.vao.items.len or t.usage == .dynamic) {
+        if (i == data.gui.text.vao.items.len or t.usage == .dynamic) {
             const s = struct {
                 var vbo_pos_data: [1024]u16 = [1]u16{0} ** 1024;
                 var vbo_tex_data: [512]u16 = [1]u16{0} ** 512;
@@ -195,10 +186,10 @@ pub fn draw() !void {
                 cnt += 1;
             }
 
-            if (i == text.vao.items.len) {
+            if (i == data.gui.text.vao.items.len) {
                 const usage = switch (t.usage) {
-                    .static => gfx.util.Usage.static,
-                    .dynamic => gfx.util.Usage.dynamic,
+                    .static => util.Usage.static,
+                    .dynamic => util.Usage.dynamic,
                 };
 
                 const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 8)], usage);
@@ -209,24 +200,24 @@ pub fn draw() !void {
                 });
                 const ebo = try Ebo.init(u16, s.ebo_data[0..(cnt * 6)], usage);
 
-                try text.vbo_pos.append(_allocator, vbo_pos);
-                try text.vbo_tex.append(_allocator, vbo_tex);
-                try text.vao.append(_allocator, vao);
-                try text.ebo.append(_allocator, ebo);
+                try data.gui.text.vbo_pos.append(allocator, vbo_pos);
+                try data.gui.text.vbo_tex.append(allocator, vbo_tex);
+                try data.gui.text.vao.append(allocator, vao);
+                try data.gui.text.ebo.append(allocator, ebo);
             } else {
-                try text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 8)]);
-                try text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 4)]);
-                try text.ebo.items[i].subdata(u16, s.ebo_data[0..(cnt * 6)]);
+                try data.gui.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 8)]);
+                try data.gui.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 4)]);
+                try data.gui.text.ebo.items[i].subdata(u16, s.ebo_data[0..(cnt * 6)]);
             }
         }
 
         const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
 
-        text.uniform.vpsize.set(window.size);
-        text.uniform.scale.set(gui.scale);
-        text.uniform.pos.set(pos);
-        text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-        text.ebo.items[i].draw(text.vao.items[i], .triangles);
+        data.gui.text.uniform.vpsize.set(window.size);
+        data.gui.text.uniform.scale.set(gui.scale);
+        data.gui.text.uniform.pos.set(pos);
+        data.gui.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+        data.gui.text.ebo.items[i].draw(data.gui.text.vao.items[i], .triangles);
     }
 
     // world

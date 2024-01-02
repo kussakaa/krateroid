@@ -5,8 +5,9 @@ const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const window = @import("window.zig");
 const input = @import("input.zig");
-const drawer = @import("drawer.zig");
 const gui = @import("gui.zig");
+const world = @import("world.zig");
+const drawer = @import("drawer.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -15,25 +16,24 @@ pub fn main() !void {
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
+
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
-    try drawer.init(.{ .allocator = allocator });
-    defer drawer.deinit();
 
     _ = try gui.button(.{
-        .text = W("<играть>"),
+        .text = W("<play>"),
         .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
     _ = try gui.button(.{
-        .text = W("<настройки>"),
+        .text = W("<settings>"),
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
     const button_exit = try gui.button(.{
-        .text = W("<выход>"),
+        .text = W("<exit>"),
         .rect = .{ .min = .{ -32, 10 }, .max = .{ 32, 26 } },
         .alignment = .{ .v = .center, .h = .center },
     });
@@ -61,6 +61,16 @@ pub fn main() !void {
         .alignment = .{ .v = .bottom },
     });
 
+    try world.init(.{ .allocator = allocator });
+    defer world.deinit();
+
+    _ = try world.chunk(.{
+        .pos = .{ 0, 0 },
+    });
+
+    try drawer.init(.{ .allocator = allocator });
+    defer drawer.deinit();
+
     loop: while (true) {
         inputproc: while (true) {
             switch (input.pollEvent()) {
@@ -69,8 +79,9 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .press => |id| {
                         if (id == c.SDL_SCANCODE_ESCAPE) break :loop;
-                        if (id == c.SDL_SCANCODE_O) gui.scale -= 1;
-                        if (id == c.SDL_SCANCODE_P) gui.scale += 1;
+                        if (id == c.SDL_SCANCODE_O) gui.scale = @max(gui.scale - 1, 1);
+                        if (id == c.SDL_SCANCODE_P) gui.scale = @min(gui.scale + 1, 8);
+                        if (id == c.SDL_SCANCODE_H) c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
                     },
                     .unpress => |_| {},
                 },
@@ -83,7 +94,7 @@ pub fn main() !void {
                             if (id == 1) gui.cursor.unpress();
                         },
                     },
-                    .pos => |pos| gui.cursor.pos(pos),
+                    .pos => |pos| gui.cursor.setPos(pos),
                 },
                 else => {},
             }

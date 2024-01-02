@@ -47,7 +47,7 @@ pub fn init() void {
     chars['k'] = .{ .pos = 109 };
     chars['l'] = .{ .pos = 112 };
     chars['m'] = .{ .pos = 115, .width = 5 };
-    chars['n'] = .{ .pos = 120 };
+    chars['n'] = .{ .pos = 120, .width = 4 };
     chars['o'] = .{ .pos = 124 };
     chars['p'] = .{ .pos = 127 };
     chars['q'] = .{ .pos = 130 };

@@ -18,21 +18,22 @@ const Event = union(enum) {
         unpress: u32,
     },
 };
-
-var _allocator: Allocator = undefined;
 pub const font = @import("gui/font.zig");
+
+var allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
 pub var texts: Array(Text) = undefined;
 pub var buttons: Array(Button) = undefined;
-pub const cursor = struct {
-    var _pos: Pos = .{ 0, 0 };
-    var _press: bool = false;
 
-    pub fn pos(p: Pos) void {
-        _pos = p;
+pub const cursor = struct {
+    var pos: Pos = .{ 0, 0 };
+    var is_press: bool = false;
+
+    pub fn setPos(p: Pos) void {
+        pos = p;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
-                if (_press) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
+                if (is_press) {
                     buttons.items[i].state = .press;
                 } else {
                     buttons.items[i].state = .focus;
@@ -44,9 +45,9 @@ pub const cursor = struct {
     }
 
     pub fn press() void {
-        _press = true;
+        is_press = true;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
                 buttons.items[i].state = .press;
                 pushEvent(Event{ .button = .{ .press = @intCast(i) } });
             } else {
@@ -56,9 +57,9 @@ pub const cursor = struct {
     }
 
     pub fn unpress() void {
-        _press = false;
+        is_press = false;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(_pos)) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
                 buttons.items[i].state = .focus;
                 pushEvent(Event{ .button = .{ .unpress = @intCast(i) } });
             } else {
@@ -76,11 +77,11 @@ pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
     scale: i32 = 3,
 }) !void {
-    _allocator = info.allocator;
+    allocator = info.allocator;
     scale = info.scale;
     font.init();
-    texts = try Array(Text).initCapacity(_allocator, 32);
-    buttons = try Array(Button).initCapacity(_allocator, 32);
+    texts = try Array(Text).initCapacity(allocator, 32);
+    buttons = try Array(Button).initCapacity(allocator, 32);
 
     for (0..events.items.len) |i| {
         events.items[i] = .none;
@@ -88,8 +89,8 @@ pub fn init(info: struct {
 }
 
 pub fn deinit() void {
-    texts.deinit(_allocator);
-    buttons.deinit(_allocator);
+    texts.deinit(allocator);
+    buttons.deinit(allocator);
 }
 
 pub fn button(info: struct {
@@ -110,8 +111,8 @@ pub fn button(info: struct {
         .alignment = info.alignment,
         .usage = .static,
     };
-    try buttons.append(_allocator, b);
-    try texts.append(_allocator, t);
+    try buttons.append(allocator, b);
+    try texts.append(allocator, t);
     return @intCast(buttons.items.len - 1);
 }
 
@@ -128,7 +129,7 @@ pub fn text(info: struct {
         .alignment = info.alignment,
         .usage = info.usage,
     };
-    try texts.append(_allocator, t);
+    try texts.append(allocator, t);
     return @intCast(texts.items.len - 1);
 }
 

@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.Texture);
+const log = std.log.scoped(.drawer);
 const c = @import("../c.zig");
 
 const Texture = @This();
