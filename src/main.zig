@@ -44,7 +44,7 @@ pub fn main() !void {
     defer gui.deinit();
 
     var menu_main = try gui.menu(.{
-        .hidden = true,
+        .hidden = false,
     });
     const button_play = try gui.button(.{
         .text = W("<play>"),
@@ -117,20 +117,20 @@ pub fn main() !void {
                     .button => |b| switch (b) {
                         .press => |id| {
                             if (id == 1) {
-                                if (menu_main.hidden) is_camera_move = true;
+                                is_camera_move = true;
                                 gui.cursor.press();
                             }
                             if (id == 3) {
-                                if (menu_main.hidden) is_camera_rotate = true;
+                                is_camera_rotate = true;
                             }
                         },
                         .unpress => |id| {
                             if (id == 1) {
-                                if (menu_main.hidden) is_camera_move = false;
+                                is_camera_move = false;
                                 gui.cursor.unpress();
                             }
                             if (id == 3) {
-                                if (menu_main.hidden) is_camera_rotate = false;
+                                is_camera_rotate = false;
                             }
                         },
                     },
@@ -138,7 +138,7 @@ pub fn main() !void {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
-                        if (is_camera_move) {
+                        if (is_camera_move and menu_main.hidden) {
                             const speed = 0.003;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
@@ -152,7 +152,7 @@ pub fn main() !void {
                             };
                         }
 
-                        if (is_camera_rotate) {
+                        if (is_camera_rotate and menu_main.hidden) {
                             const speed = 0.0002; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
@@ -166,7 +166,11 @@ pub fn main() !void {
 
                         gui.cursor.setPos(pos);
                     },
-                    .scroll => |scroll| camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1),
+                    .scroll => |scroll| {
+                        if (menu_main.hidden) {
+                            camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
+                        }
+                    },
                 },
                 .window => |w| switch (w) {
                     .size => |s| {
