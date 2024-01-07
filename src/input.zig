@@ -1,5 +1,4 @@
 const c = @import("c.zig");
-const window = @import("window.zig");
 
 const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
@@ -32,11 +31,7 @@ pub fn pollEvent() union(enum) {
         c.SDL_MOUSEBUTTONUP => .{ .mouse = .{ .button = .{ .unpress = sdl_event.button.button } } },
         c.SDL_MOUSEMOTION => .{ .mouse = .{ .pos = .{ sdl_event.motion.x, sdl_event.motion.y } } },
         c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
-            c.SDL_WINDOWEVENT_SIZE_CHANGED => {
-                window.size = .{ sdl_event.window.data1, sdl_event.window.data2 };
-                c.glViewport(0, 0, window.size[0], window.size[1]);
-                return .{ .window = .{ .size = window.size } };
-            },
+            c.SDL_WINDOWEVENT_SIZE_CHANGED => .{ .window = .{ .size = .{ sdl_event.window.data1, sdl_event.window.data2 } } },
             else => .none,
         },
         else => .none,

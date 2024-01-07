@@ -47,7 +47,7 @@ pub fn chunk(info: struct { pos: Chunk.Pos }) !void {
 
     for (0..Chunk.width) |y| {
         for (0..Chunk.width) |x| {
-            hmap[y][x] = 10;
+            hmap[y][x] = 5;
             mmap[y][x] = 1;
 
             //const value = c.fnlGetNoise2D(

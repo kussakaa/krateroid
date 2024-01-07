@@ -6,10 +6,11 @@ const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 const Color = @Vector(4, f32);
 
-var _handle: ?*c.SDL_Window = undefined;
-var _context: c.SDL_GLContext = undefined;
-var _title: []const u8 = undefined;
+var handle: ?*c.SDL_Window = undefined;
+var context: c.SDL_GLContext = undefined;
+pub var title: []const u8 = undefined;
 pub var size: Size = undefined;
+pub var ratio: f32 = undefined;
 pub var time: u32 = 0;
 pub var frame: u32 = 0;
 pub var fps: u32 = 0;
@@ -30,10 +31,11 @@ pub fn init(info: struct {
     //_ = c.SDL_GL_SetAttribute(c.SDL_GL_MULTISAMPLEBUFFERS, 1);
     _ = c.SDL_GL_SetAttribute(c.SDL_GL_MULTISAMPLESAMPLES, 4);
 
-    _title = info.title;
+    title = info.title;
     size = info.size;
+    ratio = @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(size[1]));
     const ctitle: [*c]const u8 = @ptrCast(info.title);
-    _handle = c.SDL_CreateWindow(
+    handle = c.SDL_CreateWindow(
         ctitle,
         c.SDL_WINDOWPOS_CENTERED,
         c.SDL_WINDOWPOS_CENTERED,
@@ -42,12 +44,12 @@ pub fn init(info: struct {
         c.SDL_WINDOW_OPENGL | c.SDL_WINDOW_RESIZABLE,
     );
 
-    if (_handle == null) {
+    if (handle == null) {
         log.err("init {s}", .{c.SDL_GetError()});
         return error.WINDOW_INIT;
     }
-    _context = c.SDL_GL_CreateContext(_handle);
-    _ = c.SDL_GL_MakeCurrent(_handle, _context);
+    context = c.SDL_GL_CreateContext(handle);
+    _ = c.SDL_GL_MakeCurrent(handle, context);
     if (c.gladLoadGLLoader(@as(c.GLADloadproc, @ptrCast(&c.SDL_GL_GetProcAddress))) == 0) {
         log.err("init gl functions failed", .{});
         return error.GL_INIT;
@@ -65,13 +67,13 @@ pub fn init(info: struct {
     c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_FILL);
     c.glLineWidth(1);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
-    log.debug("init {s}:{}", .{ _title, size });
+    log.debug("init {s}:{}", .{ title, size });
 }
 
 pub fn deinit() void {
-    log.debug("deinit {s}:{}", .{ _title, size });
-    c.SDL_DestroyWindow(_handle);
-    c.SDL_GL_DeleteContext(_context);
+    log.debug("deinit {s}:{}", .{ title, size });
+    c.SDL_DestroyWindow(handle);
+    c.SDL_GL_DeleteContext(context);
 }
 
 pub fn clear(info: struct {
@@ -79,8 +81,6 @@ pub fn clear(info: struct {
 }) void {
     c.glClear(c.GL_COLOR_BUFFER_BIT | c.GL_DEPTH_BUFFER_BIT);
     c.glClearColor(info.color[0], info.color[1], info.color[2], info.color[3]);
-    c.glEnable(c.GL_DEPTH_TEST);
-    c.glDisable(c.GL_DEPTH_TEST);
 }
 
 pub fn swap() void {
@@ -100,5 +100,11 @@ pub fn swap() void {
         s.sec_cntr += 1;
     }
 
-    c.SDL_GL_SwapWindow(_handle);
+    c.SDL_GL_SwapWindow(handle);
+}
+
+pub fn resize(psize: Size) void {
+    size = psize;
+    ratio = @as(f32, @floatFromInt(size[0])) / @as(f32, @floatFromInt(size[1]));
+    c.glViewport(0, 0, size[0], size[1]);
 }

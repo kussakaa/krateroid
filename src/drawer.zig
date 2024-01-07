@@ -113,6 +113,54 @@ pub fn init(info: struct {
                 &.{ "model", "view", "proj", "color" },
                 allocator,
             );
+
+            const s = struct {
+                var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
+            };
+
+            const chunk = world.chunks[0][0].?;
+            var cnt: usize = 0;
+            for (0..world.Chunk.width - 1) |y| {
+                x: for (0..world.Chunk.width - 1) |x| {
+                    for (chunk.hmap[y][x]..(world.Chunk.width - 1)) |z| {
+                        var index: u8 = 0;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x] - 1)) << 7;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1] - 1)) << 6;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1] - 1)) << 5;
+                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x] - 1)) << 4;
+
+                        if (index == 0) continue :x;
+
+                        var i: usize = 0;
+                        while (mct.tri[index][i] < 12) : (i += 3) {
+                            const v1 = mct.edge[mct.tri[index][i + 0]];
+                            const v2 = mct.edge[mct.tri[index][i + 1]];
+                            const v3 = mct.edge[mct.tri[index][i + 2]];
+
+                            s.vbo_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
+                            s.vbo_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
+                            s.vbo_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
+
+                            s.vbo_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
+                            s.vbo_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
+                            s.vbo_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
+
+                            s.vbo_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
+                            s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
+                            s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
+
+                            cnt += 3;
+                        }
+                    }
+                }
+            }
+
+            data.world.chunk.vbo_pos = try Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
+            data.world.chunk.vao = try Vao.init(&.{.{ .size = 3, .vbo = data.world.chunk.vbo_pos }});
         }
     }
 }
@@ -137,6 +185,20 @@ pub fn deinit() void {
 }
 
 pub fn draw() !void {
+    // world
+
+    c.glEnable(c.GL_DEPTH_TEST);
+
+    data.world.chunk.program.use();
+    data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat(4)));
+    data.world.chunk.program.uniforms.items[1].set(camera.view);
+    data.world.chunk.program.uniforms.items[2].set(camera.proj);
+    data.world.chunk.program.uniforms.items[3].set(Color{ 0.3, 0.7, 0.3, 1.0 });
+
+    data.world.chunk.vao.draw(.triangles);
+
+    c.glDisable(c.GL_DEPTH_TEST);
+
     // gui
     data.gui.button.program.use();
     for (gui.buttons.items) |b| {
@@ -228,12 +290,4 @@ pub fn draw() !void {
         data.gui.text.program.uniforms.items[3].set(Color{ 1.0, 1.0, 1.0, 1.0 });
         data.gui.text.vao.items[i].draw(.triangles);
     }
-
-    data.world.chunk.program.use();
-    data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat(4)));
-    data.world.chunk.program.uniforms.items[1].set(camera.view);
-    data.world.chunk.program.uniforms.items[2].set(camera.proj);
-    data.world.chunk.program.uniforms.items[2].set(Color{ 0.3, 0.7, 0.3, 1.0 });
-
-    data.world.chunk.vao.draw(.triangles);
 }

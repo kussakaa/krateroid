@@ -31,6 +31,23 @@ pub inline fn zero(comptime T: type) T {
     };
 }
 
+pub inline fn scale(comptime n: comptime_int, s: Vec(n)) Mat(n) {
+    return switch (n) {
+        4 => .{
+            .{ s[0], 0.0, 0.0, 0.0 },
+            .{ 0.0, s[1], 0.0, 0.0 },
+            .{ 0.0, 0.0, s[2], 0.0 },
+            .{ 0.0, 0.0, 0.0, s[3] },
+        },
+        3 => .{
+            .{ s[0], 0.0, 0.0 },
+            .{ 0.0, s[1], 0.0 },
+            .{ 0.0, 0.0, s[2] },
+        },
+        else => @compileError("invalid type for linmath.scale()"),
+    };
+}
+
 //pub inline fn swizzle(
 //    v: Vec,
 //    comptime x: VecComponent,

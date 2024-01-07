@@ -1,8 +1,10 @@
 const std = @import("std");
 const log = std.log.scoped(.main);
-const c = @import("c.zig");
 const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
+const c = @import("c.zig");
+
+const linmath = @import("linmath.zig");
 const window = @import("window.zig");
 const input = @import("input.zig");
 const gui = @import("gui.zig");
@@ -62,6 +64,8 @@ pub fn main() !void {
         .alignment = .{ .v = .bottom },
     });
 
+    camera.proj = linmath.scale(4, .{ 0.02 / window.ratio, 0.02, 0.02, 1.0 });
+
     try world.init(.{ .allocator = allocator });
     defer world.deinit();
 
@@ -97,7 +101,13 @@ pub fn main() !void {
                     },
                     .pos => |pos| gui.cursor.setPos(pos),
                 },
-                else => {},
+                .window => |w| switch (w) {
+                    .size => |s| {
+                        window.resize(s);
+                        camera.proj = linmath.scale(4, .{ 0.02 / window.ratio, 0.02, 0.02, 1.0 });
+                    },
+                },
+                //else => {},
             }
         }
 
