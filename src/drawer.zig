@@ -219,73 +219,73 @@ pub fn draw() !void {
     data.gui.text.program.use();
     data.gui.text.texture.use();
     for (gui.texts.items, 0..) |t, i| {
-        if (!t.menu.hidden) {
-            if (i == data.gui.text.vao.items.len or t.usage == .dynamic) {
-                const s = struct {
-                    var vbo_pos_data: [1024]u16 = [1]u16{0} ** 1024;
-                    var vbo_tex_data: [512]u16 = [1]u16{0} ** 512;
-                };
+        if (i == data.gui.text.vao.items.len or t.usage == .dynamic) {
+            const s = struct {
+                var vbo_pos_data: [4096]u16 = [1]u16{0} ** 4096;
+                var vbo_tex_data: [2048]u16 = [1]u16{0} ** 2048;
+            };
 
-                var pos: u16 = 0;
-                var cnt: usize = 0;
-                for (t.data) |cid| {
-                    if (cid == ' ') {
-                        pos += 3;
-                        continue;
-                    }
-
-                    const width = gui.font.chars[cid].width;
-                    const uvpos = gui.font.chars[cid].pos;
-                    const uvwidth = gui.font.chars[cid].width;
-
-                    // triangle 1
-                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 0;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
-                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 8;
-                    s.vbo_tex_data[cnt * 6 + 0] = uvpos;
-                    s.vbo_tex_data[cnt * 6 + 1] = uvpos;
-                    s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
-
-                    // triangle 2
-                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 8;
-                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
-                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 0;
-                    s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-                    s.vbo_tex_data[cnt * 6 + 4] = uvpos + uvwidth;
-                    s.vbo_tex_data[cnt * 6 + 5] = uvpos;
-
-                    pos += width + 1;
-                    cnt += 1;
+            var pos: u16 = 0;
+            var cnt: usize = 0;
+            for (t.data) |cid| {
+                if (cid == ' ') {
+                    pos += 3;
+                    continue;
                 }
 
-                if (i == data.gui.text.vao.items.len) {
-                    const usage = switch (t.usage) {
-                        .static => util.Usage.static,
-                        .dynamic => util.Usage.dynamic,
-                    };
+                const width = gui.font.chars[cid].width;
+                const uvpos = gui.font.chars[cid].pos;
+                const uvwidth = gui.font.chars[cid].width;
 
-                    const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
-                    const vbo_tex = try Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
-                    const vao = try Vao.init(&.{
-                        .{ .size = 2, .vbo = vbo_pos },
-                        .{ .size = 1, .vbo = vbo_tex },
-                    });
+                // triangle 1
+                s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
+                s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 0;
+                s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos;
+                s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+                s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
+                s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 8;
+                s.vbo_tex_data[cnt * 6 + 0] = uvpos;
+                s.vbo_tex_data[cnt * 6 + 1] = uvpos;
+                s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
 
-                    try data.gui.text.vbo_pos.append(allocator, vbo_pos);
-                    try data.gui.text.vbo_tex.append(allocator, vbo_tex);
-                    try data.gui.text.vao.append(allocator, vao);
-                } else {
-                    try data.gui.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 12)]);
-                    try data.gui.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 6)]);
-                }
+                // triangle 2
+                s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
+                s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 8;
+                s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos + width;
+                s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
+                s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
+                s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 0;
+                s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
+                s.vbo_tex_data[cnt * 6 + 4] = uvpos + uvwidth;
+                s.vbo_tex_data[cnt * 6 + 5] = uvpos;
+
+                pos += width + 1;
+                cnt += 1;
             }
 
+            if (i == data.gui.text.vao.items.len) {
+                const usage = switch (t.usage) {
+                    .static => util.Usage.static,
+                    .dynamic => util.Usage.dynamic,
+                };
+
+                const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
+                const vbo_tex = try Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
+                const vao = try Vao.init(&.{
+                    .{ .size = 2, .vbo = vbo_pos },
+                    .{ .size = 1, .vbo = vbo_tex },
+                });
+
+                try data.gui.text.vbo_pos.append(allocator, vbo_pos);
+                try data.gui.text.vbo_tex.append(allocator, vbo_tex);
+                try data.gui.text.vao.append(allocator, vao);
+            } else {
+                try data.gui.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 12)]);
+                try data.gui.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 6)]);
+            }
+        }
+
+        if (!t.menu.hidden) {
             const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
 
             data.gui.text.program.uniforms.items[0].set(window.size);

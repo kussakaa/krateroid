@@ -55,7 +55,7 @@ pub fn init(info: struct {
         return error.GL_INIT;
     }
 
-    _ = c.SDL_GL_SetSwapInterval(0);
+    _ = c.SDL_GL_SetSwapInterval(1);
 
     c.glViewport(0, 0, size[0], size[1]);
     c.glEnable(c.GL_DEPTH_TEST);

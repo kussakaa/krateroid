@@ -11,9 +11,9 @@ const Mat = lm.Mat;
 
 const window = @import("window.zig");
 const input = @import("input.zig");
-const gui = @import("gui.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
+const gui = @import("gui.zig");
 const drawer = @import("drawer.zig");
 
 pub fn main() !void {
@@ -24,8 +24,14 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
-    camera.pos = .{ 10.0, 10.0, 0.0, 1.0 };
-    camera.proj = lm.scale(.{ 0.02 / window.ratio, 0.02, 0.001, 1.0 });
+    const cursor = struct {
+        var pos: @Vector(2, i32) = .{ 0, 0 };
+        var delta: @Vector(2, i32) = .{ 0, 0 };
+    };
+    var is_camera_move: bool = false;
+    var is_camera_rotate: bool = false;
+    camera.pos = .{ 15.0, 15.0, 0.0, 1.0 };
+    camera.scale = 50.0;
 
     try world.init(.{ .allocator = allocator });
     defer world.deinit();
@@ -40,7 +46,7 @@ pub fn main() !void {
     var menu_main = try gui.menu(.{
         .hidden = true,
     });
-    _ = try gui.button(.{
+    const button_play = try gui.button(.{
         .text = W("<play>"),
         .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
         .alignment = .{ .v = .center, .h = .center },
@@ -65,7 +71,7 @@ pub fn main() !void {
         .hidden = true,
     });
     _ = try gui.text(.{
-        .data = W("krateroid prototype 1"),
+        .data = W("krateroid build 2"),
         .pos = .{ 2, 1 },
         .menu = menu_info,
     });
@@ -115,18 +121,61 @@ pub fn main() !void {
                 .mouse => |m| switch (m) {
                     .button => |b| switch (b) {
                         .press => |id| {
-                            if (id == 1) gui.cursor.press();
+                            if (id == 1) {
+                                if (menu_main.hidden) is_camera_move = true;
+                                gui.cursor.press();
+                            }
+                            if (id == 3) {
+                                if (menu_main.hidden) is_camera_rotate = true;
+                            }
                         },
                         .unpress => |id| {
-                            if (id == 1) gui.cursor.unpress();
+                            if (id == 1) {
+                                if (menu_main.hidden) is_camera_move = false;
+                                gui.cursor.unpress();
+                            }
+                            if (id == 3) {
+                                if (menu_main.hidden) is_camera_rotate = false;
+                            }
                         },
                     },
-                    .pos => |pos| gui.cursor.setPos(pos),
+                    .pos => |pos| {
+                        cursor.delta = pos - cursor.pos;
+                        cursor.pos = pos;
+
+                        if (is_camera_move) {
+                            const speed = 0.003;
+                            const zsin = @sin(camera.rot[2]);
+                            const zcos = @cos(camera.rot[2]);
+                            const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
+                            const dty = @as(f32, @floatFromInt(cursor.delta[1]));
+                            camera.pos += Vec{
+                                (zsin * dty - zcos * dtx) * camera.scale * speed,
+                                (zcos * dty + zsin * dtx) * camera.scale * speed,
+                                0.0,
+                                0.0,
+                            };
+                        }
+
+                        if (is_camera_rotate) {
+                            const speed = 0.0002; // radians
+                            const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
+                            const dty = @as(f32, @floatFromInt(cursor.delta[1]));
+                            camera.rot += Vec{
+                                -dty * camera.scale * speed,
+                                0.0,
+                                dtx * camera.scale * speed,
+                                0.0,
+                            };
+                        }
+
+                        gui.cursor.setPos(pos);
+                    },
+                    .scroll => |scroll| camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1),
                 },
                 .window => |w| switch (w) {
                     .size => |s| {
                         window.resize(s);
-                        camera.proj = lm.scale(.{ 0.02 / window.ratio, 0.02, 0.001, 1.0 });
                     },
                 },
                 //else => {},
@@ -140,6 +189,7 @@ pub fn main() !void {
                     .press => |_| {},
                     .unpress => |id| {
                         if (id == button_exit.id) break :loop;
+                        if (id == button_play.id) menu_main.hidden = true;
                     },
                 },
             }
@@ -149,6 +199,7 @@ pub fn main() !void {
         camera.view = lm.mul(camera.view, lm.rotateX(camera.rot[0]));
         camera.view = lm.mul(camera.view, lm.rotateZ(camera.rot[2]));
         camera.view = lm.mul(camera.view, lm.transform(camera.pos));
+        camera.proj = lm.scale(.{ 1.0 / camera.scale / window.ratio, 1.0 / camera.scale, 0.0001, 1.0 });
 
         { // обновление fps счётчика
             var fps_str_buf = [1]u8{'$'} ** 6;

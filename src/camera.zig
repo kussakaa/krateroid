@@ -7,6 +7,7 @@ const Mat = lm.Mat;
 
 pub var pos = lm.zero(Vec);
 pub var rot = lm.zero(Vec);
+pub var scale: f32 = 1.0;
 
 pub var view = lm.identity(Mat);
 pub var proj = lm.identity(Mat);

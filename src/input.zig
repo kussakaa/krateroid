@@ -16,6 +16,7 @@ pub fn pollEvent() union(enum) {
             unpress: u32,
         },
         pos: Pos,
+        scroll: i32,
     },
     window: union(enum) {
         size: Size,
@@ -30,6 +31,7 @@ pub fn pollEvent() union(enum) {
         c.SDL_MOUSEBUTTONDOWN => .{ .mouse = .{ .button = .{ .press = sdl_event.button.button } } },
         c.SDL_MOUSEBUTTONUP => .{ .mouse = .{ .button = .{ .unpress = sdl_event.button.button } } },
         c.SDL_MOUSEMOTION => .{ .mouse = .{ .pos = .{ sdl_event.motion.x, sdl_event.motion.y } } },
+        c.SDL_MOUSEWHEEL => .{ .mouse = .{ .scroll = sdl_event.wheel.y } },
         c.SDL_WINDOWEVENT => switch (sdl_event.window.event) {
             c.SDL_WINDOWEVENT_SIZE_CHANGED => .{ .window = .{ .size = .{ sdl_event.window.data1, sdl_event.window.data2 } } },
             else => .none,
