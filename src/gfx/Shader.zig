@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.gfxShader);
+const log = std.log.scoped(.gfx);
 const Allocator = std.mem.Allocator;
 const c = @import("../c.zig");
 

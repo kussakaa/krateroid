@@ -8,6 +8,7 @@ const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 const Rect = @import("gui/Rect.zig");
 const Alignment = @import("gui/Alignment.zig");
+const Menu = @import("gui/Menu.zig");
 const Text = @import("gui/Text.zig");
 const Button = @import("gui/Button.zig");
 
@@ -22,6 +23,7 @@ pub const font = @import("gui/font.zig");
 
 var allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
+pub var menus: Array(Menu) = undefined;
 pub var texts: Array(Text) = undefined;
 pub var buttons: Array(Button) = undefined;
 
@@ -32,7 +34,7 @@ pub const cursor = struct {
     pub fn setPos(p: Pos) void {
         pos = p;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
                 if (is_press) {
                     buttons.items[i].state = .press;
                 } else {
@@ -47,9 +49,9 @@ pub const cursor = struct {
     pub fn press() void {
         is_press = true;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
                 buttons.items[i].state = .press;
-                pushEvent(Event{ .button = .{ .press = @intCast(i) } });
+                pushEvent(Event{ .button = .{ .press = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
@@ -59,9 +61,9 @@ pub const cursor = struct {
     pub fn unpress() void {
         is_press = false;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos)) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
                 buttons.items[i].state = .focus;
-                pushEvent(Event{ .button = .{ .unpress = @intCast(i) } });
+                pushEvent(Event{ .button = .{ .unpress = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
@@ -91,16 +93,31 @@ pub fn init(info: struct {
 pub fn deinit() void {
     texts.deinit(allocator);
     buttons.deinit(allocator);
+    menus.deinit(allocator);
+}
+
+pub fn menu(info: struct {
+    hidden: bool = false,
+}) !*Menu {
+    const m = Menu{
+        .id = @intCast(menus.items.len),
+        .hidden = info.hidden,
+    };
+    try menus.append(allocator, m);
+    return &menus.items[menus.items.len - 1];
 }
 
 pub fn button(info: struct {
     text: []const u16,
     rect: Rect,
     alignment: Alignment = .{},
-}) !u32 {
+    menu: *Menu,
+}) !*Button {
     const b = Button{
+        .id = @intCast(buttons.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
+        .menu = info.menu,
     };
     const bs = info.rect.size();
     const ts = calcTextSize(info.text);
@@ -110,10 +127,11 @@ pub fn button(info: struct {
         .rect = .{ .min = tp, .max = tp + ts },
         .alignment = info.alignment,
         .usage = .static,
+        .menu = info.menu,
     };
     try buttons.append(allocator, b);
     try texts.append(allocator, t);
-    return @intCast(buttons.items.len - 1);
+    return &buttons.items[buttons.items.len - 1];
 }
 
 pub fn text(info: struct {
@@ -121,16 +139,18 @@ pub fn text(info: struct {
     pos: Pos,
     alignment: Alignment = .{},
     usage: Text.Usage = .static,
-}) !u32 {
+    menu: *Menu,
+}) !*Text {
     const size = calcTextSize(info.data);
     const t = Text{
         .data = info.data,
         .rect = .{ .min = info.pos, .max = info.pos + size },
         .alignment = info.alignment,
         .usage = info.usage,
+        .menu = info.menu,
     };
     try texts.append(allocator, t);
-    return @intCast(texts.items.len - 1);
+    return &texts.items[texts.items.len - 1];
 }
 
 fn calcTextSize(data: []const u16) Size {

@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.gfxVbo);
+const log = std.log.scoped(.gfx);
 const c = @import("../c.zig");
 
 const Type = @import("util.zig").Type;

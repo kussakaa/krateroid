@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.gfxProgramUniform);
+const log = std.log.scoped(.gfx);
 
 const c = @import("../../c.zig");
 
@@ -50,6 +50,6 @@ pub fn set(self: Self, value: anytype) void {
             };
             c.glUniformMatrix4fv(id, 1, c.GL_FALSE, &array);
         },
-        else => @compileError("invalid type uniform"),
+        else => @compileError("gfx.Program.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
     }
 }
