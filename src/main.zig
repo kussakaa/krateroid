@@ -110,11 +110,6 @@ pub fn main() !void {
 
                         if (id == c.SDL_SCANCODE_O) gui.scale = @max(gui.scale - 1, 1);
                         if (id == c.SDL_SCANCODE_P) gui.scale = @min(gui.scale + 1, 8);
-
-                        if (id == c.SDL_SCANCODE_RIGHT) camera.rot[2] += pi / 4.0;
-                        if (id == c.SDL_SCANCODE_LEFT) camera.rot[2] -= pi / 4.0;
-                        if (id == c.SDL_SCANCODE_UP) camera.rot[0] += pi / 6.0;
-                        if (id == c.SDL_SCANCODE_DOWN) camera.rot[0] -= pi / 6.0;
                     },
                     .unpress => |_| {},
                 },
