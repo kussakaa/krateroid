@@ -1,10 +1,13 @@
 const std = @import("std");
-const log = std.log.scoped(.drawer);
+const log = std.log.scoped(.gfxVao);
 const c = @import("../c.zig");
 
+const Mode = @import("util.zig").Mode;
 const Vbo = @import("Vbo.zig");
 const Self = @This();
+
 id: u32,
+len: u32,
 
 pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
     var id: u32 = undefined;
@@ -21,6 +24,7 @@ pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
 
     const self = Self{
         .id = id,
+        .len = @as(u32, @intCast(attribs[0].vbo.len)) / attribs[0].size,
     };
 
     log.debug("init {}", .{self});
@@ -32,12 +36,8 @@ pub fn deinit(self: Self) void {
     c.glDeleteVertexArrays(1, &self.id);
 }
 
-//pub fn draw(self: Self, mode: enum(u32) {
-//    triangle_strip = c.GL_TRIANGLE_STRIP,
-//    triangles = c.GL_TRIANGLES,
-//    lines = c.GL_LINES,
-//}) void {
-//    c.glBindVertexArray(self.id);
-//    c.glDrawArrays(@intCast(@intFromEnum(mode)), 0, @intCast(self.len));
-//    c.glBindVertexArray(0);
-//}
+pub fn draw(self: Self, mode: Mode) void {
+    c.glBindVertexArray(self.id);
+    c.glDrawArrays(@intCast(@intFromEnum(mode)), 0, @intCast(self.len));
+    c.glBindVertexArray(0);
+}

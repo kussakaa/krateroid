@@ -1,5 +1,5 @@
 const std = @import("std");
-const log = std.log.scoped(.drawer);
+const log = std.log.scoped(.gfxEbo);
 const c = @import("../c.zig");
 
 const Type = @import("util.zig").Type;
@@ -38,7 +38,7 @@ pub fn init(
 
 pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
-    c.glDeleteBuffers(1, &self.id);
+    c.glDeleteBuffers(1, &self);
 }
 
 pub fn draw(

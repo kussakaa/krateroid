@@ -1,16 +1,20 @@
-const c = @import("../c.zig");
+const std = @import("std");
+const log = std.log.scoped(.gfxProgramUniform);
 
-const Program = @import("Program.zig");
-const Uniform = @This();
+const c = @import("../../c.zig");
+
+const Self = @This();
 
 id: i32,
 
-pub fn init(program: Program, name: [*c]const u8) !Uniform {
-    return .{ .id = @intCast(c.glGetUniformLocation(program.id, name)) };
+pub fn init(program: u32, name: []const u8) !Self {
+    const self = Self{ .id = @intCast(c.glGetUniformLocation(program, @ptrCast(name))) };
+    log.debug("init {}", .{self});
+    return self;
 }
 
 // отправление значение в шейдер по идентификатору юниформы
-pub fn set(self: Uniform, value: anytype) void {
+pub fn set(self: Self, value: anytype) void {
     const id = self.id;
     switch (comptime @TypeOf(value)) {
         f32 => c.glUniform1f(id, value),

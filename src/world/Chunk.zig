@@ -1,5 +1,8 @@
 pub const Pos = @Vector(2, u32);
-pub const Block = u8;
-pub const Data = [width][width][width]Block;
+pub const H = u8;
+pub const M = u8;
+pub const HMap = [width][width]H;
+pub const MMap = [width][width]M;
 pub const width = 32;
-blocks: Data,
+hmap: HMap,
+mmap: MMap,

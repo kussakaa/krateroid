@@ -6,6 +6,7 @@ const W = std.unicode.utf8ToUtf16LeStringLiteral;
 const window = @import("window.zig");
 const input = @import("input.zig");
 const gui = @import("gui.zig");
+const camera = @import("camera.zig");
 const world = @import("world.zig");
 const drawer = @import("drawer.zig");
 

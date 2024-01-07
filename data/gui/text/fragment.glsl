@@ -4,7 +4,7 @@ uniform vec4 color;
 uniform sampler2D u_texture0;
 
 in vec2 v_tex;
-out vec4 f_color;
+layout(location = 0) out vec4 f_color;
 
 void main()
 {

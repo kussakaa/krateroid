@@ -5,7 +5,7 @@ const c = @import("c.zig");
 const Allocator = std.mem.Allocator;
 const Array = std.ArrayListUnmanaged;
 
-const Chunk = @import("world/Chunk.zig");
+pub const Chunk = @import("world/Chunk.zig");
 pub const width = 4;
 
 var allocator: Allocator = undefined;
@@ -42,27 +42,27 @@ pub fn chunk(info: struct { pos: Chunk.Pos }) !void {
     //noise_cellular.seed = _seed;
 
     chunks[@intCast(info.pos[1])][@intCast(info.pos[0])] = try allocator.create(Chunk);
-    var blocks = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.blocks;
+    var hmap = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.hmap;
+    var mmap = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.mmap;
 
-    for (0..Chunk.width) |z| {
-        for (0..Chunk.width) |y| {
-            for (0..Chunk.width) |x| {
-                if (z < 10) blocks[z][y][x] = 1 else blocks[z][y][x] = 0;
+    for (0..Chunk.width) |y| {
+        for (0..Chunk.width) |x| {
+            hmap[y][x] = 10;
+            mmap[y][x] = 1;
 
-                //const value = c.fnlGetNoise2D(
-                //    &noise_value,
-                //    @as(f32, @floatFromInt((info.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
-                //    @as(f32, @floatFromInt((info.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
-                //);
+            //const value = c.fnlGetNoise2D(
+            //    &noise_value,
+            //    @as(f32, @floatFromInt((info.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
+            //    @as(f32, @floatFromInt((info.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
+            //);
 
-                //const cellular = c.fnlGetNoise2D(
-                //    &noise_cellular,
-                //    @as(f32, @floatFromInt((info.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
-                //    @as(f32, @floatFromInt((info.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
-                //);
+            //const cellular = c.fnlGetNoise2D(
+            //    &noise_cellular,
+            //    @as(f32, @floatFromInt((info.pos[0] * @as(i32, @intCast(width)) + @as(i32, @intCast(x))) * 3)),
+            //    @as(f32, @floatFromInt((info.pos[1] * @as(i32, @intCast(width)) + @as(i32, @intCast(y))) * 3)),
+            //);
 
-                //hmap[y][x] = @as(u8, @intFromFloat((value + cellular) * 15.0 + 32.0));
-            }
+            //hmap[y][x] = @as(u8, @intFromFloat((value + cellular) * 15.0 + 32.0));
         }
     }
 }

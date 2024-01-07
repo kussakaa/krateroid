@@ -1,17 +1,22 @@
 const std = @import("std");
-const log = std.log.scoped(.drawer);
+const log = std.log.scoped(.gfxProgram);
 const Allocator = std.mem.Allocator;
+const Array = std.ArrayList;
+
 const c = @import("../c.zig");
 
 const Shader = @import("Shader.zig");
-const Program = @This();
+const Uniform = @import("Program/Uniform.zig");
+const Self = @This();
 
 id: u32,
+uniforms: Array(Uniform),
 
 pub fn init(
     shaders: []const Shader,
+    uniform_names: []const [:0]const u8,
     allocator: Allocator,
-) !Program {
+) !Self {
     const id = c.glCreateProgram();
     for (shaders) |shader| {
         c.glAttachShader(id, shader.id);
@@ -37,16 +42,22 @@ pub fn init(
         c.glDetachShader(id, shader.id);
     }
 
-    const program = Program{ .id = id };
-    log.debug("init {}", .{program});
-    return program;
+    var uniforms = try Array(Uniform).initCapacity(allocator, 8);
+    for (uniform_names) |uniform_name| {
+        try uniforms.append(try Uniform.init(id, uniform_name));
+    }
+
+    const self = Self{ .id = id, .uniforms = uniforms };
+    log.debug("init {}", .{self});
+    return self;
 }
 
-pub fn deinit(self: Program) void {
+pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
+    self.uniforms.deinit();
     c.glDeleteProgram(self.id);
 }
 
-pub fn use(self: Program) void {
+pub fn use(self: Self) void {
     c.glUseProgram(self.id);
 }

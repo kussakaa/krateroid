@@ -4,7 +4,7 @@ uniform ivec2 vpsize;
 uniform ivec4 rect;
 uniform int   scale;
 uniform sampler2D u_texture0;
-out vec4 f_color;
+layout(location = 0) out vec4 f_color;
 
 void main()
 {
