@@ -47,19 +47,21 @@ pub fn chunk(info: struct { pos: Chunk.Pos }) !void {
 
     for (0..Chunk.width) |y| {
         for (0..Chunk.width) |x| {
-            const value = c.fnlGetNoise2D(
-                &noise_value,
-                @as(f32, @floatFromInt(x)),
-                @as(f32, @floatFromInt(y)),
-            );
+            //const value = c.fnlGetNoise2D(
+            //    &noise_value,
+            //    @as(f32, @floatFromInt(x)),
+            //    @as(f32, @floatFromInt(y)),
+            //);
 
-            const cellular = c.fnlGetNoise2D(
+            const cellular: f32 = c.fnlGetNoise2D(
                 &noise_cellular,
-                @as(f32, @floatFromInt(x)),
-                @as(f32, @floatFromInt(y)),
+                @as(f32, @floatFromInt(x)) * 7.0,
+                @as(f32, @floatFromInt(y)) * 7.0,
             );
 
-            hmap[y][x] = @as(u8, @intFromFloat((value + cellular + 2.0) * 20.0));
+            log.info("{}\n", .{cellular});
+
+            hmap[y][x] = @as(u8, @intFromFloat(@max(0.0, (cellular + 1.0) * 7.0)));
             mmap[y][x] = 1;
         }
     }
