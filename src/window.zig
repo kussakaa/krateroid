@@ -65,7 +65,7 @@ pub fn init(info: struct {
     c.glCullFace(c.GL_FRONT);
     c.glFrontFace(c.GL_CW);
     c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_FILL);
-    c.glLineWidth(1);
+    c.glLineWidth(2);
     c.glBlendFunc(c.GL_SRC_ALPHA, c.GL_ONE_MINUS_SRC_ALPHA);
     log.debug("init {s}:{}", .{ title, size });
 }

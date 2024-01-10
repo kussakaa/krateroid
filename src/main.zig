@@ -31,11 +31,35 @@ pub fn main() !void {
     var is_camera_move: bool = false;
     var is_camera_rotate: bool = false;
     camera.pos = .{ 15.0, 15.0, 0.0, 1.0 };
-    camera.rot = .{ pi / 6.0, 0.0, 0.0, 1.0 };
+    camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
     camera.scale = 50.0;
 
     try world.init(.{ .allocator = allocator });
     defer world.deinit();
+
+    // X
+    var x_axis = try world.line(.{
+        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = .{ 32.0, 0.0, 0.0, 1.0 },
+        .color = .{ 1.0, 0.3, 0.3, 1.0 },
+        .hidden = true,
+    });
+
+    // Y
+    var y_axis = try world.line(.{
+        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = .{ 0.0, 32.0, 0.0, 1.0 },
+        .color = .{ 0.3, 1.0, 0.3, 1.0 },
+        .hidden = true,
+    });
+
+    // Z
+    var z_axis = try world.line(.{
+        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = .{ 0.0, 0.0, 32.0, 1.0 },
+        .color = .{ 0.3, 0.3, 1.0, 1.0 },
+        .hidden = true,
+    });
 
     _ = try world.chunk(.{
         .pos = .{ 0, 0 },
@@ -106,7 +130,12 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .press => |id| {
                         if (id == c.SDL_SCANCODE_ESCAPE) menu_main.hidden = !menu_main.hidden;
-                        if (id == c.SDL_SCANCODE_F3) menu_info.hidden = !menu_info.hidden;
+                        if (id == c.SDL_SCANCODE_F3) {
+                            menu_info.hidden = !menu_info.hidden;
+                            x_axis.hidden = !x_axis.hidden;
+                            y_axis.hidden = !y_axis.hidden;
+                            z_axis.hidden = !z_axis.hidden;
+                        }
                         if (id == c.SDL_SCANCODE_F5) c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
 
                         if (id == c.SDL_SCANCODE_O) gui.scale = @max(gui.scale - 1, 1);
@@ -158,11 +187,12 @@ pub fn main() !void {
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
                             camera.rot += Vec{
-                                -dty * camera.scale * speed,
+                                dty * camera.scale * speed,
                                 0.0,
                                 dtx * camera.scale * speed,
                                 0.0,
                             };
+                            log.info("{}", .{camera.rot});
                         }
 
                         gui.cursor.setPos(pos);
@@ -199,7 +229,14 @@ pub fn main() !void {
         camera.view = lm.mul(camera.view, lm.rotateX(camera.rot[0]));
         camera.view = lm.mul(camera.view, lm.rotateZ(camera.rot[2]));
         camera.view = lm.mul(camera.view, lm.transform(camera.pos));
-        camera.proj = lm.scale(.{ 1.0 / camera.scale / window.ratio, 1.0 / camera.scale, 0.0001, 1.0 });
+        const h = 1.0 / camera.scale;
+        const v = 1.0 / camera.scale / window.ratio;
+        camera.proj = Mat{
+            .{ v, 0.0, 0.0, 0.0 },
+            .{ 0.0, h, 0.0, 0.0 },
+            .{ 0.0, 0.0, -0.00001, 0.0 },
+            .{ 0.0, 0.0, 0.0, 1.0 },
+        };
 
         { // обновление fps счётчика
             var fps_str_buf = [1]u8{'$'} ** 6;

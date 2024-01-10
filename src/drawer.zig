@@ -37,6 +37,11 @@ const Color = Vec;
 var allocator: Allocator = undefined;
 const data = struct {
     const world = struct {
+        const line = struct {
+            var program: Program = undefined;
+            var vbo: Vbo = undefined;
+            var vao: Vao = undefined;
+        };
         const chunk = struct {
             var program: Program = undefined;
             var vbo_pos: Vbo = undefined;
@@ -70,6 +75,19 @@ pub fn init(info: struct {
     allocator = info.allocator;
 
     { // WORLD
+        { // LINE
+            const vertex = try Shader.initFormFile("data/world/line/vertex.glsl", .vertex, allocator);
+            const fragment = try Shader.initFormFile("data/world/line/fragment.glsl", .fragment, allocator);
+            defer vertex.deinit();
+            defer fragment.deinit();
+            data.world.line.program = try Program.init(
+                &.{ vertex, fragment },
+                &.{ "model", "view", "proj", "color" },
+                allocator,
+            );
+            data.world.line.vbo = try Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
+            data.world.line.vao = try Vao.init(&.{.{ .size = 3, .vbo = data.world.line.vbo }});
+        }
         { // CHUNK
             const vertex = try Shader.initFormFile("data/world/chunk/vertex.glsl", .vertex, allocator);
             const fragment = try Shader.initFormFile("data/world/chunk/fragment.glsl", .fragment, allocator);
@@ -168,40 +186,62 @@ pub fn init(info: struct {
 }
 
 pub fn deinit() void {
-    data.world.chunk.program.deinit();
+    defer data.world.line.program.deinit();
+    defer data.world.line.vbo.deinit();
+    defer data.world.line.vao.deinit();
 
-    for (data.gui.text.vao.items) |item| item.deinit();
-    for (data.gui.text.vbo_tex.items) |item| item.deinit();
-    for (data.gui.text.vbo_pos.items) |item| item.deinit();
-    data.gui.text.vbo_pos.deinit(allocator);
-    data.gui.text.vbo_tex.deinit(allocator);
-    data.gui.text.vao.deinit(allocator);
-    data.gui.text.program.deinit();
+    defer data.world.chunk.program.deinit();
+    defer data.world.chunk.vbo_pos.deinit();
+    defer data.world.chunk.vao.deinit();
 
-    data.gui.button.vao.deinit();
-    data.gui.button.vbo.deinit();
-    data.gui.button.texture.empty.deinit();
-    data.gui.button.texture.focus.deinit();
-    data.gui.button.texture.press.deinit();
-    data.gui.button.program.deinit();
+    defer data.gui.button.program.deinit();
+    defer data.gui.button.texture.press.deinit();
+    defer data.gui.button.texture.focus.deinit();
+    defer data.gui.button.texture.empty.deinit();
+    defer data.gui.button.vbo.deinit();
+    defer data.gui.button.vao.deinit();
+
+    defer data.gui.text.program.deinit();
+    defer data.gui.text.vbo_pos.deinit(allocator);
+    defer data.gui.text.vbo_tex.deinit(allocator);
+    defer data.gui.text.vao.deinit(allocator);
+    defer for (data.gui.text.vao.items) |item| item.deinit();
+    defer for (data.gui.text.vbo_tex.items) |item| item.deinit();
+    defer for (data.gui.text.vbo_pos.items) |item| item.deinit();
 }
 
 pub fn draw() !void {
     // world
-
     c.glEnable(c.GL_DEPTH_TEST);
 
+    // line
+    data.world.line.program.use();
+    for (world.lines.items) |l| {
+        if (!l.hidden) {
+            const model = Mat{
+                .{ l.p2[0] - l.p1[0], 0.0, 0.0, l.p1[0] },
+                .{ 0.0, l.p2[1] - l.p1[1], 0.0, l.p1[1] },
+                .{ 0.0, 0.0, l.p2[2] - l.p1[2], l.p1[2] },
+                .{ 0.0, 0.0, 0.0, 1.0 },
+            };
+            data.world.chunk.program.uniforms.items[0].set(model);
+            data.world.chunk.program.uniforms.items[1].set(camera.view);
+            data.world.chunk.program.uniforms.items[2].set(camera.proj);
+            data.world.chunk.program.uniforms.items[3].set(l.color);
+            data.world.line.vao.draw(.lines);
+        }
+    }
+
+    // chunk
     data.world.chunk.program.use();
     data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat));
     data.world.chunk.program.uniforms.items[1].set(camera.view);
     data.world.chunk.program.uniforms.items[2].set(camera.proj);
     data.world.chunk.program.uniforms.items[3].set(Color{ 0.3, 0.7, 0.3, 1.0 });
-
     data.world.chunk.vao.draw(.triangles);
 
-    c.glDisable(c.GL_DEPTH_TEST);
-
     // gui
+    c.glDisable(c.GL_DEPTH_TEST);
     data.gui.button.program.use();
     for (gui.buttons.items) |b| {
         if (!b.menu.hidden) {
