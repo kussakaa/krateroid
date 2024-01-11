@@ -29,9 +29,9 @@ const Program = @import("gfx/Program.zig");
 const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 
-const linmath = @import("linmath.zig");
-const Mat = linmath.Mat;
-const Vec = linmath.Vec;
+const lm = @import("linmath.zig");
+const Mat = lm.Mat;
+const Vec = lm.Vec;
 const Color = Vec;
 
 pub var polygon_mode: gfx.PolygonMode = undefined;
@@ -41,11 +41,13 @@ const data = struct {
         const line = struct {
             var program: Program = undefined;
             var vbo: Vbo = undefined;
+
             var vao: Vao = undefined;
         };
         const chunk = struct {
             var program: Program = undefined;
             var vbo_pos: Vbo = undefined;
+            var vbo_nrm: Vbo = undefined;
             var vao: Vao = undefined;
         };
     };
@@ -104,6 +106,7 @@ pub fn init(info: struct {
 
             const s = struct {
                 var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
+                var vbo_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
             };
 
             const chunk = world.chunks[0][0].?;
@@ -129,19 +132,28 @@ pub fn init(info: struct {
                             const v1 = mct.edge[mct.tri[index][i + 0]];
                             const v2 = mct.edge[mct.tri[index][i + 1]];
                             const v3 = mct.edge[mct.tri[index][i + 2]];
-                            //const n = linmath.normalize(linmath.cross(p2 - p1, p3 - p1));
 
                             s.vbo_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
                             s.vbo_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
                             s.vbo_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
-
                             s.vbo_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
                             s.vbo_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
                             s.vbo_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
-
                             s.vbo_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
                             s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
                             s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
+
+                            const n = lm.cross(v2 - v1, v3 - v1);
+
+                            s.vbo_nrm_data[(cnt + 0) * 3 + 0] = n[0];
+                            s.vbo_nrm_data[(cnt + 0) * 3 + 1] = n[1];
+                            s.vbo_nrm_data[(cnt + 0) * 3 + 2] = n[2];
+                            s.vbo_nrm_data[(cnt + 1) * 3 + 0] = n[0];
+                            s.vbo_nrm_data[(cnt + 1) * 3 + 1] = n[1];
+                            s.vbo_nrm_data[(cnt + 1) * 3 + 2] = n[2];
+                            s.vbo_nrm_data[(cnt + 2) * 3 + 0] = n[0];
+                            s.vbo_nrm_data[(cnt + 2) * 3 + 1] = n[1];
+                            s.vbo_nrm_data[(cnt + 2) * 3 + 2] = n[2];
 
                             cnt += 3;
                         }
@@ -150,7 +162,11 @@ pub fn init(info: struct {
             }
 
             data.world.chunk.vbo_pos = try Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
-            data.world.chunk.vao = try Vao.init(&.{.{ .size = 3, .vbo = data.world.chunk.vbo_pos }});
+            data.world.chunk.vbo_nrm = try Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
+            data.world.chunk.vao = try Vao.init(&.{
+                .{ .size = 3, .vbo = data.world.chunk.vbo_pos },
+                .{ .size = 3, .vbo = data.world.chunk.vbo_nrm },
+            });
         }
     }
     { // GUI
@@ -220,7 +236,7 @@ pub fn draw() !void {
     // chunk
     c.glEnable(c.GL_DEPTH_TEST);
     data.world.chunk.program.use();
-    data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat));
+    data.world.chunk.program.uniforms.items[0].set(lm.identity(Mat));
     data.world.chunk.program.uniforms.items[1].set(camera.view);
     data.world.chunk.program.uniforms.items[2].set(camera.proj);
     data.world.chunk.program.uniforms.items[3].set(Color{ 0.4, 0.4, 0.4, 1.0 });

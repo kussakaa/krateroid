@@ -26,6 +26,15 @@ pub inline fn zero(comptime T: type) T {
     };
 }
 
+pub inline fn cross(v0: Vec, v1: Vec) Vec {
+    var xmm0 = swizzle(v0, .y, .z, .x, .w);
+    var xmm1 = swizzle(v1, .z, .x, .y, .w);
+    var result = xmm0 * xmm1;
+    xmm0 = swizzle(xmm0, .y, .z, .x, .w);
+    xmm1 = swizzle(xmm1, .z, .x, .y, .w);
+    return result - xmm0 * xmm1;
+}
+
 pub inline fn scale(v: Vec) Mat {
     return .{
         .{ v[0], 0.0, 0.0, 0.0 },
