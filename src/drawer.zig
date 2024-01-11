@@ -13,7 +13,7 @@ const gui = @import("gui.zig");
 // drawer modules
 const mct = @import("drawer/mct.zig");
 
-const util = struct {
+const gfx = struct {
     usingnamespace @import("gfx/util.zig");
 };
 
@@ -34,6 +34,7 @@ const Mat = linmath.Mat;
 const Vec = linmath.Vec;
 const Color = Vec;
 
+pub var polygon_mode: gfx.PolygonMode = undefined;
 var allocator: Allocator = undefined;
 const data = struct {
     const world = struct {
@@ -71,8 +72,10 @@ const data = struct {
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
+    polygon_mode: gfx.PolygonMode = .fill,
 }) !void {
     allocator = info.allocator;
+    polygon_mode = info.polygon_mode;
 
     { // WORLD
         { // LINE
@@ -212,8 +215,18 @@ pub fn deinit() void {
 
 pub fn draw() !void {
     // world
-    c.glEnable(c.GL_DEPTH_TEST);
+    c.glPolygonMode(c.GL_FRONT_AND_BACK, @intFromEnum(polygon_mode));
 
+    // chunk
+    c.glEnable(c.GL_DEPTH_TEST);
+    data.world.chunk.program.use();
+    data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat));
+    data.world.chunk.program.uniforms.items[1].set(camera.view);
+    data.world.chunk.program.uniforms.items[2].set(camera.proj);
+    data.world.chunk.program.uniforms.items[3].set(Color{ 0.4, 0.4, 0.4, 1.0 });
+    data.world.chunk.vao.draw(.triangles);
+
+    c.glDisable(c.GL_DEPTH_TEST);
     // line
     data.world.line.program.use();
     for (world.lines.items) |l| {
@@ -232,16 +245,10 @@ pub fn draw() !void {
         }
     }
 
-    // chunk
-    data.world.chunk.program.use();
-    data.world.chunk.program.uniforms.items[0].set(linmath.identity(Mat));
-    data.world.chunk.program.uniforms.items[1].set(camera.view);
-    data.world.chunk.program.uniforms.items[2].set(camera.proj);
-    data.world.chunk.program.uniforms.items[3].set(Color{ 0.3, 0.7, 0.3, 1.0 });
-    data.world.chunk.vao.draw(.triangles);
-
     // gui
-    c.glDisable(c.GL_DEPTH_TEST);
+
+    c.glPolygonMode(c.GL_FRONT_AND_BACK, @intFromEnum(gfx.PolygonMode.fill));
+
     data.gui.button.program.use();
     for (gui.buttons.items) |b| {
         if (!b.menu.hidden) {
@@ -306,8 +313,8 @@ pub fn draw() !void {
 
             if (i == data.gui.text.vao.items.len) {
                 const usage = switch (t.usage) {
-                    .static => util.Usage.static,
-                    .dynamic => util.Usage.dynamic,
+                    .static => gfx.Usage.static,
+                    .dynamic => gfx.Usage.dynamic,
                 };
 
                 const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);

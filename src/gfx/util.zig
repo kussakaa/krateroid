@@ -33,3 +33,9 @@ pub const Usage = enum(u32) {
     static = c.GL_STATIC_DRAW,
     dynamic = c.GL_DYNAMIC_DRAW,
 };
+
+pub const PolygonMode = enum(u32) {
+    point = c.GL_POINT,
+    line = c.GL_LINE,
+    fill = c.GL_FILL,
+};

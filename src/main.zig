@@ -39,24 +39,24 @@ pub fn main() !void {
 
     // X
     var x_axis = try world.line(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 32.0, 0.0, 0.0, 1.0 },
+        .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
         .color = .{ 1.0, 0.3, 0.3, 1.0 },
         .hidden = true,
     });
 
     // Y
     var y_axis = try world.line(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 32.0, 0.0, 1.0 },
+        .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
         .color = .{ 0.3, 1.0, 0.3, 1.0 },
         .hidden = true,
     });
 
     // Z
     var z_axis = try world.line(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 0.0, 32.0, 1.0 },
+        .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
+        .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.3, 0.3, 1.0, 1.0 },
         .hidden = true,
     });
@@ -122,6 +122,8 @@ pub fn main() !void {
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
 
+    var is_debug_polygons = false;
+
     loop: while (true) {
         inputproc: while (true) {
             switch (input.pollEvent()) {
@@ -136,7 +138,14 @@ pub fn main() !void {
                             y_axis.hidden = !y_axis.hidden;
                             z_axis.hidden = !z_axis.hidden;
                         }
-                        if (id == c.SDL_SCANCODE_F5) c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+                        if (id == c.SDL_SCANCODE_F5) {
+                            is_debug_polygons = !is_debug_polygons;
+                            if (is_debug_polygons) {
+                                drawer.polygon_mode = .line;
+                            } else {
+                                drawer.polygon_mode = .fill;
+                            }
+                        }
 
                         if (id == c.SDL_SCANCODE_O) gui.scale = @max(gui.scale - 1, 1);
                         if (id == c.SDL_SCANCODE_P) gui.scale = @min(gui.scale + 1, 8);
@@ -169,7 +178,7 @@ pub fn main() !void {
                         cursor.pos = pos;
 
                         if (is_camera_move and menu_main.hidden) {
-                            const speed = 0.003;
+                            const speed = 0.004;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
@@ -180,19 +189,24 @@ pub fn main() !void {
                                 0.0,
                                 0.0,
                             };
+                            x_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            x_axis.p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 };
+                            y_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            y_axis.p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 };
+                            z_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
                         if (is_camera_rotate and menu_main.hidden) {
-                            const speed = 0.0002; // radians
+                            const speed = 0.005; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
                             camera.rot += Vec{
-                                dty * camera.scale * speed,
+                                dty * speed,
                                 0.0,
-                                dtx * camera.scale * speed,
+                                dtx * speed,
                                 0.0,
                             };
-                            log.info("{}", .{camera.rot});
                         }
 
                         gui.cursor.setPos(pos);

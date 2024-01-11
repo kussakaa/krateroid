@@ -20,7 +20,7 @@ pub var chunks: [width][width]?*Chunk = undefined;
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
-    seed: i32 = 2739,
+    seed: i32 = 0,
 }) !void {
     allocator = info.allocator;
     lines = try Array(Line).initCapacity(allocator, 32);

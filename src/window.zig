@@ -11,9 +11,9 @@ var context: c.SDL_GLContext = undefined;
 pub var title: []const u8 = undefined;
 pub var size: Size = undefined;
 pub var ratio: f32 = undefined;
-pub var time: u32 = 0;
-pub var frame: u32 = 0;
-pub var fps: u32 = 0;
+pub var time: u64 = 0;
+pub var fps: u64 = 0;
+pub var dt: f32 = 0.0;
 
 pub fn init(info: struct {
     title: []const u8 = "window",
@@ -84,17 +84,20 @@ pub fn clear(info: struct {
 }
 
 pub fn swap() void {
-    time = c.SDL_GetTicks();
-    frame += 1;
+    const ltime = time;
+    time = c.SDL_GetPerformanceCounter();
+    const pf = c.SDL_GetPerformanceFrequency();
+
+    dt = @floatCast(@as(f64, @floatFromInt(time - ltime)) / @as(f64, @floatFromInt(pf)));
 
     const s = struct {
-        var sec_cntr: u32 = 0;
-        var fps_cntr: u32 = 0;
+        var sec_cntr: u64 = 0;
+        var fps_cntr: u64 = 0;
     };
 
     s.fps_cntr += 1;
 
-    if (time - s.sec_cntr * 1000 > 1000) {
+    if (time - s.sec_cntr * pf > pf) {
         fps = s.fps_cntr;
         s.fps_cntr = 0;
         s.sec_cntr += 1;
