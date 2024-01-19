@@ -1,11 +1,11 @@
 const std = @import("std");
 const log = std.log.scoped(.world);
-const c = @import("c.zig");
-
 const Allocator = std.mem.Allocator;
 const Array = std.ArrayListUnmanaged;
 
-const lm = @import("linmath.zig");
+const Noise = @import("znoise").FnlGenerator;
+
+const lm = @import("zmath");
 const Vec = lm.Vec;
 const Color = lm.Vec;
 
@@ -59,12 +59,14 @@ pub fn line(info: struct {
 pub fn chunk(info: struct {
     pos: Chunk.Pos,
 }) !*Chunk {
-    var noise_value = c.fnlCreateState();
-    noise_value.noise_type = c.FNL_NOISE_VALUE;
-    noise_value.seed = @intCast(seed);
-    var noise_cellular = c.fnlCreateState();
-    noise_cellular.noise_type = c.FNL_NOISE_CELLULAR;
-    noise_cellular.seed = @intCast(seed);
+    //const value_gen = znoise.FnlGeterator{
+    //    .seed = seed,
+    //    .noise_type = .value,
+    //};
+    const cellular_gen = Noise{
+        .seed = seed,
+        .noise_type = .cellular,
+    };
 
     chunks[@intCast(info.pos[1])][@intCast(info.pos[0])] = try allocator.create(Chunk);
     var hmap = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.hmap;
@@ -78,8 +80,7 @@ pub fn chunk(info: struct {
             //    @as(f32, @floatFromInt(y)),
             //);
 
-            const cellular: f32 = c.fnlGetNoise2D(
-                &noise_cellular,
+            const cellular: f32 = cellular_gen.noise2(
                 @as(f32, @floatFromInt(x)) * 7.0,
                 @as(f32, @floatFromInt(y)) * 7.0,
             );

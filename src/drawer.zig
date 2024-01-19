@@ -239,7 +239,7 @@ pub fn draw() !void {
     data.world.chunk.program.uniforms.items[0].set(lm.identity(Mat));
     data.world.chunk.program.uniforms.items[1].set(camera.view);
     data.world.chunk.program.uniforms.items[2].set(camera.proj);
-    data.world.chunk.program.uniforms.items[3].set(Color{ 0.4, 0.4, 0.4, 1.0 });
+    data.world.chunk.program.uniforms.items[3].set(Color{ 1.0, 1.0, 1.0, 1.0 });
     data.world.chunk.vao.draw(.triangles);
 
     c.glDisable(c.GL_DEPTH_TEST);
