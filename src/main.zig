@@ -1,11 +1,11 @@
 const std = @import("std");
+const zm = @import("zmath");
+const gl = @import("zopengl");
+
 const log = std.log.scoped(.main);
 const pi = std.math.pi;
 const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
-const c = @import("c.zig");
-
-const zm = @import("zmath");
 const Vec = zm.Vec;
 const Mat = zm.Mat;
 
@@ -41,7 +41,7 @@ pub fn main() !void {
     var x_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
-        .color = .{ 1.0, 0.3, 0.3, 1.0 },
+        .color = .{ 1.0, 0.5, 0.5, 1.0 },
         .hidden = true,
     });
 
@@ -49,7 +49,7 @@ pub fn main() !void {
     var y_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
-        .color = .{ 0.3, 1.0, 0.3, 1.0 },
+        .color = .{ 0.5, 1.0, 0.5, 1.0 },
         .hidden = true,
     });
 
@@ -57,7 +57,7 @@ pub fn main() !void {
     var z_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
-        .color = .{ 0.3, 0.3, 1.0, 1.0 },
+        .color = .{ 0.5, 0.5, 1.0, 1.0 },
         .hidden = true,
     });
 

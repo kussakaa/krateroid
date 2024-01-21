@@ -64,6 +64,16 @@ pub fn init(info: struct {
     allocator = info.allocator;
     polygon_mode = info.polygon_mode;
 
+    gl.enable(gl.MULTISAMPLE);
+    gl.enable(gl.LINE_SMOOTH);
+    gl.enable(gl.BLEND);
+    gl.enable(gl.CULL_FACE);
+
+    gl.lineWidth(2.0);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.cullFace(gl.FRONT);
+    gl.frontFace(gl.CW);
+
     { // WORLD
         { // LINE
             const vertex = try gfx.Shader.initFormFile("data/world/line/vertex.glsl", .vertex, allocator);

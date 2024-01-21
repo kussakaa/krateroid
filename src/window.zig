@@ -28,8 +28,8 @@ pub fn init(info: struct {
     try sdl.gl.setAttribute(.context_major_version, 3);
     try sdl.gl.setAttribute(.context_minor_version, 3);
     try sdl.gl.setAttribute(.context_flags, @as(i32, @bitCast(sdl.gl.ContextFlags{ .forward_compatible = true })));
-    //sdl.gl.setAttribute(c.SDL_GL_MULTISAMPLEBUFFERS, 1);
-    //sdl.gl.setAttribute(c.SDL_GL_MULTISAMPLESAMPLES, 4);
+    try sdl.gl.setAttribute(.multisamplebuffers, 1);
+    try sdl.gl.setAttribute(.multisamplesamples, 4);
 
     title = info.title;
     size = info.size;
@@ -43,8 +43,7 @@ pub fn init(info: struct {
         .{
             .opengl = true,
             .resizable = true,
-            .mouse_focus = true,
-            .allow_highdpi = true,
+            //.allow_highdpi = true,
         },
     );
 
@@ -55,13 +54,6 @@ pub fn init(info: struct {
     try gl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 
     gl.viewport(0, 0, size[0], size[1]);
-    gl.enable(gl.DEPTH_TEST);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.BLEND);
-    gl.cullFace(gl.FRONT);
-    gl.frontFace(gl.CW);
-    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     log.debug("init {s}:{}", .{ title, size });
 }
 
