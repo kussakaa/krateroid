@@ -5,9 +5,9 @@ const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const c = @import("c.zig");
 
-const lm = @import("linmath.zig");
-const Vec = lm.Vec;
-const Mat = lm.Mat;
+const zm = @import("zmath");
+const Vec = zm.Vec;
+const Mat = zm.Mat;
 
 const window = @import("window.zig");
 const input = @import("input.zig");
@@ -239,10 +239,10 @@ pub fn main() !void {
             }
         }
 
-        camera.view = lm.identity(Mat);
-        camera.view = lm.mul(camera.view, lm.rotateX(camera.rot[0]));
-        camera.view = lm.mul(camera.view, lm.rotateZ(camera.rot[2]));
-        camera.view = lm.mul(camera.view, lm.transform(camera.pos));
+        camera.view = zm.identity();
+        camera.view = zm.mul(camera.view, zm.translationV(-camera.pos));
+        camera.view = zm.mul(camera.view, zm.rotationZ(camera.rot[2]));
+        camera.view = zm.mul(camera.view, zm.rotationX(camera.rot[0]));
         const h = 1.0 / camera.scale;
         const v = 1.0 / camera.scale / window.ratio;
         camera.proj = Mat{

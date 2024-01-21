@@ -1,4 +1,4 @@
-const Vec = @import("../linmath.zig").Vec;
+const Vec = @import("zmath").Vec;
 const Color = Vec;
 
 p1: Vec,

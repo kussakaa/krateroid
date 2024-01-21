@@ -5,9 +5,9 @@ const Array = std.ArrayListUnmanaged;
 
 const Noise = @import("znoise").FnlGenerator;
 
-const lm = @import("zmath");
-const Vec = lm.Vec;
-const Color = lm.Vec;
+const zm = @import("zmath");
+const Vec = zm.Vec;
+const Color = zm.Vec;
 
 pub const Line = @import("world/Line.zig");
 pub const Chunk = @import("world/Chunk.zig");

@@ -1,13 +1,18 @@
 const std = @import("std");
 const log = std.log.scoped(.camera);
 
-const lm = @import("linmath.zig");
-const Vec = lm.Vec;
-const Mat = lm.Mat;
+const zm = @import("zmath");
+const vec = zm.f32x4;
+const Vec = zm.Vec;
+const Mat = zm.Mat;
 
-pub var pos = lm.zero(Vec);
-pub var rot = lm.zero(Vec);
+pub const forward = vec(0.0, 1.0, 0.0, 0.0);
+pub const up = vec(0.0, 0.0, 1.0, 0.0);
+pub const right = vec(1.0, 0.0, 0.0, 0.0);
+
+pub var pos = vec(0.0, 0.0, 0.0, 0.0);
+pub var rot = vec(0.0, 0.0, 0.0, 0.0);
 pub var scale: f32 = 1.0;
 
-pub var view = lm.identity(Mat);
-pub var proj = lm.identity(Mat);
+pub var view = zm.identity();
+pub var proj = zm.identity();

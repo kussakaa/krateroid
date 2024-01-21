@@ -1,6 +1,8 @@
 const std = @import("std");
 const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
 const znoise = @import("libs/zig-gamedev/libs/znoise/build.zig");
+const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
+const zsdl = @import("libs/zig-gamedev/libs/zsdl/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -19,17 +21,21 @@ pub fn build(b: *std.Build) void {
     const znoise_pkg = znoise.package(b, target, optimize, .{});
     znoise_pkg.link(exe);
 
-    exe.linkSystemLibrary("c");
-    exe.linkSystemLibrary("SDL2");
+    const zopengl_pkg = zopengl.package(b, target, optimize, .{}); // .options = .{ .api = .wrapper }
+    zopengl_pkg.link(exe);
+
+    const zsdl_pkg = zsdl.package(b, target, optimize, .{});
+    zsdl_pkg.link(exe);
+
+    //exe.linkSystemLibrary("c");
+    //exe.linkSystemLibrary("SDL2");
 
     exe.addCSourceFile(.{ .file = .{ .path = "libs/stb/image.c" }, .flags = &.{
         "-std=c99",
         "-fno-sanitize=undefined",
         "-O3",
     } });
-    exe.addCSourceFile(.{ .file = .{ .path = "libs/glad/src/glad.c" }, .flags = &.{"-std=c99"} });
     exe.addIncludePath(.{ .path = "libs/" });
-    exe.addIncludePath(.{ .path = "libs/glad/include" });
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);
