@@ -1,37 +1,22 @@
 const std = @import("std");
-const log = std.log.scoped(.drawer);
-const Allocator = std.mem.Allocator;
-const Array = std.ArrayListUnmanaged;
-
-const c = @import("c.zig");
+const zm = @import("zmath");
+const gl = @import("zopengl");
 
 const window = @import("window.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
+const gfx = @import("gfx.zig");
 const gui = @import("gui.zig");
-
-// drawer modules
 const mct = @import("drawer/mct.zig");
 
-const gfx = struct {
-    usingnamespace @import("gfx/util.zig");
-};
-
-// gfx modules
-const Vbo = @import("gfx/Vbo.zig");
-const Vao = @import("gfx/Vao.zig");
-const Ebo = @import("gfx/Ebo.zig");
-const Texture = @import("gfx/Texture.zig");
-const Shader = @import("gfx/Shader.zig");
-const Program = @import("gfx/Program.zig");
-
-// other
+const log = std.log.scoped(.drawer);
+const Allocator = std.mem.Allocator;
+const Array = std.ArrayListUnmanaged;
 const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 
-const lm = @import("linmath.zig");
-const Mat = lm.Mat;
-const Vec = lm.Vec;
+const Mat = zm.Mat;
+const Vec = zm.Vec;
 const Color = Vec;
 
 pub var polygon_mode: gfx.PolygonMode = undefined;
@@ -39,35 +24,35 @@ var allocator: Allocator = undefined;
 const data = struct {
     const world = struct {
         const line = struct {
-            var program: Program = undefined;
-            var vbo: Vbo = undefined;
+            var program: gfx.Program = undefined;
+            var vbo: gfx.Vbo = undefined;
 
-            var vao: Vao = undefined;
+            var vao: gfx.Vao = undefined;
         };
         const chunk = struct {
-            var program: Program = undefined;
-            var vbo_pos: Vbo = undefined;
-            var vbo_nrm: Vbo = undefined;
-            var vao: Vao = undefined;
+            var program: gfx.Program = undefined;
+            var vbo_pos: gfx.Vbo = undefined;
+            var vbo_nrm: gfx.Vbo = undefined;
+            var vao: gfx.Vao = undefined;
         };
     };
     const gui = struct {
         const button = struct {
-            var program: Program = undefined;
+            var program: gfx.Program = undefined;
             const texture = struct {
-                var empty: Texture = undefined;
-                var focus: Texture = undefined;
-                var press: Texture = undefined;
+                var empty: gfx.Texture = undefined;
+                var focus: gfx.Texture = undefined;
+                var press: gfx.Texture = undefined;
             };
-            var vbo: Vbo = undefined;
-            var vao: Vao = undefined;
+            var vbo: gfx.Vbo = undefined;
+            var vao: gfx.Vao = undefined;
         };
         const text = struct {
-            var program: Program = undefined;
-            var texture: Texture = undefined;
-            var vbo_pos: Array(Vbo) = undefined;
-            var vbo_tex: Array(Vbo) = undefined;
-            var vao: Array(Vao) = undefined;
+            var program: gfx.Program = undefined;
+            var texture: gfx.Texture = undefined;
+            var vbo_pos: Array(gfx.Vbo) = undefined;
+            var vbo_tex: Array(gfx.Vbo) = undefined;
+            var vao: Array(gfx.Vao) = undefined;
         };
     };
 };
@@ -81,24 +66,24 @@ pub fn init(info: struct {
 
     { // WORLD
         { // LINE
-            const vertex = try Shader.initFormFile("data/world/line/vertex.glsl", .vertex, allocator);
-            const fragment = try Shader.initFormFile("data/world/line/fragment.glsl", .fragment, allocator);
+            const vertex = try gfx.Shader.initFormFile("data/world/line/vertex.glsl", .vertex, allocator);
+            const fragment = try gfx.Shader.initFormFile("data/world/line/fragment.glsl", .fragment, allocator);
             defer vertex.deinit();
             defer fragment.deinit();
-            data.world.line.program = try Program.init(
+            data.world.line.program = try gfx.Program.init(
                 &.{ vertex, fragment },
                 &.{ "model", "view", "proj", "color" },
                 allocator,
             );
-            data.world.line.vbo = try Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
-            data.world.line.vao = try Vao.init(&.{.{ .size = 3, .vbo = data.world.line.vbo }});
+            data.world.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
+            data.world.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = data.world.line.vbo }});
         }
         { // CHUNK
-            const vertex = try Shader.initFormFile("data/world/chunk/vertex.glsl", .vertex, allocator);
-            const fragment = try Shader.initFormFile("data/world/chunk/fragment.glsl", .fragment, allocator);
+            const vertex = try gfx.Shader.initFormFile("data/world/chunk/vertex.glsl", .vertex, allocator);
+            const fragment = try gfx.Shader.initFormFile("data/world/chunk/fragment.glsl", .fragment, allocator);
             defer vertex.deinit();
             defer fragment.deinit();
-            data.world.chunk.program = try Program.init(
+            data.world.chunk.program = try gfx.Program.init(
                 &.{ vertex, fragment },
                 &.{ "model", "view", "proj", "color" },
                 allocator,
@@ -143,7 +128,7 @@ pub fn init(info: struct {
                             s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
                             s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
 
-                            const n = lm.cross(v2 - v1, v3 - v1);
+                            const n = zm.cross3(v2 - v1, v3 - v1);
 
                             s.vbo_nrm_data[(cnt + 0) * 3 + 0] = n[0];
                             s.vbo_nrm_data[(cnt + 0) * 3 + 1] = n[1];
@@ -161,9 +146,9 @@ pub fn init(info: struct {
                 }
             }
 
-            data.world.chunk.vbo_pos = try Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
-            data.world.chunk.vbo_nrm = try Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
-            data.world.chunk.vao = try Vao.init(&.{
+            data.world.chunk.vbo_pos = try gfx.Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
+            data.world.chunk.vbo_nrm = try gfx.Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
+            data.world.chunk.vao = try gfx.Vao.init(&.{
                 .{ .size = 3, .vbo = data.world.chunk.vbo_pos },
                 .{ .size = 3, .vbo = data.world.chunk.vbo_nrm },
             });
@@ -171,35 +156,35 @@ pub fn init(info: struct {
     }
     { // GUI
         { // BUTTON
-            const vertex = try Shader.initFormFile("data/gui/button/vertex.glsl", .vertex, allocator);
-            const fragment = try Shader.initFormFile("data/gui/button/fragment.glsl", .fragment, allocator);
+            const vertex = try gfx.Shader.initFormFile("data/gui/button/vertex.glsl", .vertex, allocator);
+            const fragment = try gfx.Shader.initFormFile("data/gui/button/fragment.glsl", .fragment, allocator);
             defer vertex.deinit();
             defer fragment.deinit();
-            data.gui.button.program = try Program.init(
+            data.gui.button.program = try gfx.Program.init(
                 &.{ vertex, fragment },
                 &.{ "vpsize", "scale", "rect" },
                 allocator,
             );
-            data.gui.button.texture.empty = try Texture.init("data/gui/button/empty.png");
-            data.gui.button.texture.focus = try Texture.init("data/gui/button/focus.png");
-            data.gui.button.texture.press = try Texture.init("data/gui/button/press.png");
-            data.gui.button.vbo = try Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-            data.gui.button.vao = try Vao.init(&.{.{ .size = 2, .vbo = data.gui.button.vbo }});
+            data.gui.button.texture.empty = try gfx.Texture.init("data/gui/button/empty.png");
+            data.gui.button.texture.focus = try gfx.Texture.init("data/gui/button/focus.png");
+            data.gui.button.texture.press = try gfx.Texture.init("data/gui/button/press.png");
+            data.gui.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
+            data.gui.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = data.gui.button.vbo }});
         }
         { // TEXT
-            const vertex = try Shader.initFormFile("data/gui/text/vertex.glsl", .vertex, allocator);
-            const fragment = try Shader.initFormFile("data/gui/text/fragment.glsl", .fragment, allocator);
+            const vertex = try gfx.Shader.initFormFile("data/gui/text/vertex.glsl", .vertex, allocator);
+            const fragment = try gfx.Shader.initFormFile("data/gui/text/fragment.glsl", .fragment, allocator);
             defer vertex.deinit();
             defer fragment.deinit();
-            data.gui.text.program = try Program.init(
+            data.gui.text.program = try gfx.Program.init(
                 &.{ vertex, fragment },
                 &.{ "vpsize", "scale", "pos", "color" },
                 allocator,
             );
-            data.gui.text.texture = try Texture.init("data/gui/text/font.png");
-            data.gui.text.vbo_pos = try Array(Vbo).initCapacity(allocator, 32);
-            data.gui.text.vbo_tex = try Array(Vbo).initCapacity(allocator, 32);
-            data.gui.text.vao = try Array(Vao).initCapacity(allocator, 32);
+            data.gui.text.texture = try gfx.Texture.init("data/gui/text/font.png");
+            data.gui.text.vbo_pos = try Array(gfx.Vbo).initCapacity(allocator, 32);
+            data.gui.text.vbo_tex = try Array(gfx.Vbo).initCapacity(allocator, 32);
+            data.gui.text.vao = try Array(gfx.Vao).initCapacity(allocator, 32);
         }
     }
 }
@@ -231,27 +216,27 @@ pub fn deinit() void {
 
 pub fn draw() !void {
     // world
-    c.glPolygonMode(c.GL_FRONT_AND_BACK, @intFromEnum(polygon_mode));
+    gl.polygonMode(gl.FRONT_AND_BACK, @intFromEnum(polygon_mode));
 
     // chunk
-    c.glEnable(c.GL_DEPTH_TEST);
+    gl.enable(gl.DEPTH_TEST);
     data.world.chunk.program.use();
-    data.world.chunk.program.uniforms.items[0].set(lm.identity(Mat));
+    data.world.chunk.program.uniforms.items[0].set(zm.identity());
     data.world.chunk.program.uniforms.items[1].set(camera.view);
     data.world.chunk.program.uniforms.items[2].set(camera.proj);
     data.world.chunk.program.uniforms.items[3].set(Color{ 1.0, 1.0, 1.0, 1.0 });
     data.world.chunk.vao.draw(.triangles);
 
-    c.glDisable(c.GL_DEPTH_TEST);
+    gl.disable(gl.DEPTH_TEST);
     // line
     data.world.line.program.use();
     for (world.lines.items) |l| {
         if (!l.hidden) {
             const model = Mat{
-                .{ l.p2[0] - l.p1[0], 0.0, 0.0, l.p1[0] },
-                .{ 0.0, l.p2[1] - l.p1[1], 0.0, l.p1[1] },
-                .{ 0.0, 0.0, l.p2[2] - l.p1[2], l.p1[2] },
-                .{ 0.0, 0.0, 0.0, 1.0 },
+                .{ l.p2[0] - l.p1[0], 0.0, 0.0, 0.0 },
+                .{ 0.0, l.p2[1] - l.p1[1], 0.0, 0.0 },
+                .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
+                .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
             };
             data.world.chunk.program.uniforms.items[0].set(model);
             data.world.chunk.program.uniforms.items[1].set(camera.view);
@@ -263,7 +248,7 @@ pub fn draw() !void {
 
     // gui
 
-    c.glPolygonMode(c.GL_FRONT_AND_BACK, @intFromEnum(gfx.PolygonMode.fill));
+    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     data.gui.button.program.use();
     for (gui.buttons.items) |b| {
@@ -328,14 +313,14 @@ pub fn draw() !void {
             }
 
             if (i == data.gui.text.vao.items.len) {
-                const usage = switch (t.usage) {
-                    .static => gfx.Usage.static,
-                    .dynamic => gfx.Usage.dynamic,
+                const usage: gfx.Usage = switch (t.usage) {
+                    .static => .static,
+                    .dynamic => .dynamic,
                 };
 
-                const vbo_pos = try Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
-                const vbo_tex = try Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
-                const vao = try Vao.init(&.{
+                const vbo_pos = try gfx.Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
+                const vbo_tex = try gfx.Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
+                const vao = try gfx.Vao.init(&.{
                     .{ .size = 2, .vbo = vbo_pos },
                     .{ .size = 1, .vbo = vbo_tex },
                 });

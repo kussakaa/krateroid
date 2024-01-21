@@ -1,4 +1,4 @@
-const Vec = @import("../linmath.zig").Vec;
+const Vec = @import("zmath").Vec;
 
 pub const edge = [12]Vec{
     .{ 0.5, 1.0, 0.0, 1.0 },

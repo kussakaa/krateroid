@@ -1,10 +1,11 @@
 const std = @import("std");
 const log = std.log.scoped(.gfx);
-const c = @import("../c.zig");
+const gl = @import("zopengl");
 
-const Type = @import("util.zig").Type;
-const Mode = @import("util.zig").Mode;
-const Usage = @import("util.zig").Usage;
+const wrapper = @import("wrapper.zig");
+const Type = wrapper.Type;
+const Mode = wrapper.Mode;
+const Usage = wrapper.Usage;
 const Vao = @import("Vao.zig");
 
 const Self = @This();
@@ -18,10 +19,10 @@ pub fn init(
     usage: Usage,
 ) !Self {
     var id: u32 = undefined;
-    c.glGenBuffers(1, &id);
-    c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, id);
-    c.glBufferData(
-        c.GL_ELEMENT_ARRAY_BUFFER,
+    gl.genBuffers(1, &id);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, id);
+    gl.bufferData(
+        gl.ELEMENT_ARRAY_BUFFER,
         @intCast(data.len * @sizeOf(T)),
         @as(*const anyopaque, &data[0]),
         @intFromEnum(usage),
@@ -38,7 +39,7 @@ pub fn init(
 
 pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
-    c.glDeleteBuffers(1, &self);
+    gl.DeleteBuffers(1, &self);
 }
 
 pub fn draw(
@@ -46,15 +47,15 @@ pub fn draw(
     vao: Vao,
     mode: Mode,
 ) void {
-    c.glBindVertexArray(vao.id);
-    c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.id);
-    c.glDrawElements(@intCast(@intFromEnum(mode)), @intCast(self.len), @intFromEnum(self.type), null);
+    gl.bindVertexArray(vao.id);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.id);
+    gl.drawElements(@intCast(@intFromEnum(mode)), @intCast(self.len), @intFromEnum(self.type), null);
 }
 
 pub fn subdata(self: Self, comptime T: type, data: []const T) !void {
-    c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.id);
-    c.glBufferSubData(
-        c.GL_ELEMENT_ARRAY_BUFFER,
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.id);
+    gl.bufferSubData(
+        gl.ELEMENT_ARRAY_BUFFER,
         0,
         @as(c_long, @intCast(data.len * @sizeOf(T))),
         @as(*const anyopaque, &data[0]),

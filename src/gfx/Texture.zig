@@ -1,4 +1,6 @@
 const std = @import("std");
+const gl = @import("zopengl");
+
 const log = std.log.scoped(.gfx);
 const c = @import("../c.zig");
 
@@ -11,7 +13,7 @@ channels: i32,
 pub fn init(path: []const u8) !Texture {
     var width: i32 = 0;
     var height: i32 = 0;
-    var channels: i32 = 0;
+    var channels: i32 = 4;
     const data = c.stbi_load(path.ptr, &width, &height, &channels, 0);
 
     if (data == null) {
@@ -21,24 +23,25 @@ pub fn init(path: []const u8) !Texture {
 
     var id: u32 = 0;
 
-    c.glGenTextures(1, &id);
-    c.glBindTexture(c.GL_TEXTURE_2D, id);
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_WRAP_S, c.GL_REPEAT);
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MIN_FILTER, c.GL_NEAREST);
-    c.glTexParameteri(c.GL_TEXTURE_2D, c.GL_TEXTURE_MAG_FILTER, c.GL_NEAREST);
-    const format = switch (channels) {
-        1 => c.GL_RED,
-        3 => c.GL_RGB,
-        4 => c.GL_RGBA,
-        else => {
-            log.err("invalid channels count {}", .{channels});
-            return error.ChannelsCount;
-        },
+    gl.genTextures(1, &id);
+    gl.bindTexture(gl.TEXTURE_2D, id);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    const format: gl.Enum = switch (channels) {
+        1 => gl.RED,
+        3 => gl.RGB,
+        4 => gl.RGBA,
+        //else => {
+        //    log.err("Texture not support {} channels", .{channels});
+        //    return error.ChannelsCount;
+        //},
+        else => 0,
     };
 
-    c.glTexImage2D(c.GL_TEXTURE_2D, 0, @intCast(format), width, height, 0, @intCast(format), c.GL_UNSIGNED_BYTE, data);
-    c.glBindTexture(c.GL_TEXTURE_2D, 0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, width, height, 0, format, gl.UNSIGNED_BYTE, data);
+    gl.bindTexture(gl.TEXTURE_2D, 0);
     c.stbi_image_free(data);
 
     const texture = Texture{
@@ -52,9 +55,9 @@ pub fn init(path: []const u8) !Texture {
 
 pub fn deinit(self: Texture) void {
     log.debug("deinit {}", .{self});
-    c.glDeleteTextures(1, &self.id);
+    gl.deleteTextures(1, &self.id);
 }
 
 pub fn use(self: Texture) void {
-    c.glBindTexture(c.GL_TEXTURE_2D, self.id);
+    gl.bindTexture(gl.TEXTURE_2D, self.id);
 }

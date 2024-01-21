@@ -1,9 +1,10 @@
 const std = @import("std");
 const log = std.log.scoped(.gfx);
-const c = @import("../c.zig");
+const gl = @import("zopengl");
 
-const Type = @import("util.zig").Type;
-const Usage = @import("util.zig").Usage;
+const wrapper = @import("wrapper.zig");
+const Type = wrapper.Type;
+const Usage = wrapper.Usage;
 
 const Self = @This();
 id: u32,
@@ -16,10 +17,10 @@ pub fn init(
     usage: Usage,
 ) !Self {
     var id: u32 = undefined;
-    c.glGenBuffers(1, &id);
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, id);
-    c.glBufferData(
-        c.GL_ARRAY_BUFFER,
+    gl.genBuffers(1, &id);
+    gl.bindBuffer(gl.ARRAY_BUFFER, id);
+    gl.bufferData(
+        gl.ARRAY_BUFFER,
         @intCast(data.len * @sizeOf(T)),
         @as(*const anyopaque, &data[0]),
         @intFromEnum(usage),
@@ -36,13 +37,13 @@ pub fn init(
 
 pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
-    c.glDeleteBuffers(1, &self.id);
+    gl.deleteBuffers(1, &self.id);
 }
 
 pub fn subdata(self: Self, comptime T: type, data: []const T) !void {
-    c.glBindBuffer(c.GL_ARRAY_BUFFER, self.id);
-    c.glBufferSubData(
-        c.GL_ARRAY_BUFFER,
+    gl.bindBuffer(gl.ARRAY_BUFFER, self.id);
+    gl.bufferSubData(
+        gl.ARRAY_BUFFER,
         0,
         @intCast(data.len * @sizeOf(T)),
         @as(*const anyopaque, &data[0]),

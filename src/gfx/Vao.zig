@@ -1,8 +1,10 @@
 const std = @import("std");
-const log = std.log.scoped(.gfx);
-const c = @import("../c.zig");
+const gl = @import("zopengl");
 
-const Mode = @import("util.zig").Mode;
+const log = std.log.scoped(.gfx);
+
+const wrapper = @import("wrapper.zig");
+const Mode = wrapper.Mode;
 const Vbo = @import("Vbo.zig");
 const Self = @This();
 
@@ -13,13 +15,13 @@ pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
     var id: u32 = undefined;
 
     // создание объекта аттрибутов вершин
-    c.glGenVertexArrays(1, &id);
-    c.glBindVertexArray(id);
+    gl.genVertexArrays(1, &id);
+    gl.bindVertexArray(id);
 
     for (attribs, 0..) |attrib, i| {
-        c.glBindBuffer(c.GL_ARRAY_BUFFER, attrib.vbo.id);
-        c.glEnableVertexAttribArray(@intCast(i));
-        c.glVertexAttribPointer(@intCast(i), @intCast(attrib.size), @intFromEnum(attrib.vbo.type), c.GL_FALSE, 0, null);
+        gl.bindBuffer(gl.ARRAY_BUFFER, attrib.vbo.id);
+        gl.enableVertexAttribArray(@intCast(i));
+        gl.vertexAttribPointer(@intCast(i), @intCast(attrib.size), @intFromEnum(attrib.vbo.type), gl.FALSE, 0, null);
     }
 
     const self = Self{
@@ -33,11 +35,10 @@ pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
 
 pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
-    c.glDeleteVertexArrays(1, &self.id);
+    gl.deleteVertexArrays(1, &self.id);
 }
 
 pub fn draw(self: Self, mode: Mode) void {
-    c.glBindVertexArray(self.id);
-    c.glDrawArrays(@intCast(@intFromEnum(mode)), 0, @intCast(self.len));
-    c.glBindVertexArray(0);
+    gl.bindVertexArray(self.id);
+    gl.drawArrays(@intCast(@intFromEnum(mode)), 0, @intCast(self.len));
 }

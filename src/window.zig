@@ -54,15 +54,13 @@ pub fn init(info: struct {
 
     try gl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 
-    gl.viewport(0, 0, @intCast(size[0]), @intCast(size[1]));
+    gl.viewport(0, 0, size[0], size[1]);
     gl.enable(gl.DEPTH_TEST);
     gl.enable(gl.CULL_FACE);
     gl.enable(gl.BLEND);
-    gl.enable(gl.MULTISAMPLE);
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
-    gl.lineWidth(2);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     log.debug("init {s}:{}", .{ title, size });
 }
@@ -76,8 +74,8 @@ pub fn deinit() void {
 pub fn clear(info: struct {
     color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
 }) void {
-    gl.clear(.{ .color = true, .depth = true });
-    gl.clearBufferfv(gl.COLOR, 0, &[_]f32{ info.color[0], info.color[1], info.color[2], info.color[3] });
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(info.color[0], info.color[1], info.color[2], info.color[3]);
 }
 
 pub fn swap() void {

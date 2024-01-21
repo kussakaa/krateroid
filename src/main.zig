@@ -130,15 +130,15 @@ pub fn main() !void {
                 .none => break :inputproc,
                 .quit => break :loop,
                 .key => |k| switch (k) {
-                    .press => |id| {
-                        if (id == c.SDL_SCANCODE_ESCAPE) menu_main.hidden = !menu_main.hidden;
-                        if (id == c.SDL_SCANCODE_F3) {
+                    .press => |key| {
+                        if (key == .escape) menu_main.hidden = !menu_main.hidden;
+                        if (key == .f3) {
                             menu_info.hidden = !menu_info.hidden;
                             x_axis.hidden = !x_axis.hidden;
                             y_axis.hidden = !y_axis.hidden;
                             z_axis.hidden = !z_axis.hidden;
                         }
-                        if (id == c.SDL_SCANCODE_F5) {
+                        if (key == .f5) {
                             is_debug_polygons = !is_debug_polygons;
                             if (is_debug_polygons) {
                                 drawer.polygon_mode = .line;
@@ -147,8 +147,8 @@ pub fn main() !void {
                             }
                         }
 
-                        if (id == c.SDL_SCANCODE_O) gui.scale = @max(gui.scale - 1, 1);
-                        if (id == c.SDL_SCANCODE_P) gui.scale = @min(gui.scale + 1, 8);
+                        if (key == .o) gui.scale = @max(gui.scale - 1, 1);
+                        if (key == .p) gui.scale = @min(gui.scale + 1, 8);
                     },
                     .unpress => |_| {},
                 },
