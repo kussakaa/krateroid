@@ -3,6 +3,7 @@ const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
 const znoise = @import("libs/zig-gamedev/libs/znoise/build.zig");
 const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
 const zsdl = @import("libs/zig-gamedev/libs/zsdl/build.zig");
+const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -27,15 +28,8 @@ pub fn build(b: *std.Build) void {
     const zsdl_pkg = zsdl.package(b, target, optimize, .{});
     zsdl_pkg.link(exe);
 
-    //exe.linkSystemLibrary("c");
-    //exe.linkSystemLibrary("SDL2");
-
-    exe.addCSourceFile(.{ .file = .{ .path = "libs/stb/image.c" }, .flags = &.{
-        "-std=c99",
-        "-fno-sanitize=undefined",
-        "-O3",
-    } });
-    exe.addIncludePath(.{ .path = "libs/" });
+    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
+    zstbi_pkg.link(exe);
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);

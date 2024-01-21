@@ -1,6 +1,7 @@
 const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl");
+const stb = @import("zstbi");
 
 const log = std.log.scoped(.main);
 const pi = std.math.pi;
@@ -20,6 +21,9 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
+
+    stb.init(allocator);
+    defer stb.deinit();
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
