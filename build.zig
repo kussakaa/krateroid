@@ -1,9 +1,9 @@
 const std = @import("std");
-const zmath = @import("libs/zig-gamedev/libs/zmath/build.zig");
-const znoise = @import("libs/zig-gamedev/libs/znoise/build.zig");
-const zopengl = @import("libs/zig-gamedev/libs/zopengl/build.zig");
-const zsdl = @import("libs/zig-gamedev/libs/zsdl/build.zig");
-const zstbi = @import("libs/zig-gamedev/libs/zstbi/build.zig");
+const zmath = @import("deps/zig-gamedev/libs/zmath/build.zig");
+const znoise = @import("deps/zig-gamedev/libs/znoise/build.zig");
+const zopengl = @import("deps/zig-gamedev/libs/zopengl/build.zig");
+const zsdl = @import("deps/zig-gamedev/libs/zsdl/build.zig");
+const zstbi = @import("deps/zig-gamedev/libs/zstbi/build.zig");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
