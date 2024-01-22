@@ -263,7 +263,7 @@ pub fn main() !void {
         }
 
         window.clear(.{
-            .color = .{ 0.1, 0.1, 0.1, 1.0 },
+            .color = .{ 0.0, 0.0, 0.0, 1.0 },
         });
         try drawer.draw();
         window.swap();
