@@ -69,7 +69,7 @@ pub fn init(info: struct {
     gl.enable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
 
-    gl.lineWidth(3.0);
+    gl.lineWidth(2.0);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);

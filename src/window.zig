@@ -27,7 +27,7 @@ pub fn init(info: struct {
     try sdl.gl.setAttribute(.context_profile_mask, @intFromEnum(sdl.gl.Profile.core));
     try sdl.gl.setAttribute(.context_major_version, 3);
     try sdl.gl.setAttribute(.context_minor_version, 3);
-    try sdl.gl.setAttribute(.context_flags, @as(i32, @bitCast(sdl.gl.ContextFlags{ .forward_compatible = true })));
+    try sdl.gl.setAttribute(.context_flags, @as(i32, @bitCast(sdl.gl.ContextFlags{})));
     try sdl.gl.setAttribute(.multisamplebuffers, 1);
     try sdl.gl.setAttribute(.multisamplesamples, 4);
 
