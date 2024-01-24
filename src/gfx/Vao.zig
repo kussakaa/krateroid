@@ -26,7 +26,7 @@ pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
 
     const self = Self{
         .id = id,
-        .len = @as(u32, @intCast(attribs[0].vbo.len)) / attribs[0].size,
+        .len = attribs[0].vbo.len / attribs[0].size,
     };
 
     log.debug("init {}", .{self});
@@ -40,5 +40,5 @@ pub fn deinit(self: Self) void {
 
 pub fn draw(self: Self, mode: Mode) void {
     gl.bindVertexArray(self.id);
-    gl.drawArrays(@intCast(@intFromEnum(mode)), 0, @intCast(self.len));
+    gl.drawArrays(@intFromEnum(mode), 0, @intCast(self.len));
 }

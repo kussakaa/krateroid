@@ -28,7 +28,7 @@ pub fn init(
 
     const self = Self{
         .id = id,
-        .len = @as(u32, @intCast(data.len)),
+        .len = @intCast(data.len),
         .type = Type.from(T),
     };
     log.debug("init {}", .{self});

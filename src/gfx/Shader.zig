@@ -28,7 +28,7 @@ pub fn init(
     if (succes == 0) {
         var info_log_len: i32 = 0;
         gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
-        const info_log = try allocator.alloc(u8, @as(usize, @intCast(info_log_len)));
+        const info_log = try allocator.alloc(u8, @intCast(info_log_len));
         defer allocator.free(info_log);
         gl.getShaderInfoLog(id, info_log_len, null, info_log.ptr);
         log.err("shader {} compilation failed: {s}\n", .{ id, info_log });
