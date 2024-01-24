@@ -30,7 +30,7 @@ pub fn init(
 
     const self = Self{
         .id = id,
-        .len = @as(u32, @intCast(data.len)),
+        .len = @intCast(data.len),
         .type = Type.from(T),
     };
     log.debug("init {}", .{self});
@@ -49,7 +49,7 @@ pub fn draw(
 ) void {
     gl.bindVertexArray(vao.id);
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.id);
-    gl.drawElements(@intCast(@intFromEnum(mode)), @intCast(self.len), @intFromEnum(self.type), null);
+    gl.drawElements(@intFromEnum(mode), self.len, @intFromEnum(self.type), null);
 }
 
 pub fn subdata(self: Self, comptime T: type, data: []const T) !void {
@@ -57,7 +57,7 @@ pub fn subdata(self: Self, comptime T: type, data: []const T) !void {
     gl.bufferSubData(
         gl.ELEMENT_ARRAY_BUFFER,
         0,
-        @as(c_long, @intCast(data.len * @sizeOf(T))),
+        data.len * @sizeOf(T),
         @as(*const anyopaque, &data[0]),
     );
 }

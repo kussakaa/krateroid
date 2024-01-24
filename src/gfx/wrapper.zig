@@ -1,6 +1,6 @@
 const gl = @import("zopengl");
 
-pub const Type = enum(u32) {
+pub const Type = enum(gl.Enum) {
     i8 = gl.BYTE,
     u8 = gl.UNSIGNED_BYTE,
     i16 = gl.SHORT,
@@ -23,18 +23,18 @@ pub const Type = enum(u32) {
     }
 };
 
-pub const Mode = enum(u32) {
+pub const Mode = enum(gl.Enum) {
     triangles = gl.TRIANGLES,
     triangle_strip = gl.TRIANGLE_STRIP,
     lines = gl.LINES,
 };
 
-pub const Usage = enum(u32) {
+pub const Usage = enum(gl.Enum) {
     static = gl.STATIC_DRAW,
     dynamic = gl.DYNAMIC_DRAW,
 };
 
-pub const PolygonMode = enum(u32) {
+pub const PolygonMode = enum(gl.Enum) {
     point = gl.POINT,
     line = gl.LINE,
     fill = gl.FILL,
