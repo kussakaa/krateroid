@@ -100,7 +100,7 @@ pub fn main() !void {
         .hidden = true,
     });
     _ = try gui.text(.{
-        .data = W("krateroid build 2"),
+        .data = W("krateroid alpha"),
         .pos = .{ 2, 1 },
         .menu = menu_info,
     });
