@@ -1,9 +1,10 @@
 const std = @import("std");
-const zmath = @import("deps/zig-gamedev/libs/zmath/build.zig");
-const znoise = @import("deps/zig-gamedev/libs/znoise/build.zig");
-const zopengl = @import("deps/zig-gamedev/libs/zopengl/build.zig");
-const zsdl = @import("deps/zig-gamedev/libs/zsdl/build.zig");
-const zstbi = @import("deps/zig-gamedev/libs/zstbi/build.zig");
+const zmath = @import("zmath");
+const znoise = @import("znoise");
+const zopengl = @import("zopengl");
+const zsdl = @import("zsdl");
+const zstbi = @import("zstbi");
+const zaudio = @import("zaudio");
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
@@ -30,6 +31,9 @@ pub fn build(b: *std.Build) void {
 
     const zstbi_pkg = zstbi.package(b, target, optimize, .{});
     zstbi_pkg.link(exe);
+
+    const zaudio_pkg = zaudio.package(b, target, optimize, .{});
+    zaudio_pkg.link(exe);
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);

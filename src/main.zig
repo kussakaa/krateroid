@@ -3,6 +3,8 @@ const zm = @import("zmath");
 const gl = @import("zopengl");
 const stb = @import("zstbi");
 
+const audio = @import("zaudio");
+
 const log = std.log.scoped(.main);
 const pi = std.math.pi;
 const W = std.unicode.utf8ToUtf16LeStringLiteral;
@@ -24,6 +26,20 @@ pub fn main() !void {
 
     stb.init(allocator);
     defer stb.deinit();
+
+    audio.init(allocator);
+    defer audio.deinit();
+
+    const engine = try audio.Engine.create(null);
+    defer engine.destroy();
+
+    const focus = try engine.createSoundFromFile(
+        "data/gui/button/focus.wav",
+        .{ .flags = .{ .async_load = true } },
+    );
+    defer focus.destroy();
+
+    try focus.start();
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
@@ -117,7 +133,7 @@ pub fn main() !void {
         .menu = menu_info,
     });
     _ = try gui.text(.{
-        .data = W("gitlab.com/kussakaa/krateroid"),
+        .data = W("github.com/kussakaa/krateroid"),
         .pos = .{ 2, -8 },
         .alignment = .{ .v = .bottom },
         .menu = menu_info,
@@ -234,7 +250,9 @@ pub fn main() !void {
             switch (gui.pollEvent()) {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
-                    .press => |_| {},
+                    .press => |_| {
+                        try focus.start();
+                    },
                     .unpress => |id| {
                         if (id == button_exit.id) break :loop;
                         if (id == button_play.id) menu_main.hidden = true;
