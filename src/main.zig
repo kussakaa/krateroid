@@ -89,12 +89,10 @@ pub fn main() !void {
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
-    var menu_main = try gui.menu(.{
-        .hidden = false,
-    });
+    var menu_main = try gui.menu(.{ .hidden = false });
     const button_play = try gui.button(.{
         .text = W("<play>"),
-        .rect = .{ .min = .{ -32, -26 }, .max = .{ 32, -10 } },
+        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
@@ -106,10 +104,12 @@ pub fn main() !void {
     });
     const button_exit = try gui.button(.{
         .text = W("<exit>"),
-        .rect = .{ .min = .{ -32, 10 }, .max = .{ 32, 26 } },
+        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
+
+    //var settings_menu = try gui.menu(.{ .hidden = true });
 
     // F3
 
@@ -151,15 +151,16 @@ pub fn main() !void {
                 .none => break :inputproc,
                 .quit => break :loop,
                 .key => |k| switch (k) {
-                    .press => |key| {
-                        if (key == .escape) menu_main.hidden = !menu_main.hidden;
-                        if (key == .f3) {
+                    .press => |id| {
+                        if (id == .f10) break :loop;
+                        if (id == .escape) menu_main.hidden = !menu_main.hidden;
+                        if (id == .f3) {
                             menu_info.hidden = !menu_info.hidden;
                             x_axis.hidden = !x_axis.hidden;
                             y_axis.hidden = !y_axis.hidden;
                             z_axis.hidden = !z_axis.hidden;
                         }
-                        if (key == .f5) {
+                        if (id == .f5) {
                             is_debug_polygons = !is_debug_polygons;
                             if (is_debug_polygons) {
                                 drawer.polygon_mode = .line;
@@ -168,8 +169,8 @@ pub fn main() !void {
                             }
                         }
 
-                        if (key == .o) gui.scale = @max(gui.scale - 1, 1);
-                        if (key == .p) gui.scale = @min(gui.scale + 1, 8);
+                        if (id == .kp_minus) gui.scale = @max(gui.scale - 1, 1);
+                        if (id == .kp_plus) gui.scale = @min(gui.scale + 1, 8);
                     },
                     .unpress => |_| {},
                 },
