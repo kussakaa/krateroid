@@ -30,16 +30,17 @@ pub fn main() !void {
     audio.init(allocator);
     defer audio.deinit();
 
-    const engine = try audio.Engine.create(null);
-    defer engine.destroy();
+    const audio_engine = try audio.Engine.create(null);
+    defer audio_engine.destroy();
 
-    const focus = try engine.createSoundFromFile(
-        "data/gui/button/focus.wav",
-        .{ .flags = .{ .async_load = true } },
-    );
-    defer focus.destroy();
+    try audio_engine.setVolume(0.3);
 
-    try focus.start();
+    //const focus = try engine.createSoundFromFile(
+    //    "data/gui/button/focus.wav",
+    //    .{ .flags = .{ .stream = false } },
+    //);
+    //defer focus.destroy();
+    //focus.setVolume(0.3);
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
@@ -251,7 +252,7 @@ pub fn main() !void {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
                     .press => |_| {
-                        try focus.start();
+                        try audio_engine.playSound("data/gui/button/focus.wav", null);
                     },
                     .unpress => |id| {
                         if (id == button_exit.id) break :loop;
