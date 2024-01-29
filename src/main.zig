@@ -35,20 +35,11 @@ pub fn main() !void {
 
     try audio_engine.setVolume(0.3);
 
-    //const focus = try engine.createSoundFromFile(
-    //    "data/gui/button/focus.wav",
-    //    .{ .flags = .{ .stream = false } },
-    //);
-    //defer focus.destroy();
-    //focus.setVolume(0.3);
-
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
     try data.init(.{});
     defer data.deinit();
-
-    _ = try data.texture("data/gui/button/empty.png");
 
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
