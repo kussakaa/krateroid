@@ -6,6 +6,7 @@ const window = @import("window.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gfx = @import("gfx.zig");
+const _data = @import("data.zig");
 const gui = @import("gui.zig");
 const mct = @import("drawer/mct.zig");
 
@@ -26,7 +27,6 @@ const data = struct {
         const line = struct {
             var program: gfx.Program = undefined;
             var vbo: gfx.Vbo = undefined;
-
             var vao: gfx.Vao = undefined;
         };
         const chunk = struct {
@@ -39,17 +39,11 @@ const data = struct {
     const gui = struct {
         const button = struct {
             var program: gfx.Program = undefined;
-            const texture = struct {
-                var empty: gfx.Texture = undefined;
-                var focus: gfx.Texture = undefined;
-                var press: gfx.Texture = undefined;
-            };
             var vbo: gfx.Vbo = undefined;
             var vao: gfx.Vao = undefined;
         };
         const text = struct {
             var program: gfx.Program = undefined;
-            var texture: gfx.Texture = undefined;
             var vbo_pos: Array(gfx.Vbo) = undefined;
             var vbo_tex: Array(gfx.Vbo) = undefined;
             var vao: Array(gfx.Vao) = undefined;
@@ -175,9 +169,6 @@ pub fn init(info: struct {
                 &.{ "vpsize", "scale", "rect" },
                 allocator,
             );
-            data.gui.button.texture.empty = try gfx.Texture.init("data/gui/button/empty.png");
-            data.gui.button.texture.focus = try gfx.Texture.init("data/gui/button/focus.png");
-            data.gui.button.texture.press = try gfx.Texture.init("data/gui/button/press.png");
             data.gui.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
             data.gui.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = data.gui.button.vbo }});
         }
@@ -191,7 +182,6 @@ pub fn init(info: struct {
                 &.{ "vpsize", "scale", "pos", "color" },
                 allocator,
             );
-            data.gui.text.texture = try gfx.Texture.init("data/gui/text/font.png");
             data.gui.text.vbo_pos = try Array(gfx.Vbo).initCapacity(allocator, 32);
             data.gui.text.vbo_tex = try Array(gfx.Vbo).initCapacity(allocator, 32);
             data.gui.text.vao = try Array(gfx.Vao).initCapacity(allocator, 32);
@@ -209,9 +199,6 @@ pub fn deinit() void {
     defer data.world.chunk.vao.deinit();
 
     defer data.gui.button.program.deinit();
-    defer data.gui.button.texture.press.deinit();
-    defer data.gui.button.texture.focus.deinit();
-    defer data.gui.button.texture.empty.deinit();
     defer data.gui.button.vbo.deinit();
     defer data.gui.button.vao.deinit();
 
@@ -260,13 +247,17 @@ pub fn draw() !void {
 
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
+    const empty = try _data.texture("data/gui/button/empty.png");
+    const focus = try _data.texture("data/gui/button/focus.png");
+    const press = try _data.texture("data/gui/button/press.png");
+
     data.gui.button.program.use();
     for (gui.buttons.items) |b| {
         if (!b.menu.hidden) {
             switch (b.state) {
-                .empty => data.gui.button.texture.empty.use(),
-                .focus => data.gui.button.texture.focus.use(),
-                .press => data.gui.button.texture.press.use(),
+                .empty => empty.use(),
+                .focus => focus.use(),
+                .press => press.use(),
             }
             data.gui.button.program.uniforms.items[0].set(window.size);
             data.gui.button.program.uniforms.items[1].set(gui.scale);
@@ -276,7 +267,7 @@ pub fn draw() !void {
     }
 
     data.gui.text.program.use();
-    data.gui.text.texture.use();
+    (try _data.texture("data/gui/text/font.png")).use();
     for (gui.texts.items, 0..) |t, i| {
         if (i == data.gui.text.vao.items.len or t.usage == .dynamic) {
             const s = struct {

@@ -45,12 +45,12 @@ pub fn init(path: [:0]const u8) !Texture {
         .size = .{ width, height },
         .channels = channels,
     };
-    log.debug("init {}", .{texture});
+    //log.debug("init {}", .{texture});
     return texture;
 }
 
 pub fn deinit(self: Texture) void {
-    log.debug("deinit {}", .{self});
+    //log.debug("deinit {}", .{self});
     gl.deleteTextures(1, &self.id);
 }
 

@@ -2,7 +2,6 @@ const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl");
 const stb = @import("zstbi");
-
 const audio = @import("zaudio");
 
 const log = std.log.scoped(.main);
@@ -14,6 +13,7 @@ const Mat = zm.Mat;
 
 const window = @import("window.zig");
 const input = @import("input.zig");
+const data = @import("data.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gui = @import("gui.zig");
@@ -44,6 +44,11 @@ pub fn main() !void {
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
+
+    try data.init(.{});
+    defer data.deinit();
+
+    _ = try data.texture("data/gui/button/empty.png");
 
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
@@ -152,7 +157,6 @@ pub fn main() !void {
                 .quit => break :loop,
                 .key => |k| switch (k) {
                     .press => |id| {
-                        if (id == .f10) break :loop;
                         if (id == .escape) menu_main.hidden = !menu_main.hidden;
                         if (id == .f3) {
                             menu_info.hidden = !menu_info.hidden;
@@ -168,7 +172,7 @@ pub fn main() !void {
                                 drawer.polygon_mode = .fill;
                             }
                         }
-
+                        if (id == .f10) break :loop;
                         if (id == .kp_minus) gui.scale = @max(gui.scale - 1, 1);
                         if (id == .kp_plus) gui.scale = @min(gui.scale + 1, 8);
                     },
