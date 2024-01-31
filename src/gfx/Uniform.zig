@@ -3,17 +3,20 @@ const gl = @import("zopengl");
 
 const log = std.log.scoped(.gfx);
 
+const Program = @import("Program.zig");
 const Self = @This();
 
-id: i32,
+id: gl.Int,
 
-pub fn init(program: u32, name: []const u8) !Self {
-    const self = Self{ .id = @intCast(gl.getUniformLocation(program, @ptrCast(name))) };
-    log.debug("init {}", .{self});
+// получение индекса юниформы в шейдерной программе
+pub fn init(program: Program, name: [:0]const u8) !Self {
+    const id = gl.getUniformLocation(program.id, name);
+    const self = Self{ .id = id };
+    //log.debug("init {}", .{self});
     return self;
 }
 
-// отправление значение в шейдер по идентификатору юниформы
+// отправление значения юниформы в программу
 pub fn set(self: Self, value: anytype) void {
     const id = self.id;
     switch (comptime @TypeOf(value)) {

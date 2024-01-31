@@ -4,18 +4,14 @@ const gl = @import("zopengl");
 const log = std.log.scoped(.gfx);
 const Allocator = std.mem.Allocator;
 const Array = std.ArrayList;
-
 const Shader = @import("Shader.zig");
-const Uniform = @import("Program/Uniform.zig");
 const Self = @This();
 
-id: u32,
-uniforms: Array(Uniform),
+id: gl.Uint,
 
 pub fn init(
-    shaders: []const Shader,
-    uniform_names: []const [:0]const u8,
     allocator: Allocator,
+    shaders: []const Shader,
 ) !Self {
     const id = gl.createProgram();
     for (shaders) |shader| {
@@ -42,19 +38,13 @@ pub fn init(
         gl.detachShader(id, shader.id);
     }
 
-    var uniforms = try Array(Uniform).initCapacity(allocator, 8);
-    for (uniform_names) |uniform_name| {
-        try uniforms.append(try Uniform.init(id, uniform_name));
-    }
-
-    const self = Self{ .id = id, .uniforms = uniforms };
+    const self = Self{ .id = id };
     log.debug("init {}", .{self});
     return self;
 }
 
 pub fn deinit(self: Self) void {
     log.debug("deinit {}", .{self});
-    self.uniforms.deinit();
     gl.deleteProgram(self.id);
 }
 
