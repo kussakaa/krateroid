@@ -101,8 +101,8 @@ pub fn init(info: struct {
 
     { // WORLD
         { // LINE
-            const vertex = try gfx.Shader.initFormFile("data/world/line/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/world/line/fragment.glsl", .fragment, _allocator);
+            const vertex = try gfx.Shader.initFormFile("data/shader/line/vertex.glsl", .vertex, _allocator);
+            const fragment = try gfx.Shader.initFormFile("data/shader/line/fragment.glsl", .fragment, _allocator);
             defer vertex.deinit();
             defer fragment.deinit();
             _data.world.line.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
@@ -114,8 +114,8 @@ pub fn init(info: struct {
             _data.world.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.world.line.vbo }});
         }
         { // CHUNK
-            const vertex = try gfx.Shader.initFormFile("data/world/chunk/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/world/chunk/fragment.glsl", .fragment, _allocator);
+            const vertex = try gfx.Shader.initFormFile("data/shader/chunk/vertex.glsl", .vertex, _allocator);
+            const fragment = try gfx.Shader.initFormFile("data/shader/chunk/fragment.glsl", .fragment, _allocator);
             defer vertex.deinit();
             defer fragment.deinit();
             _data.world.chunk.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
@@ -191,8 +191,8 @@ pub fn init(info: struct {
     }
     { // GUI
         { // BUTTON
-            const vertex = try gfx.Shader.initFormFile("data/gui/button/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/gui/button/fragment.glsl", .fragment, _allocator);
+            const vertex = try gfx.Shader.initFormFile("data/shader/button/vertex.glsl", .vertex, _allocator);
+            const fragment = try gfx.Shader.initFormFile("data/shader/button/fragment.glsl", .fragment, _allocator);
             defer vertex.deinit();
             defer fragment.deinit();
             _data.gui.button.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
@@ -201,13 +201,13 @@ pub fn init(info: struct {
             _data.gui.button.uniform.rect = try data.uniform(_data.gui.button.program, "rect");
             _data.gui.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
             _data.gui.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.gui.button.vbo }});
-            _data.gui.button.texture.empty = try data.texture("data/gui/button/empty.png");
-            _data.gui.button.texture.focus = try data.texture("data/gui/button/focus.png");
-            _data.gui.button.texture.press = try data.texture("data/gui/button/press.png");
+            _data.gui.button.texture.empty = try data.texture("button/empty.png");
+            _data.gui.button.texture.focus = try data.texture("button/focus.png");
+            _data.gui.button.texture.press = try data.texture("button/press.png");
         }
         { // TEXT
-            const vertex = try gfx.Shader.initFormFile("data/gui/text/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/gui/text/fragment.glsl", .fragment, _allocator);
+            const vertex = try gfx.Shader.initFormFile("data/shader/text/vertex.glsl", .vertex, _allocator);
+            const fragment = try gfx.Shader.initFormFile("data/shader/text/fragment.glsl", .fragment, _allocator);
             defer vertex.deinit();
             defer fragment.deinit();
             _data.gui.text.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
@@ -218,7 +218,7 @@ pub fn init(info: struct {
             _data.gui.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
             _data.gui.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
             _data.gui.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-            _data.gui.text.texture.font = try data.texture("data/gui/text/font.png");
+            _data.gui.text.texture.font = try data.texture("text/font.png");
         }
     }
 }

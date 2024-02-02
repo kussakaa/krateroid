@@ -248,7 +248,7 @@ pub fn main() !void {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
                     .press => |_| {
-                        try audio_engine.playSound("data/gui/button/focus.wav", null);
+                        try audio_engine.playSound("data/sound/press.wav", null);
                     },
                     .unpress => |id| {
                         if (id == button_exit.id) break :loop;
