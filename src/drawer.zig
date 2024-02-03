@@ -101,11 +101,7 @@ pub fn init(info: struct {
 
     { // WORLD
         { // LINE
-            const vertex = try gfx.Shader.initFormFile("data/shader/line/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/shader/line/fragment.glsl", .fragment, _allocator);
-            defer vertex.deinit();
-            defer fragment.deinit();
-            _data.world.line.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
+            _data.world.line.program = try data.program("line");
             _data.world.line.uniform.model = try data.uniform(_data.world.line.program, "model");
             _data.world.line.uniform.view = try data.uniform(_data.world.line.program, "view");
             _data.world.line.uniform.proj = try data.uniform(_data.world.line.program, "proj");
@@ -114,11 +110,7 @@ pub fn init(info: struct {
             _data.world.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.world.line.vbo }});
         }
         { // CHUNK
-            const vertex = try gfx.Shader.initFormFile("data/shader/chunk/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/shader/chunk/fragment.glsl", .fragment, _allocator);
-            defer vertex.deinit();
-            defer fragment.deinit();
-            _data.world.chunk.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
+            _data.world.chunk.program = try data.program("chunk");
             _data.world.chunk.uniform.model = try data.uniform(_data.world.chunk.program, "model");
             _data.world.chunk.uniform.view = try data.uniform(_data.world.chunk.program, "view");
             _data.world.chunk.uniform.proj = try data.uniform(_data.world.chunk.program, "proj");
@@ -191,11 +183,7 @@ pub fn init(info: struct {
     }
     { // GUI
         { // BUTTON
-            const vertex = try gfx.Shader.initFormFile("data/shader/button/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/shader/button/fragment.glsl", .fragment, _allocator);
-            defer vertex.deinit();
-            defer fragment.deinit();
-            _data.gui.button.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
+            _data.gui.button.program = try data.program("button");
             _data.gui.button.uniform.vpsize = try data.uniform(_data.gui.button.program, "vpsize");
             _data.gui.button.uniform.scale = try data.uniform(_data.gui.button.program, "scale");
             _data.gui.button.uniform.rect = try data.uniform(_data.gui.button.program, "rect");
@@ -206,11 +194,7 @@ pub fn init(info: struct {
             _data.gui.button.texture.press = try data.texture("button/press.png");
         }
         { // TEXT
-            const vertex = try gfx.Shader.initFormFile("data/shader/text/vertex.glsl", .vertex, _allocator);
-            const fragment = try gfx.Shader.initFormFile("data/shader/text/fragment.glsl", .fragment, _allocator);
-            defer vertex.deinit();
-            defer fragment.deinit();
-            _data.gui.text.program = try gfx.Program.init(_allocator, &.{ vertex, fragment });
+            _data.gui.text.program = try data.program("text");
             _data.gui.text.uniform.vpsize = try data.uniform(_data.gui.text.program, "vpsize");
             _data.gui.text.uniform.scale = try data.uniform(_data.gui.text.program, "scale");
             _data.gui.text.uniform.pos = try data.uniform(_data.gui.text.program, "pos");

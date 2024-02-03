@@ -8,9 +8,11 @@ const Shader = @import("Shader.zig");
 const Self = @This();
 
 id: gl.Uint,
+name: []const u8,
 
 pub fn init(
     allocator: Allocator,
+    name: []const u8,
     shaders: []const Shader,
 ) !Self {
     const id = gl.createProgram();
@@ -38,13 +40,13 @@ pub fn init(
         gl.detachShader(id, shader.id);
     }
 
-    const self = Self{ .id = id };
-    log.debug("init {}", .{self});
+    const self = Self{ .name = name, .id = id };
+    //log.debug("init {}", .{self});
     return self;
 }
 
 pub fn deinit(self: Self) void {
-    log.debug("deinit {}", .{self});
+    //log.debug("deinit {}", .{self});
     gl.deleteProgram(self.id);
 }
 

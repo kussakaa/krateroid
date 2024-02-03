@@ -20,6 +20,8 @@ const gui = @import("gui.zig");
 const drawer = @import("drawer.zig");
 
 pub fn main() !void {
+    std.debug.print("\n", .{});
+
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();

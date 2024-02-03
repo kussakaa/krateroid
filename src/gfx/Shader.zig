@@ -13,9 +13,9 @@ const Self = @This();
 id: u32, // индекс шейдера
 
 pub fn init(
+    allocator: Allocator,
     source: []const u8,
     @"type": Type,
-    allocator: Allocator,
 ) !Self {
     const id = gl.createShader(@intFromEnum(@"type"));
     gl.shaderSource(id, 1, &source.ptr, @ptrCast(&.{@as(gl.Int, @intCast(source.len))}));
@@ -36,22 +36,22 @@ pub fn init(
     }
 
     const self = Self{ .id = id };
-    log.debug("init {}", .{self});
+    //log.debug("init {}", .{self});
     return self;
 }
 
 pub fn deinit(self: Self) void {
-    log.debug("deinit {}", .{self});
+    //log.debug("deinit {}", .{self});
     gl.deleteShader(self.id);
 }
 
-pub fn initFormFile(
+pub fn initFromFile(
+    allocator: Allocator,
     path: [:0]const u8,
     @"type": Type,
-    allocator: std.mem.Allocator,
 ) !Self {
     const cwd = std.fs.cwd();
     const data = try cwd.readFileAlloc(allocator, path, 100_000_000);
     defer allocator.free(data);
-    return Self.init(data[0..], @"type", allocator);
+    return Self.init(allocator, data[0..], @"type");
 }
