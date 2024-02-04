@@ -1,6 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 const window = @import("window.zig");
 const camera = @import("camera.zig");
@@ -208,19 +208,12 @@ pub fn init(info: struct {
 }
 
 pub fn deinit() void {
-    defer _data.world.line.program.deinit();
     defer _data.world.line.vbo.deinit();
     defer _data.world.line.vao.deinit();
-
-    defer _data.world.chunk.program.deinit();
     defer _data.world.chunk.vbo_pos.deinit();
     defer _data.world.chunk.vao.deinit();
-
-    defer _data.gui.button.program.deinit();
     defer _data.gui.button.vbo.deinit();
     defer _data.gui.button.vao.deinit();
-
-    defer _data.gui.text.program.deinit();
     defer _data.gui.text.vbo_pos.deinit(_allocator);
     defer _data.gui.text.vbo_tex.deinit(_allocator);
     defer _data.gui.text.vao.deinit(_allocator);

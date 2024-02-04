@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 const log = std.log.scoped(.gfx);
 const Allocator = std.mem.Allocator;

@@ -1,4 +1,4 @@
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 pub const Type = enum(gl.Enum) {
     i8 = gl.BYTE,

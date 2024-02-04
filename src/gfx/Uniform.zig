@@ -1,5 +1,5 @@
 const std = @import("std");
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 const log = std.log.scoped(.gfx);
 
@@ -46,12 +46,12 @@ pub fn set(self: Self, value: anytype) void {
         },
         [4]@Vector(4, f32) => {
             const array = [16]f32{
-                value[0][0], value[1][0], value[2][0], value[3][0],
-                value[0][1], value[1][1], value[2][1], value[3][1],
-                value[0][2], value[1][2], value[2][2], value[3][2],
-                value[0][3], value[1][3], value[2][3], value[3][3],
+                value[0][0], value[0][1], value[0][2], value[0][3],
+                value[1][0], value[1][1], value[1][2], value[1][3],
+                value[2][0], value[2][1], value[2][2], value[2][3],
+                value[3][0], value[3][1], value[3][2], value[3][3],
             };
-            gl.uniformMatrix4fv(id, 1, gl.TRUE, &array);
+            gl.uniformMatrix4fv(id, 1, gl.FALSE, &array);
         },
         else => @compileError("gfx.Program.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
     }

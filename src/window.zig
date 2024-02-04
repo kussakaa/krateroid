@@ -1,7 +1,8 @@
 const std = @import("std");
 const log = std.log.scoped(.window);
 const sdl = @import("zsdl");
-const gl = @import("zopengl");
+const zopengl = @import("zopengl");
+const gl = zopengl.bindings;
 const Allocator = std.mem.Allocator;
 
 const zm = @import("zmath");
@@ -51,7 +52,7 @@ pub fn init(info: struct {
     try sdl.gl.makeCurrent(handle, gl_context);
     try sdl.gl.setSwapInterval(0);
 
-    try gl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
+    try zopengl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 
     gl.viewport(0, 0, size[0], size[1]);
     log.debug("init window {s} {}", .{ title, size });

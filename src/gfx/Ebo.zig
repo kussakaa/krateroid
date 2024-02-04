@@ -1,6 +1,6 @@
 const std = @import("std");
 const log = std.log.scoped(.gfx);
-const gl = @import("zopengl");
+const gl = @import("zopengl").bindings;
 
 const wrapper = @import("wrapper.zig");
 const Type = wrapper.Type;

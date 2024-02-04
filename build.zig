@@ -23,7 +23,7 @@ pub fn build(b: *std.Build) void {
     const znoise_pkg = znoise.package(b, target, optimize, .{});
     znoise_pkg.link(exe);
 
-    const zopengl_pkg = zopengl.package(b, target, optimize, .{}); // .options = .{ .api = .wrapper }
+    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
     zopengl_pkg.link(exe);
 
     const zsdl_pkg = zsdl.package(b, target, optimize, .{});
