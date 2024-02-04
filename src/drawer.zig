@@ -24,7 +24,7 @@ pub var polygon_mode: gfx.PolygonMode = undefined;
 var _allocator: Allocator = undefined;
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
+    var direction: Vec = .{ 1.0, 0.5, 1.0, 1.0 };
     var ambient: f32 = 0.4;
     var diffuse: f32 = 0.3;
     var specular: f32 = 0.1;
@@ -258,7 +258,7 @@ pub fn draw() !void {
     _data.chunk.uniform.model.set(zm.identity());
     _data.chunk.uniform.view.set(camera.view);
     _data.chunk.uniform.proj.set(camera.proj);
-    _data.chunk.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+    _data.chunk.uniform.color.set(Color{ 0.7, 1.0, 0.7, 1.0 });
     _data.chunk.uniform.light.color.set(light.color);
     _data.chunk.uniform.light.direction.set(light.direction);
     _data.chunk.uniform.light.ambient.set(light.ambient);

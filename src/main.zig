@@ -129,7 +129,7 @@ pub fn main() !void {
         .menu = menu_info,
     });
     _ = try gui.text(.{
-        .data = W("github.com/kussakaa/krateroid"),
+        .data = W("https://github.com/kussakaa/krateroid"),
         .pos = .{ 2, -8 },
         .alignment = .{ .v = .bottom },
         .menu = menu_info,
