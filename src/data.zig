@@ -58,6 +58,7 @@ pub fn texture(path: []const u8) !gfx.Texture {
         return t;
     } else {
         const prefix = "data/texture/";
+
         const fullpath = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path }, 0);
         defer _allocator.free(fullpath);
 

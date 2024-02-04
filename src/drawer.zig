@@ -202,8 +202,19 @@ pub fn init(info: struct {
             _data.button.uniform.vpsize = try data.uniform(_data.button.program, "vpsize");
             _data.button.uniform.scale = try data.uniform(_data.button.program, "scale");
             _data.button.uniform.rect = try data.uniform(_data.button.program, "rect");
+
+            //_data.button.mesh = try data.mesh(.{
+            //    .name = "button",
+            //    .buffers = &.{
+            //        .{gfx.Buffer.init(u8, .static)},
+            //        .{gfx.Buffer.init(u8, .dynamic)},
+            //    },
+            //    .indices = null,
+            //});
+
             _data.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
             _data.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.button.vbo }});
+
             _data.button.texture.empty = try data.texture("button/empty.png");
             _data.button.texture.focus = try data.texture("button/focus.png");
             _data.button.texture.press = try data.texture("button/press.png");

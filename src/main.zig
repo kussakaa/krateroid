@@ -40,9 +40,6 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
-    try data.init(.{});
-    defer data.deinit();
-
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
         var delta: @Vector(2, i32) = .{ 0, 0 };
@@ -137,6 +134,9 @@ pub fn main() !void {
         .alignment = .{ .v = .bottom },
         .menu = menu_info,
     });
+
+    try data.init(.{});
+    defer data.deinit();
 
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
@@ -249,6 +249,10 @@ pub fn main() !void {
             switch (gui.pollEvent()) {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
+                    .focus => |_| {
+                        try audio_engine.playSound("data/sound/focus.wav", null);
+                    },
+                    .unfocus => |_| {},
                     .press => |_| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },

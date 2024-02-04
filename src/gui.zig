@@ -15,6 +15,8 @@ const Button = @import("gui/Button.zig");
 const Event = union(enum) {
     none,
     button: union(enum) {
+        focus: u32,
+        unfocus: u32,
         press: u32,
         unpress: u32,
     },
@@ -38,6 +40,7 @@ pub const cursor = struct {
                 if (is_press) {
                     buttons.items[i].state = .press;
                 } else {
+                    if (buttons.items[i].state == .empty) pushEvent(.{ .button = .{ .focus = buttons.items[i].id } });
                     buttons.items[i].state = .focus;
                 }
             } else {
@@ -51,7 +54,7 @@ pub const cursor = struct {
         for (buttons.items, 0..) |b, i| {
             if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
                 buttons.items[i].state = .press;
-                pushEvent(Event{ .button = .{ .press = buttons.items[i].id } });
+                pushEvent(.{ .button = .{ .press = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
@@ -63,7 +66,7 @@ pub const cursor = struct {
         for (buttons.items, 0..) |b, i| {
             if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
                 buttons.items[i].state = .focus;
-                pushEvent(Event{ .button = .{ .unpress = buttons.items[i].id } });
+                pushEvent(.{ .button = .{ .unpress = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
