@@ -266,10 +266,10 @@ pub fn draw() !void {
                 .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
                 .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
             };
-            _data.chunk.uniform.model.set(model);
-            _data.chunk.uniform.view.set(camera.view);
-            _data.chunk.uniform.proj.set(camera.proj);
-            _data.chunk.uniform.color.set(l.color);
+            _data.line.uniform.model.set(model);
+            _data.line.uniform.view.set(camera.view);
+            _data.line.uniform.proj.set(camera.proj);
+            _data.line.uniform.color.set(l.color);
             _data.line.vao.draw(.lines);
         }
     }
