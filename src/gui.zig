@@ -36,14 +36,15 @@ pub const cursor = struct {
     pub fn setPos(p: Pos) void {
         pos = p;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
+                if (buttons.items[i].state == .empty) events.push(.{ .button = .{ .focus = buttons.items[i].id } });
                 if (is_press) {
                     buttons.items[i].state = .press;
                 } else {
-                    if (buttons.items[i].state == .empty) pushEvent(.{ .button = .{ .focus = buttons.items[i].id } });
                     buttons.items[i].state = .focus;
                 }
             } else {
+                if (buttons.items[i].state != .empty) events.push(.{ .button = .{ .unfocus = buttons.items[i].id } });
                 buttons.items[i].state = .empty;
             }
         }
@@ -52,9 +53,9 @@ pub const cursor = struct {
     pub fn press() void {
         is_press = true;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
                 buttons.items[i].state = .press;
-                pushEvent(.{ .button = .{ .press = buttons.items[i].id } });
+                events.push(.{ .button = .{ .press = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
@@ -64,19 +65,48 @@ pub const cursor = struct {
     pub fn unpress() void {
         is_press = false;
         for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and !b.menu.hidden) {
+            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
                 buttons.items[i].state = .focus;
-                pushEvent(.{ .button = .{ .unpress = buttons.items[i].id } });
+                events.push(.{ .button = .{ .unpress = buttons.items[i].id } });
             } else {
                 buttons.items[i].state = .empty;
             }
         }
     }
 };
+
 const events = struct {
-    var len: usize = 0;
     var items: [16]Event = undefined;
+    var current: usize = 0;
+    var current_event: usize = 0;
+
+    fn push(event: Event) void {
+        items[current_event] = event;
+        if (current_event < items.len - 1) {
+            current_event += 1;
+        } else {
+            current_event = 0;
+        }
+    }
+
+    fn pop() Event {
+        if (current != current_event) {
+            const e = items[current];
+            if (current < items.len - 1) {
+                current += 1;
+            } else {
+                current = 0;
+            }
+            return e;
+        } else {
+            return .none;
+        }
+    }
 };
+
+pub fn pollEvent() Event {
+    return events.pop();
+}
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
@@ -100,11 +130,11 @@ pub fn deinit() void {
 }
 
 pub fn menu(info: struct {
-    hidden: bool = false,
+    show: bool = true,
 }) !*Menu {
     const m = Menu{
         .id = @intCast(menus.items.len),
-        .hidden = info.hidden,
+        .show = info.show,
     };
     try menus.append(allocator, m);
     return &menus.items[menus.items.len - 1];
@@ -163,22 +193,4 @@ fn calcTextSize(data: []const u16) Size {
     }
     width -= 1;
     return .{ width, 8 };
-}
-
-fn pushEvent(event: Event) void {
-    if (events.len < events.items.len) {
-        events.items[events.len] = event;
-        events.len += 1;
-    }
-}
-
-pub fn pollEvent() Event {
-    const e = events.items[0];
-    if (events.len != 0) {
-        for (0..events.len) |i| {
-            events.items[i] = events.items[i + 1];
-        }
-        events.len -= 1;
-    }
-    return e;
 }

@@ -109,127 +109,123 @@ pub fn init(info: struct {
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
 
-    { // WORLD
-        { // LINE
-            _data.line.program = try data.program("line");
-            _data.line.uniform.model = try data.uniform(_data.line.program, "model");
-            _data.line.uniform.view = try data.uniform(_data.line.program, "view");
-            _data.line.uniform.proj = try data.uniform(_data.line.program, "proj");
-            _data.line.uniform.color = try data.uniform(_data.line.program, "color");
-            _data.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
-            _data.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.line.vbo }});
-        }
-        { // CHUNK
-            _data.chunk.program = try data.program("chunk");
-            _data.chunk.uniform.model = try data.uniform(_data.chunk.program, "model");
-            _data.chunk.uniform.view = try data.uniform(_data.chunk.program, "view");
-            _data.chunk.uniform.proj = try data.uniform(_data.chunk.program, "proj");
-            _data.chunk.uniform.color = try data.uniform(_data.chunk.program, "color");
-            _data.chunk.uniform.light.color = try data.uniform(_data.chunk.program, "light.color");
-            _data.chunk.uniform.light.direction = try data.uniform(_data.chunk.program, "light.direction");
-            _data.chunk.uniform.light.ambient = try data.uniform(_data.chunk.program, "light.ambient");
-            _data.chunk.uniform.light.diffuse = try data.uniform(_data.chunk.program, "light.diffuse");
-            _data.chunk.uniform.light.specular = try data.uniform(_data.chunk.program, "light.specular");
+    { // LINE
+        _data.line.program = try data.program("line");
+        _data.line.uniform.model = try data.uniform(_data.line.program, "model");
+        _data.line.uniform.view = try data.uniform(_data.line.program, "view");
+        _data.line.uniform.proj = try data.uniform(_data.line.program, "proj");
+        _data.line.uniform.color = try data.uniform(_data.line.program, "color");
+        _data.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
+        _data.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.line.vbo }});
+    }
+    { // CHUNK
+        _data.chunk.program = try data.program("chunk");
+        _data.chunk.uniform.model = try data.uniform(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try data.uniform(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try data.uniform(_data.chunk.program, "proj");
+        _data.chunk.uniform.color = try data.uniform(_data.chunk.program, "color");
+        _data.chunk.uniform.light.color = try data.uniform(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try data.uniform(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try data.uniform(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try data.uniform(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try data.uniform(_data.chunk.program, "light.specular");
 
-            const s = struct {
-                var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
-                var vbo_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
-            };
+        const s = struct {
+            var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
+            var vbo_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
+        };
 
-            const chunk = world.chunks[0][0].?;
-            var cnt: usize = 0;
-            for (0..world.Chunk.width - 1) |y| {
-                x: for (0..world.Chunk.width - 1) |x| {
-                    const minh = @min(chunk.hmap[y][x], chunk.hmap[y][x + 1], chunk.hmap[y + 1][x], chunk.hmap[y + 1][x + 1]);
-                    for (minh..255) |z| {
-                        var index: u8 = 0;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x])) << 7;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
-                        index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
+        const chunk = world.chunks[0][0].?;
+        var cnt: usize = 0;
+        for (0..world.Chunk.width - 1) |y| {
+            x: for (0..world.Chunk.width - 1) |x| {
+                const minh = @min(chunk.hmap[y][x], chunk.hmap[y][x + 1], chunk.hmap[y + 1][x], chunk.hmap[y + 1][x + 1]);
+                for (minh..255) |z| {
+                    var index: u8 = 0;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x])) << 7;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
+                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
 
-                        if (index == 0) continue :x;
+                    if (index == 0) continue :x;
 
-                        var i: usize = 0;
-                        while (mct.tri[index][i] < 12) : (i += 3) {
-                            const v1 = mct.edge[mct.tri[index][i + 0]];
-                            const v2 = mct.edge[mct.tri[index][i + 1]];
-                            const v3 = mct.edge[mct.tri[index][i + 2]];
+                    var i: usize = 0;
+                    while (mct.tri[index][i] < 12) : (i += 3) {
+                        const v1 = mct.edge[mct.tri[index][i + 0]];
+                        const v2 = mct.edge[mct.tri[index][i + 1]];
+                        const v3 = mct.edge[mct.tri[index][i + 2]];
 
-                            s.vbo_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
-                            s.vbo_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
-                            s.vbo_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
-                            s.vbo_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
-                            s.vbo_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
-                            s.vbo_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
-                            s.vbo_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
-                            s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
-                            s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
+                        s.vbo_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
+                        s.vbo_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
+                        s.vbo_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
+                        s.vbo_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
+                        s.vbo_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
+                        s.vbo_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
+                        s.vbo_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
+                        s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
+                        s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
 
-                            const n = zm.cross3(v2 - v1, v3 - v1);
+                        const n = zm.cross3(v2 - v1, v3 - v1);
 
-                            s.vbo_nrm_data[(cnt + 0) * 3 + 0] = n[0];
-                            s.vbo_nrm_data[(cnt + 0) * 3 + 1] = n[1];
-                            s.vbo_nrm_data[(cnt + 0) * 3 + 2] = n[2];
-                            s.vbo_nrm_data[(cnt + 1) * 3 + 0] = n[0];
-                            s.vbo_nrm_data[(cnt + 1) * 3 + 1] = n[1];
-                            s.vbo_nrm_data[(cnt + 1) * 3 + 2] = n[2];
-                            s.vbo_nrm_data[(cnt + 2) * 3 + 0] = n[0];
-                            s.vbo_nrm_data[(cnt + 2) * 3 + 1] = n[1];
-                            s.vbo_nrm_data[(cnt + 2) * 3 + 2] = n[2];
+                        s.vbo_nrm_data[(cnt + 0) * 3 + 0] = n[0];
+                        s.vbo_nrm_data[(cnt + 0) * 3 + 1] = n[1];
+                        s.vbo_nrm_data[(cnt + 0) * 3 + 2] = n[2];
+                        s.vbo_nrm_data[(cnt + 1) * 3 + 0] = n[0];
+                        s.vbo_nrm_data[(cnt + 1) * 3 + 1] = n[1];
+                        s.vbo_nrm_data[(cnt + 1) * 3 + 2] = n[2];
+                        s.vbo_nrm_data[(cnt + 2) * 3 + 0] = n[0];
+                        s.vbo_nrm_data[(cnt + 2) * 3 + 1] = n[1];
+                        s.vbo_nrm_data[(cnt + 2) * 3 + 2] = n[2];
 
-                            cnt += 3;
-                        }
+                        cnt += 3;
                     }
                 }
             }
-
-            _data.chunk.vbo_pos = try gfx.Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
-            _data.chunk.vbo_nrm = try gfx.Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
-            _data.chunk.vao = try gfx.Vao.init(&.{
-                .{ .size = 3, .vbo = _data.chunk.vbo_pos },
-                .{ .size = 3, .vbo = _data.chunk.vbo_nrm },
-            });
         }
+
+        _data.chunk.vbo_pos = try gfx.Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
+        _data.chunk.vbo_nrm = try gfx.Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
+        _data.chunk.vao = try gfx.Vao.init(&.{
+            .{ .size = 3, .vbo = _data.chunk.vbo_pos },
+            .{ .size = 3, .vbo = _data.chunk.vbo_nrm },
+        });
     }
-    { // GUI
-        { // BUTTON
-            _data.button.program = try data.program("button");
-            _data.button.uniform.vpsize = try data.uniform(_data.button.program, "vpsize");
-            _data.button.uniform.scale = try data.uniform(_data.button.program, "scale");
-            _data.button.uniform.rect = try data.uniform(_data.button.program, "rect");
+    { // BUTTON
+        _data.button.program = try data.program("button");
+        _data.button.uniform.vpsize = try data.uniform(_data.button.program, "vpsize");
+        _data.button.uniform.scale = try data.uniform(_data.button.program, "scale");
+        _data.button.uniform.rect = try data.uniform(_data.button.program, "rect");
 
-            //_data.button.mesh = try data.mesh(.{
-            //    .name = "button",
-            //    .buffers = &.{
-            //        .{gfx.Buffer.init(u8, .static)},
-            //        .{gfx.Buffer.init(u8, .dynamic)},
-            //    },
-            //    .indices = null,
-            //});
+        //_data.button.mesh = try data.mesh(.{
+        //    .name = "button",
+        //    .buffers = &.{
+        //        .{gfx.Buffer.init(u8, .static)},
+        //        .{gfx.Buffer.init(u8, .dynamic)},
+        //    },
+        //    .indices = null,
+        //});
 
-            _data.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-            _data.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.button.vbo }});
+        _data.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
+        _data.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.button.vbo }});
 
-            _data.button.texture.empty = try data.texture("button/empty.png");
-            _data.button.texture.focus = try data.texture("button/focus.png");
-            _data.button.texture.press = try data.texture("button/press.png");
-        }
-        { // TEXT
-            _data.text.program = try data.program("text");
-            _data.text.uniform.vpsize = try data.uniform(_data.text.program, "vpsize");
-            _data.text.uniform.scale = try data.uniform(_data.text.program, "scale");
-            _data.text.uniform.pos = try data.uniform(_data.text.program, "pos");
-            _data.text.uniform.color = try data.uniform(_data.text.program, "color");
-            _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
-            _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
-            _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-            _data.text.texture.font = try data.texture("text/font.png");
-        }
+        _data.button.texture.empty = try data.texture("button/empty.png");
+        _data.button.texture.focus = try data.texture("button/focus.png");
+        _data.button.texture.press = try data.texture("button/press.png");
+    }
+    { // TEXT
+        _data.text.program = try data.program("text");
+        _data.text.uniform.vpsize = try data.uniform(_data.text.program, "vpsize");
+        _data.text.uniform.scale = try data.uniform(_data.text.program, "scale");
+        _data.text.uniform.pos = try data.uniform(_data.text.program, "pos");
+        _data.text.uniform.color = try data.uniform(_data.text.program, "color");
+        _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
+        _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
+        _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
+        _data.text.texture.font = try data.texture("text/font.png");
     }
 }
 
@@ -258,7 +254,7 @@ pub fn draw() !void {
     _data.chunk.uniform.model.set(zm.identity());
     _data.chunk.uniform.view.set(camera.view);
     _data.chunk.uniform.proj.set(camera.proj);
-    _data.chunk.uniform.color.set(Color{ 0.7, 1.0, 0.7, 1.0 });
+    _data.chunk.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
     _data.chunk.uniform.light.color.set(light.color);
     _data.chunk.uniform.light.direction.set(light.direction);
     _data.chunk.uniform.light.ambient.set(light.ambient);
@@ -270,7 +266,7 @@ pub fn draw() !void {
     // line
     _data.line.program.use();
     for (world.lines.items) |l| {
-        if (!l.hidden) {
+        if (l.show) {
             const model = Mat{
                 .{ l.p2[0] - l.p1[0], 0.0, 0.0, 0.0 },
                 .{ 0.0, l.p2[1] - l.p1[1], 0.0, 0.0 },
@@ -291,7 +287,7 @@ pub fn draw() !void {
 
     _data.button.program.use();
     for (gui.buttons.items) |b| {
-        if (!b.menu.hidden) {
+        if (b.menu.show) {
             switch (b.state) {
                 .empty => _data.button.texture.empty.use(),
                 .focus => _data.button.texture.focus.use(),
@@ -373,7 +369,7 @@ pub fn draw() !void {
             }
         }
 
-        if (!t.menu.hidden) {
+        if (t.menu.show) {
             const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
 
             _data.text.uniform.vpsize.set(window.size);

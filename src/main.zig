@@ -44,6 +44,7 @@ pub fn main() !void {
         var pos: @Vector(2, i32) = .{ 0, 0 };
         var delta: @Vector(2, i32) = .{ 0, 0 };
     };
+
     var is_camera_move: bool = false;
     var is_camera_rotate: bool = false;
     camera.pos = .{ 15.0, 15.0, 0.0, 1.0 };
@@ -58,7 +59,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
         .color = .{ 1.0, 0.5, 0.5, 1.0 },
-        .hidden = true,
+        .show = false,
     });
 
     // Y
@@ -66,7 +67,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
         .color = .{ 0.5, 1.0, 0.5, 1.0 },
-        .hidden = true,
+        .show = false,
     });
 
     // Z
@@ -74,7 +75,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
-        .hidden = true,
+        .show = false,
     });
 
     _ = try world.chunk(.{
@@ -84,32 +85,42 @@ pub fn main() !void {
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
-    var menu_main = try gui.menu(.{ .hidden = false });
+    var menu_main = try gui.menu(.{
+        .show = true,
+    });
     const button_play = try gui.button(.{
-        .text = W("<play>"),
+        .text = W("<играть>"),
         .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
-    _ = try gui.button(.{
-        .text = W("<settings>"),
+    const button_settings = try gui.button(.{
+        .text = W("<настройки>"),
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
     const button_exit = try gui.button(.{
-        .text = W("<exit>"),
+        .text = W("<выход>"),
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
 
-    //var settings_menu = try gui.menu(.{ .hidden = true });
+    var menu_settings = try gui.menu(.{
+        .show = false,
+    });
+    const button_settings_close = try gui.button(.{
+        .text = W("<закрыть>"),
+        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .menu = menu_settings,
+    });
 
     // F3
 
     var menu_info = try gui.menu(.{
-        .hidden = true,
+        .show = false,
     });
     _ = try gui.text(.{
         .data = W("krateroid alpha"),
@@ -150,12 +161,15 @@ pub fn main() !void {
                 .quit => break :loop,
                 .key => |k| switch (k) {
                     .press => |id| {
-                        if (id == .escape) menu_main.hidden = !menu_main.hidden;
+                        if (id == .escape) {
+                            menu_main.show = true;
+                            menu_settings.show = false;
+                        }
                         if (id == .f3) {
-                            menu_info.hidden = !menu_info.hidden;
-                            x_axis.hidden = !x_axis.hidden;
-                            y_axis.hidden = !y_axis.hidden;
-                            z_axis.hidden = !z_axis.hidden;
+                            menu_info.show = !menu_info.show;
+                            x_axis.show = !x_axis.show;
+                            y_axis.show = !y_axis.show;
+                            z_axis.show = !z_axis.show;
                         }
                         if (id == .f5) {
                             is_debug_polygons = !is_debug_polygons;
@@ -196,7 +210,7 @@ pub fn main() !void {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
-                        if (is_camera_move and menu_main.hidden) {
+                        if (is_camera_move) {
                             const speed = 0.004;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
@@ -216,7 +230,7 @@ pub fn main() !void {
                             z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
-                        if (is_camera_rotate and menu_main.hidden) {
+                        if (is_camera_rotate) {
                             const speed = 0.005; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
@@ -231,9 +245,7 @@ pub fn main() !void {
                         gui.cursor.setPos(pos);
                     },
                     .scroll => |scroll| {
-                        if (menu_main.hidden) {
-                            camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
-                        }
+                        camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
                     },
                 },
                 .window => |w| switch (w) {
@@ -246,20 +258,31 @@ pub fn main() !void {
         }
 
         guiproc: while (true) {
-            switch (gui.pollEvent()) {
+            const e = gui.pollEvent();
+            if (e != .none) log.info("gui event: {}", .{e});
+            switch (e) {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
                     .focus => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
                     },
                     .unfocus => |_| {},
-                    .press => |_| {
+                    .press => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
+                        if (id == button_play.id)
+                            menu_main.show = false;
+                        if (id == button_settings.id) {
+                            menu_settings.show = true;
+                            menu_main.show = false;
+                        }
+                        if (id == button_settings_close.id) {
+                            menu_settings.show = false;
+                            menu_main.show = true;
+                        }
+                        if (id == button_exit.id)
+                            break :loop;
                     },
-                    .unpress => |id| {
-                        if (id == button_exit.id) break :loop;
-                        if (id == button_play.id) menu_main.hidden = true;
-                    },
+                    .unpress => |_| {},
                 },
             }
         }

@@ -45,13 +45,13 @@ pub fn line(info: struct {
     p1: Vec,
     p2: Vec,
     color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
-    hidden: bool = false,
+    show: bool = true,
 }) !*Line {
     try lines.append(allocator, .{
         .p1 = info.p1,
         .p2 = info.p2,
         .color = info.color,
-        .hidden = info.hidden,
+        .show = info.show,
     });
     return &lines.items[lines.items.len - 1];
 }
