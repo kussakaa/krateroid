@@ -141,43 +141,35 @@ pub fn menu(info: struct {
 }
 
 pub fn button(info: struct {
-    text: []const u16,
     rect: Rect,
     alignment: Alignment = .{},
-    menu: *Menu,
-}) !*Button {
+    menu: *const Menu,
+}) !*const Button {
     const b = Button{
         .id = @intCast(buttons.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
         .menu = info.menu,
     };
-    const bs = info.rect.size();
-    const ts = calcTextSize(info.text);
-    const tp = b.rect.min + Pos{ @divTrunc(bs[0] - ts[0], 2), @divTrunc(bs[1] - ts[1], 2) };
-    const t = Text{
-        .data = info.text,
-        .rect = .{ .min = tp, .max = tp + ts },
-        .alignment = info.alignment,
-        .usage = .static,
-        .menu = info.menu,
-    };
     try buttons.append(allocator, b);
-    try texts.append(allocator, t);
     return &buttons.items[buttons.items.len - 1];
 }
 
-pub fn text(info: struct {
-    data: []const u16,
+pub fn text(data: []const u16, info: struct {
     pos: Pos,
     alignment: Alignment = .{},
+    centered: bool = false,
     usage: Text.Usage = .static,
     menu: *Menu,
 }) !*Text {
-    const size = calcTextSize(info.data);
+    const ts = calcTextSize(data);
+    const tp = if (info.centered)
+        info.pos - Pos{ @divTrunc(ts[0], 2), @divTrunc(ts[1], 2) }
+    else
+        info.pos;
     const t = Text{
-        .data = info.data,
-        .rect = .{ .min = info.pos, .max = info.pos + size },
+        .data = data,
+        .rect = .{ .min = tp, .max = tp + ts },
         .alignment = info.alignment,
         .usage = info.usage,
         .menu = info.menu,

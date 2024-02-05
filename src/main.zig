@@ -88,22 +88,40 @@ pub fn main() !void {
     var menu_main = try gui.menu(.{
         .show = true,
     });
+
     const button_play = try gui.button(.{
-        .text = W("<играть>"),
         .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
+    _ = try gui.text(W("<играть>"), .{
+        .pos = .{ 0, -17 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+        .menu = menu_main,
+    });
+
     const button_settings = try gui.button(.{
-        .text = W("<настройки>"),
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
+    _ = try gui.text(W("<настройки>"), .{
+        .pos = .{ 0, 0 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+        .menu = menu_main,
+    });
+
     const button_exit = try gui.button(.{
-        .text = W("<выход>"),
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
+        .menu = menu_main,
+    });
+    _ = try gui.text(W("<выход>"), .{
+        .pos = .{ 0, 17 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
         .menu = menu_main,
     });
 
@@ -111,9 +129,14 @@ pub fn main() !void {
         .show = false,
     });
     const button_settings_close = try gui.button(.{
-        .text = W("<закрыть>"),
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
+        .menu = menu_settings,
+    });
+    _ = try gui.text(W("<закрыть>"), .{
+        .pos = .{ 0, 17 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
         .menu = menu_settings,
     });
 
@@ -122,25 +145,21 @@ pub fn main() !void {
     var menu_info = try gui.menu(.{
         .show = false,
     });
-    _ = try gui.text(.{
-        .data = W("krateroid alpha"),
+    _ = try gui.text(W("krateroid alpha"), .{
         .pos = .{ 2, 1 },
         .menu = menu_info,
     });
-    _ = try gui.text(.{
-        .data = W("fps:"),
+    _ = try gui.text(W("fps:"), .{
         .pos = .{ 2, 9 },
         .menu = menu_info,
     });
     var fps_str = [1]u16{'0'} ** 6;
-    _ = try gui.text(.{
-        .data = &fps_str,
+    _ = try gui.text(&fps_str, .{
         .pos = .{ 16, 9 },
         .usage = .dynamic,
         .menu = menu_info,
     });
-    _ = try gui.text(.{
-        .data = W("https://github.com/kussakaa/krateroid"),
+    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
         .pos = .{ 2, -8 },
         .alignment = .{ .v = .bottom },
         .menu = menu_info,
