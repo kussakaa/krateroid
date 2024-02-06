@@ -147,14 +147,32 @@ pub fn main() !void {
     var menu_settings = try gui.menu(.{
         .show = false,
     });
+
+    _ = try gui.panel(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("-<settings>-"), .{
+        .menu = menu_settings,
+        .pos = .{ 0, -38 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
     const button_settings_close = try gui.button(.{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
+        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
     });
     _ = try gui.text(W("<close>"), .{
         .menu = menu_settings,
-        .pos = .{ 0, 17 },
+        .pos = .{ 0, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
