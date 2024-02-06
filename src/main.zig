@@ -94,7 +94,7 @@ pub fn main() !void {
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
-    _ = try gui.text(W("<играть>"), .{
+    _ = try gui.text(W("<play>"), .{
         .pos = .{ 0, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
@@ -106,7 +106,7 @@ pub fn main() !void {
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
-    _ = try gui.text(W("<настройки>"), .{
+    _ = try gui.text(W("<settings>"), .{
         .pos = .{ 0, 0 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
@@ -118,7 +118,7 @@ pub fn main() !void {
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_main,
     });
-    _ = try gui.text(W("<выход>"), .{
+    _ = try gui.text(W("<exit>"), .{
         .pos = .{ 0, 17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
@@ -133,7 +133,7 @@ pub fn main() !void {
         .alignment = .{ .v = .center, .h = .center },
         .menu = menu_settings,
     });
-    _ = try gui.text(W("<закрыть>"), .{
+    _ = try gui.text(W("<close>"), .{
         .pos = .{ 0, 17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
@@ -278,7 +278,7 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
-            if (e != .none) log.info("gui event: {}", .{e});
+            //if (e != .none) log.info("gui event: {}", .{e});
             switch (e) {
                 .none => break :guiproc,
                 .button => |b| switch (b) {

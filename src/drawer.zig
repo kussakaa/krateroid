@@ -60,7 +60,7 @@ const _data = struct {
         var vbo_nrm: gfx.Vbo = undefined;
         var vao: gfx.Vao = undefined;
     };
-    const button = struct {
+    const panel = struct {
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -69,6 +69,9 @@ const _data = struct {
         };
         var vbo: gfx.Vbo = undefined;
         var vao: gfx.Vao = undefined;
+        const texture = struct {};
+    };
+    const button = struct {
         const texture = struct {
             var empty: gfx.Texture = undefined;
             var focus: gfx.Texture = undefined;
@@ -194,14 +197,14 @@ pub fn init(info: struct {
             .{ .size = 3, .vbo = _data.chunk.vbo_nrm },
         });
     }
-    { // BUTTON
-        _data.button.program = try data.program("button");
-        _data.button.uniform.vpsize = try data.uniform(_data.button.program, "vpsize");
-        _data.button.uniform.scale = try data.uniform(_data.button.program, "scale");
-        _data.button.uniform.rect = try data.uniform(_data.button.program, "rect");
+    { // PANEL
+        _data.panel.program = try data.program("panel");
+        _data.panel.uniform.vpsize = try data.uniform(_data.panel.program, "vpsize");
+        _data.panel.uniform.scale = try data.uniform(_data.panel.program, "scale");
+        _data.panel.uniform.rect = try data.uniform(_data.panel.program, "rect");
 
-        //_data.button.mesh = try data.mesh(.{
-        //    .name = "button",
+        //_data.panel.mesh = try data.mesh(.{
+        //    .name = "panel",
         //    .buffers = &.{
         //        .{gfx.Buffer.init(u8, .static)},
         //        .{gfx.Buffer.init(u8, .dynamic)},
@@ -209,8 +212,10 @@ pub fn init(info: struct {
         //    .indices = null,
         //});
 
-        _data.button.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-        _data.button.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.button.vbo }});
+        _data.panel.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
+        _data.panel.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.panel.vbo }});
+    }
+    { // BUTTON
 
         _data.button.texture.empty = try data.texture("button/empty.png");
         _data.button.texture.focus = try data.texture("button/focus.png");
@@ -234,8 +239,8 @@ pub fn deinit() void {
     defer _data.line.vao.deinit();
     defer _data.chunk.vbo_pos.deinit();
     defer _data.chunk.vao.deinit();
-    defer _data.button.vbo.deinit();
-    defer _data.button.vao.deinit();
+    defer _data.panel.vbo.deinit();
+    defer _data.panel.vao.deinit();
     defer _data.text.vbo_pos.deinit(_allocator);
     defer _data.text.vbo_tex.deinit(_allocator);
     defer _data.text.vao.deinit(_allocator);
@@ -245,7 +250,6 @@ pub fn deinit() void {
 }
 
 pub fn draw() !void {
-    // world
     gl.polygonMode(gl.FRONT_AND_BACK, @intFromEnum(polygon_mode));
 
     // chunk
@@ -281,11 +285,13 @@ pub fn draw() !void {
         }
     }
 
-    // gui
-
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
-    _data.button.program.use();
+    // panel
+
+    _data.panel.program.use();
+
+    // button
     for (gui.buttons.items) |b| {
         if (b.menu.show) {
             switch (b.state) {
@@ -293,13 +299,14 @@ pub fn draw() !void {
                 .focus => _data.button.texture.focus.use(),
                 .press => _data.button.texture.press.use(),
             }
-            _data.button.uniform.vpsize.set(window.size);
-            _data.button.uniform.scale.set(gui.scale);
-            _data.button.uniform.rect.set(b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
-            _data.button.vao.draw(.triangle_strip);
+            _data.panel.uniform.vpsize.set(window.size);
+            _data.panel.uniform.scale.set(gui.scale);
+            _data.panel.uniform.rect.set(b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
+            _data.panel.vao.draw(.triangle_strip);
         }
     }
 
+    // text
     _data.text.program.use();
     _data.text.texture.font.use();
     for (gui.texts.items, 0..) |t, i| {
