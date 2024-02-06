@@ -89,55 +89,74 @@ pub fn main() !void {
         .show = true,
     });
 
+    _ = try gui.panel(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+
+    _ = try gui.text(W("-<main menu>-"), .{
+        .menu = menu_main,
+        .pos = .{ 0, -38 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+
     const button_play = try gui.button(.{
+        .menu = menu_main,
         .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
-        .menu = menu_main,
     });
     _ = try gui.text(W("<play>"), .{
+        .menu = menu_main,
         .pos = .{ 0, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
-        .menu = menu_main,
     });
 
     const button_settings = try gui.button(.{
+        .menu = menu_main,
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
-        .menu = menu_main,
     });
     _ = try gui.text(W("<settings>"), .{
+        .menu = menu_main,
         .pos = .{ 0, 0 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
-        .menu = menu_main,
     });
 
     const button_exit = try gui.button(.{
+        .menu = menu_main,
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
-        .menu = menu_main,
     });
     _ = try gui.text(W("<exit>"), .{
+        .menu = menu_main,
         .pos = .{ 0, 17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
-        .menu = menu_main,
     });
 
     var menu_settings = try gui.menu(.{
         .show = false,
     });
     const button_settings_close = try gui.button(.{
+        .menu = menu_settings,
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
-        .menu = menu_settings,
     });
     _ = try gui.text(W("<close>"), .{
+        .menu = menu_settings,
         .pos = .{ 0, 17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
-        .menu = menu_settings,
     });
 
     // F3
@@ -146,23 +165,23 @@ pub fn main() !void {
         .show = false,
     });
     _ = try gui.text(W("krateroid alpha"), .{
-        .pos = .{ 2, 1 },
         .menu = menu_info,
+        .pos = .{ 2, 1 },
     });
     _ = try gui.text(W("fps:"), .{
-        .pos = .{ 2, 9 },
         .menu = menu_info,
+        .pos = .{ 2, 9 },
     });
     var fps_str = [1]u16{'0'} ** 6;
     _ = try gui.text(&fps_str, .{
+        .menu = menu_info,
         .pos = .{ 16, 9 },
         .usage = .dynamic,
-        .menu = menu_info,
     });
     _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
+        .menu = menu_info,
         .pos = .{ 2, -8 },
         .alignment = .{ .v = .bottom },
-        .menu = menu_info,
     });
 
     try data.init(.{});

@@ -9,8 +9,10 @@ const Size = @Vector(2, i32);
 const Rect = @import("gui/Rect.zig");
 const Alignment = @import("gui/Alignment.zig");
 const Menu = @import("gui/Menu.zig");
-const Text = @import("gui/Text.zig");
+const Panel = @import("gui/Panel.zig");
 const Button = @import("gui/Button.zig");
+const Text = @import("gui/Text.zig");
+const Slider = @import("gui/Button.zig");
 
 const Event = union(enum) {
     none,
@@ -23,11 +25,13 @@ const Event = union(enum) {
 };
 pub const font = @import("gui/font.zig");
 
-var allocator: Allocator = undefined;
+var _allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
 pub var menus: Array(Menu) = undefined;
-pub var texts: Array(Text) = undefined;
+pub var panels: Array(Panel) = undefined;
 pub var buttons: Array(Button) = undefined;
+pub var sliders: Array(Slider) = undefined;
+pub var texts: Array(Text) = undefined;
 
 pub const cursor = struct {
     var pos: Pos = .{ 0, 0 };
@@ -112,11 +116,14 @@ pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
     scale: i32 = 3,
 }) !void {
-    allocator = info.allocator;
+    _allocator = info.allocator;
     scale = info.scale;
     font.init();
-    texts = try Array(Text).initCapacity(allocator, 32);
-    buttons = try Array(Button).initCapacity(allocator, 32);
+    menus = try Array(Menu).initCapacity(_allocator, 32);
+    panels = try Array(Panel).initCapacity(_allocator, 32);
+    buttons = try Array(Button).initCapacity(_allocator, 32);
+    sliders = try Array(Slider).initCapacity(_allocator, 32);
+    texts = try Array(Text).initCapacity(_allocator, 32);
 
     for (0..events.items.len) |i| {
         events.items[i] = .none;
@@ -124,9 +131,11 @@ pub fn init(info: struct {
 }
 
 pub fn deinit() void {
-    texts.deinit(allocator);
-    buttons.deinit(allocator);
-    menus.deinit(allocator);
+    defer menus.deinit(_allocator);
+    defer panels.deinit(_allocator);
+    defer buttons.deinit(_allocator);
+    defer sliders.deinit(_allocator);
+    defer texts.deinit(_allocator);
 }
 
 pub fn menu(info: struct {
@@ -136,8 +145,22 @@ pub fn menu(info: struct {
         .id = @intCast(menus.items.len),
         .show = info.show,
     };
-    try menus.append(allocator, m);
+    try menus.append(_allocator, m);
     return &menus.items[menus.items.len - 1];
+}
+
+pub fn panel(info: struct {
+    rect: Rect,
+    alignment: Alignment,
+    menu: *const Menu,
+}) !*const Panel {
+    const item = Panel{
+        .rect = info.rect,
+        .alignment = info.alignment,
+        .menu = info.menu,
+    };
+    try panels.append(_allocator, item);
+    return &panels.items[panels.items.len - 1];
 }
 
 pub fn button(info: struct {
@@ -145,15 +168,17 @@ pub fn button(info: struct {
     alignment: Alignment = .{},
     menu: *const Menu,
 }) !*const Button {
-    const b = Button{
+    const item = Button{
         .id = @intCast(buttons.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
         .menu = info.menu,
     };
-    try buttons.append(allocator, b);
+    try buttons.append(_allocator, item);
     return &buttons.items[buttons.items.len - 1];
 }
+
+//pub fn slider(info: struct {}) !*const Slider {}
 
 pub fn text(data: []const u16, info: struct {
     pos: Pos,
@@ -162,19 +187,21 @@ pub fn text(data: []const u16, info: struct {
     usage: Text.Usage = .static,
     menu: *Menu,
 }) !*Text {
-    const ts = calcTextSize(data);
-    const tp = if (info.centered)
-        info.pos - Pos{ @divTrunc(ts[0], 2), @divTrunc(ts[1], 2) }
+    const itemsize = calcTextSize(data);
+    const itempos = if (info.centered)
+        info.pos - Pos{ @divTrunc(itemsize[0], 2), @divTrunc(itemsize[1], 2) }
     else
         info.pos;
+
     const t = Text{
         .data = data,
-        .rect = .{ .min = tp, .max = tp + ts },
+        .rect = .{ .min = itempos, .max = itempos + itemsize },
         .alignment = info.alignment,
         .usage = info.usage,
         .menu = info.menu,
     };
-    try texts.append(allocator, t);
+
+    try texts.append(_allocator, t);
     return &texts.items[texts.items.len - 1];
 }
 

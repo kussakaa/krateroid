@@ -2,12 +2,14 @@ const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl").bindings;
 
+// modules
 const window = @import("window.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gfx = @import("gfx.zig");
 const data = @import("data.zig");
 const gui = @import("gui.zig");
+
 const mct = @import("drawer/mct.zig");
 
 const log = std.log.scoped(.drawer);
@@ -69,7 +71,9 @@ const _data = struct {
         };
         var vbo: gfx.Vbo = undefined;
         var vao: gfx.Vao = undefined;
-        const texture = struct {};
+        const texture = struct {
+            var default: gfx.Texture = undefined;
+        };
     };
     const button = struct {
         const texture = struct {
@@ -214,6 +218,8 @@ pub fn init(info: struct {
 
         _data.panel.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
         _data.panel.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.panel.vbo }});
+
+        _data.panel.texture.default = try data.texture("panel/default.png");
     }
     { // BUTTON
 
@@ -291,17 +297,27 @@ pub fn draw() !void {
 
     _data.panel.program.use();
 
+    for (gui.panels.items) |item| {
+        if (item.menu.show) {
+            _data.panel.texture.default.use();
+            _data.panel.uniform.vpsize.set(window.size);
+            _data.panel.uniform.scale.set(gui.scale);
+            _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+            _data.panel.vao.draw(.triangle_strip);
+        }
+    }
+
     // button
-    for (gui.buttons.items) |b| {
-        if (b.menu.show) {
-            switch (b.state) {
+    for (gui.buttons.items) |item| {
+        if (item.menu.show) {
+            switch (item.state) {
                 .empty => _data.button.texture.empty.use(),
                 .focus => _data.button.texture.focus.use(),
                 .press => _data.button.texture.press.use(),
             }
             _data.panel.uniform.vpsize.set(window.size);
             _data.panel.uniform.scale.set(gui.scale);
-            _data.panel.uniform.rect.set(b.alignment.transform(b.rect.scale(gui.scale), window.size).vector());
+            _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
             _data.panel.vao.draw(.triangle_strip);
         }
     }
