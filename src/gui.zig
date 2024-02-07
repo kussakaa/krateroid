@@ -12,7 +12,7 @@ const Menu = @import("gui/Menu.zig");
 const Panel = @import("gui/Panel.zig");
 const Button = @import("gui/Button.zig");
 const Text = @import("gui/Text.zig");
-const Slider = @import("gui/Button.zig");
+const Slider = @import("gui/Slider.zig");
 
 const Event = union(enum) {
     none,
@@ -22,9 +22,12 @@ const Event = union(enum) {
         press: u32,
         unpress: u32,
     },
+    slider: union(enum) {
+        scroll: struct { id: u32, value: i32 },
+    },
 };
-pub const font = @import("gui/font.zig");
 
+pub const font = @import("gui/font.zig");
 var _allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
 pub var menus: Array(Menu) = undefined;
@@ -39,41 +42,59 @@ pub const cursor = struct {
 
     pub fn setPos(p: Pos) void {
         pos = p;
-        for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
-                if (buttons.items[i].state == .empty) events.push(.{ .button = .{ .focus = buttons.items[i].id } });
+        for (buttons.items) |*item| {
+            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
+                if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
                 if (is_press) {
-                    buttons.items[i].state = .press;
+                    item.state = .press;
                 } else {
-                    buttons.items[i].state = .focus;
+                    item.state = .focus;
                 }
             } else {
-                if (buttons.items[i].state != .empty) events.push(.{ .button = .{ .unfocus = buttons.items[i].id } });
-                buttons.items[i].state = .empty;
+                if (item.state != .empty) events.push(.{ .button = .{ .unfocus = item.id } });
+                item.state = .empty;
+            }
+        }
+
+        for (sliders.items) |*item| {
+            const vp_slider_rect = item.alignment.transform(item.rect.scale(scale), window.size);
+            if (is_press and item.menu.show and vp_slider_rect.isAroundPoint(pos)) {
+                const value = @divTrunc(pos[0] - vp_slider_rect.min[0], scale) - 2;
+                events.push(.{ .slider = .{ .scroll = .{ .id = item.id, .value = value } } });
+                item.value = value;
             }
         }
     }
 
     pub fn press() void {
         is_press = true;
-        for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
-                buttons.items[i].state = .press;
-                events.push(.{ .button = .{ .press = buttons.items[i].id } });
+        for (buttons.items) |*item| {
+            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
+                item.state = .press;
+                events.push(.{ .button = .{ .press = item.id } });
             } else {
-                buttons.items[i].state = .empty;
+                item.state = .empty;
+            }
+        }
+
+        for (sliders.items) |*item| {
+            const vp_slider_rect = item.alignment.transform(item.rect.scale(scale), window.size);
+            if (vp_slider_rect.isAroundPoint(pos) and item.menu.show) {
+                const value = @divTrunc(pos[0] - vp_slider_rect.min[0], scale) - 2;
+                events.push(.{ .slider = .{ .scroll = .{ .id = item.id, .value = value } } });
+                item.value = value;
             }
         }
     }
 
     pub fn unpress() void {
         is_press = false;
-        for (buttons.items, 0..) |b, i| {
-            if (b.alignment.transform(b.rect.scale(scale), window.size).isAroundPoint(pos) and b.menu.show) {
-                buttons.items[i].state = .focus;
-                events.push(.{ .button = .{ .unpress = buttons.items[i].id } });
+        for (buttons.items) |*item| {
+            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
+                item.state = .focus;
+                events.push(.{ .button = .{ .unpress = item.id } });
             } else {
-                buttons.items[i].state = .empty;
+                item.state = .empty;
             }
         }
     }
@@ -138,6 +159,13 @@ pub fn deinit() void {
     defer texts.deinit(_allocator);
 }
 
+pub fn rect(x1: i32, y1: i32, x2: i32, y2: i32) Rect {
+    return Rect{
+        .min = .{ x1, y1 },
+        .max = .{ x2, y2 },
+    };
+}
+
 pub fn menu(info: struct {
     show: bool = true,
 }) !*Menu {
@@ -154,9 +182,9 @@ pub fn panel(info: struct {
     alignment: Alignment = .{},
 }) !*const Panel {
     try panels.append(_allocator, Panel{
+        .menu = info.menu,
         .rect = info.rect,
         .alignment = info.alignment,
-        .menu = info.menu,
     });
     return &panels.items[panels.items.len - 1];
 }
@@ -167,10 +195,10 @@ pub fn button(info: struct {
     alignment: Alignment = .{},
 }) !*const Button {
     try buttons.append(_allocator, Button{
+        .menu = info.menu,
         .id = @intCast(buttons.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
-        .menu = info.menu,
     });
     return &buttons.items[buttons.items.len - 1];
 }
@@ -179,11 +207,12 @@ pub fn slider(info: struct {
     menu: *const Menu,
     rect: Rect,
     alignment: Alignment = .{},
-    steps: u32 = 0,
-    value: u32 = 0,
+    steps: i32 = 0,
+    value: i32 = 0,
 }) !*const Slider {
-    try sliders.append(_allocator, Button{
+    try sliders.append(_allocator, Slider{
         .menu = info.menu,
+        .id = @intCast(sliders.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
         .steps = info.steps,
@@ -206,11 +235,11 @@ pub fn text(data: []const u16, info: struct {
         info.pos;
 
     const t = Text{
+        .menu = info.menu,
         .data = data,
         .rect = .{ .min = itempos, .max = itempos + itemsize },
         .alignment = info.alignment,
         .usage = info.usage,
-        .menu = info.menu,
     };
 
     try texts.append(_allocator, t);

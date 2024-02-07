@@ -1,6 +1,5 @@
 const std = @import("std");
 const zm = @import("zmath");
-const gl = @import("zopengl");
 const stb = @import("zstbi");
 const audio = @import("zaudio");
 
@@ -177,6 +176,13 @@ pub fn main() !void {
         .centered = true,
     });
 
+    _ = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -32, -4 }, .max = .{ 32, 4 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = 20,
+    });
+
     // F3
 
     var menu_info = try gui.menu(.{
@@ -315,7 +321,7 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
-            //if (e != .none) log.info("gui event: {}", .{e});
+            if (e != .none) log.info("gui event: {}", .{e});
             switch (e) {
                 .none => break :guiproc,
                 .button => |b| switch (b) {
@@ -340,6 +346,7 @@ pub fn main() !void {
                             break :loop;
                     },
                 },
+                else => {},
             }
         }
 

@@ -62,6 +62,10 @@ const _data = struct {
         var vbo_nrm: gfx.Vbo = undefined;
         var vao: gfx.Vao = undefined;
     };
+    const rect = struct {
+        var vbo: gfx.Vbo = undefined;
+        var vao: gfx.Vao = undefined;
+    };
     const panel = struct {
         var program: gfx.Program = undefined;
         const uniform = struct {
@@ -70,11 +74,19 @@ const _data = struct {
             var rect: gfx.Uniform = undefined;
             var texrect: gfx.Uniform = undefined;
         };
-        var vbo: gfx.Vbo = undefined;
-        var vao: gfx.Vao = undefined;
         var texture: gfx.Texture = undefined;
     };
     const button = struct {
+        var texture: gfx.Texture = undefined;
+    };
+    const slider = struct {
+        //var program: gfx.Program = undefined;
+        //const uniform = struct {
+        //    var vpsize: gfx.Uniform = undefined;
+        //    var scale: gfx.Uniform = undefined;
+        //    var rect: gfx.Uniform = undefined;
+        //    var texrect: gfx.Uniform = undefined;
+        //};
         var texture: gfx.Texture = undefined;
     };
     const text = struct {
@@ -193,18 +205,23 @@ pub fn init(info: struct {
             .{ .size = 3, .vbo = _data.chunk.vbo_nrm },
         });
     }
+    { // RECT
+        _data.rect.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
+        _data.rect.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.rect.vbo }});
+    }
     { // PANEL
         _data.panel.program = try data.program("panel");
         _data.panel.uniform.vpsize = try data.uniform(_data.panel.program, "vpsize");
         _data.panel.uniform.scale = try data.uniform(_data.panel.program, "scale");
         _data.panel.uniform.rect = try data.uniform(_data.panel.program, "rect");
         _data.panel.uniform.texrect = try data.uniform(_data.panel.program, "texrect");
-        _data.panel.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-        _data.panel.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.panel.vbo }});
         _data.panel.texture = try data.texture("panel.png");
     }
     { // BUTTON
         _data.button.texture = try data.texture("button.png");
+    }
+    { // SLIDER
+        _data.slider.texture = try data.texture("slider.png");
     }
     { // TEXT
         _data.text.program = try data.program("text");
@@ -224,8 +241,8 @@ pub fn deinit() void {
     defer _data.line.vao.deinit();
     defer _data.chunk.vbo_pos.deinit();
     defer _data.chunk.vao.deinit();
-    defer _data.panel.vbo.deinit();
-    defer _data.panel.vao.deinit();
+    defer _data.rect.vbo.deinit();
+    defer _data.rect.vao.deinit();
     defer _data.text.vbo_pos.deinit(_allocator);
     defer _data.text.vbo_tex.deinit(_allocator);
     defer _data.text.vao.deinit(_allocator);
@@ -237,153 +254,177 @@ pub fn deinit() void {
 pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, @intFromEnum(polygon_mode));
 
-    // chunk
-    gl.enable(gl.DEPTH_TEST);
-    _data.chunk.program.use();
-    _data.chunk.uniform.model.set(zm.identity());
-    _data.chunk.uniform.view.set(camera.view);
-    _data.chunk.uniform.proj.set(camera.proj);
-    _data.chunk.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-    _data.chunk.uniform.light.color.set(light.color);
-    _data.chunk.uniform.light.direction.set(light.direction);
-    _data.chunk.uniform.light.ambient.set(light.ambient);
-    _data.chunk.uniform.light.diffuse.set(light.diffuse);
-    _data.chunk.uniform.light.specular.set(light.specular);
-    _data.chunk.vao.draw(.triangles);
+    { // CHUNK
+        gl.enable(gl.DEPTH_TEST);
+        _data.chunk.program.use();
+        _data.chunk.uniform.model.set(zm.identity());
+        _data.chunk.uniform.view.set(camera.view);
+        _data.chunk.uniform.proj.set(camera.proj);
+        _data.chunk.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+        _data.chunk.uniform.light.color.set(light.color);
+        _data.chunk.uniform.light.direction.set(light.direction);
+        _data.chunk.uniform.light.ambient.set(light.ambient);
+        _data.chunk.uniform.light.diffuse.set(light.diffuse);
+        _data.chunk.uniform.light.specular.set(light.specular);
+        _data.chunk.vao.draw(.triangles);
 
-    gl.disable(gl.DEPTH_TEST);
-    // line
-    _data.line.program.use();
-    for (world.lines.items) |l| {
-        if (l.show) {
-            const model = Mat{
-                .{ l.p2[0] - l.p1[0], 0.0, 0.0, 0.0 },
-                .{ 0.0, l.p2[1] - l.p1[1], 0.0, 0.0 },
-                .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
-                .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
-            };
-            _data.line.uniform.model.set(model);
-            _data.line.uniform.view.set(camera.view);
-            _data.line.uniform.proj.set(camera.proj);
-            _data.line.uniform.color.set(l.color);
-            _data.line.vao.draw(.lines);
+        gl.disable(gl.DEPTH_TEST);
+        // line
+        _data.line.program.use();
+        for (world.lines.items) |l| {
+            if (l.show) {
+                const model = Mat{
+                    .{ l.p2[0] - l.p1[0], 0.0, 0.0, 0.0 },
+                    .{ 0.0, l.p2[1] - l.p1[1], 0.0, 0.0 },
+                    .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
+                    .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
+                };
+                _data.line.uniform.model.set(model);
+                _data.line.uniform.view.set(camera.view);
+                _data.line.uniform.proj.set(camera.proj);
+                _data.line.uniform.color.set(l.color);
+                _data.line.vao.draw(.lines);
+            }
         }
     }
 
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
-    // panel
-    _data.panel.program.use();
-    _data.panel.texture.use();
-    for (gui.panels.items) |item| {
-        if (item.menu.show) {
-            _data.panel.uniform.vpsize.set(window.size);
-            _data.panel.uniform.scale.set(gui.scale);
-            _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
-            _data.panel.uniform.texrect.set(@Vector(4, i32){
-                0,
-                0,
-                @intCast(_data.panel.texture.size[0]),
-                @intCast(_data.panel.texture.size[1]),
-            });
-            _data.panel.vao.draw(.triangle_strip);
-        }
-    }
-
-    // button
-    _data.button.texture.use();
-    for (gui.buttons.items) |item| {
-        if (item.menu.show) {
-            _data.panel.uniform.vpsize.set(window.size);
-            _data.panel.uniform.scale.set(gui.scale);
-            _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
-            switch (item.state) {
-                .empty => _data.panel.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
-                .focus => _data.panel.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
-                .press => _data.panel.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
+    { // PANEL
+        _data.panel.program.use();
+        _data.panel.texture.use();
+        for (gui.panels.items) |item| {
+            if (item.menu.show) {
+                _data.panel.uniform.vpsize.set(window.size);
+                _data.panel.uniform.scale.set(gui.scale);
+                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                _data.panel.uniform.texrect.set(@Vector(4, i32){
+                    0,
+                    0,
+                    @intCast(_data.panel.texture.size[0]),
+                    @intCast(_data.panel.texture.size[1]),
+                });
+                _data.rect.vao.draw(.triangle_strip);
             }
-            _data.panel.vao.draw(.triangle_strip);
         }
     }
-
-    // text
-    _data.text.program.use();
-    _data.text.texture.use();
-    for (gui.texts.items, 0..) |t, i| {
-        if (i == _data.text.vao.items.len or t.usage == .dynamic) {
-            const s = struct {
-                var vbo_pos_data: [4096]u16 = [1]u16{0} ** 4096;
-                var vbo_tex_data: [2048]u16 = [1]u16{0} ** 2048;
-            };
-
-            var pos: u16 = 0;
-            var cnt: usize = 0;
-            for (t.data) |cid| {
-                if (cid == ' ') {
-                    pos += 3;
-                    continue;
+    { // BUTTON
+        _data.button.texture.use();
+        for (gui.buttons.items) |item| {
+            if (item.menu.show) {
+                _data.panel.uniform.vpsize.set(window.size);
+                _data.panel.uniform.scale.set(gui.scale);
+                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                switch (item.state) {
+                    .empty => _data.panel.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
+                    .focus => _data.panel.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
+                    .press => _data.panel.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
                 }
-
-                const width = gui.font.chars[cid].width;
-                const uvpos = gui.font.chars[cid].pos;
-                const uvwidth = gui.font.chars[cid].width;
-
-                // triangle 1
-                s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-                s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 0;
-                s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos;
-                s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
-                s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-                s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 8;
-                s.vbo_tex_data[cnt * 6 + 0] = uvpos;
-                s.vbo_tex_data[cnt * 6 + 1] = uvpos;
-                s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
-
-                // triangle 2
-                s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-                s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 8;
-                s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos + width;
-                s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
-                s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-                s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 0;
-                s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-                s.vbo_tex_data[cnt * 6 + 4] = uvpos + uvwidth;
-                s.vbo_tex_data[cnt * 6 + 5] = uvpos;
-
-                pos += width + 1;
-                cnt += 1;
+                _data.rect.vao.draw(.triangle_strip);
             }
-
-            if (i == _data.text.vao.items.len) {
-                const usage: gfx.Usage = switch (t.usage) {
-                    .static => .static,
-                    .dynamic => .dynamic,
+        }
+    }
+    { // SLIDER
+        _data.slider.texture.use();
+        for (gui.sliders.items) |item| {
+            if (item.menu.show) {
+                _data.panel.uniform.vpsize.set(window.size);
+                _data.panel.uniform.scale.set(gui.scale);
+                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                _data.panel.uniform.texrect.set(gui.rect(0, 8, 5, 16).vector());
+                _data.rect.vao.draw(.triangle_strip);
+                _data.panel.uniform.rect.set(
+                    item.alignment.transform(gui.rect(
+                        item.rect.min[0] + item.value,
+                        item.rect.min[1],
+                        item.rect.min[0] + item.value + 5,
+                        item.rect.max[1],
+                    ).scale(gui.scale), window.size).vector(),
+                );
+                _data.panel.uniform.texrect.set(gui.rect(0, 0, 5, 8).vector());
+                _data.rect.vao.draw(.triangle_strip);
+            }
+        }
+    }
+    { // TEXT
+        _data.text.program.use();
+        _data.text.texture.use();
+        for (gui.texts.items, 0..) |t, i| {
+            if (i == _data.text.vao.items.len or t.usage == .dynamic) {
+                const s = struct {
+                    var vbo_pos_data: [4096]u16 = [1]u16{0} ** 4096;
+                    var vbo_tex_data: [2048]u16 = [1]u16{0} ** 2048;
                 };
 
-                const vbo_pos = try gfx.Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
-                const vbo_tex = try gfx.Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
-                const vao = try gfx.Vao.init(&.{
-                    .{ .size = 2, .vbo = vbo_pos },
-                    .{ .size = 1, .vbo = vbo_tex },
-                });
+                var pos: u16 = 0;
+                var cnt: usize = 0;
+                for (t.data) |cid| {
+                    if (cid == ' ') {
+                        pos += 3;
+                        continue;
+                    }
 
-                try _data.text.vbo_pos.append(_allocator, vbo_pos);
-                try _data.text.vbo_tex.append(_allocator, vbo_tex);
-                try _data.text.vao.append(_allocator, vao);
-            } else {
-                try _data.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 12)]);
-                try _data.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 6)]);
+                    const width = gui.font.chars[cid].width;
+                    const uvpos = gui.font.chars[cid].pos;
+                    const uvwidth = gui.font.chars[cid].width;
+
+                    // triangle 1
+                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
+                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 0;
+                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos;
+                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
+                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 8;
+                    s.vbo_tex_data[cnt * 6 + 0] = uvpos;
+                    s.vbo_tex_data[cnt * 6 + 1] = uvpos;
+                    s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
+
+                    // triangle 2
+                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
+                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 8;
+                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos + width;
+                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
+                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
+                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 0;
+                    s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
+                    s.vbo_tex_data[cnt * 6 + 4] = uvpos + uvwidth;
+                    s.vbo_tex_data[cnt * 6 + 5] = uvpos;
+
+                    pos += width + 1;
+                    cnt += 1;
+                }
+
+                if (i == _data.text.vao.items.len) {
+                    const usage: gfx.Usage = switch (t.usage) {
+                        .static => .static,
+                        .dynamic => .dynamic,
+                    };
+
+                    const vbo_pos = try gfx.Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
+                    const vbo_tex = try gfx.Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
+                    const vao = try gfx.Vao.init(&.{
+                        .{ .size = 2, .vbo = vbo_pos },
+                        .{ .size = 1, .vbo = vbo_tex },
+                    });
+
+                    try _data.text.vbo_pos.append(_allocator, vbo_pos);
+                    try _data.text.vbo_tex.append(_allocator, vbo_tex);
+                    try _data.text.vao.append(_allocator, vao);
+                } else {
+                    try _data.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 12)]);
+                    try _data.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 6)]);
+                }
             }
-        }
 
-        if (t.menu.show) {
-            const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
+            if (t.menu.show) {
+                const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
 
-            _data.text.uniform.vpsize.set(window.size);
-            _data.text.uniform.scale.set(gui.scale);
-            _data.text.uniform.pos.set(pos);
-            _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-            _data.text.vao.items[i].draw(.triangles);
+                _data.text.uniform.vpsize.set(window.size);
+                _data.text.uniform.scale.set(gui.scale);
+                _data.text.uniform.pos.set(pos);
+                _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+                _data.text.vao.items[i].draw(.triangles);
+            }
         }
     }
 }
