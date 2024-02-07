@@ -6,7 +6,9 @@ strategic 3d game.
 
 ![Главное меню](screenshot.png)
 
-## BUILDING LINUX
+## Build
+
+### linux
 
 ```bash
 zigup 0.12.0-dev.2063+804cee3b9
