@@ -182,7 +182,7 @@ pub fn main() !void {
     var menu_info = try gui.menu(.{
         .show = false,
     });
-    _ = try gui.text(W("krateroid alpha"), .{
+    _ = try gui.text(W("krateroid 0.0.1"), .{
         .menu = menu_info,
         .pos = .{ 2, 1 },
     });
