@@ -68,19 +68,14 @@ const _data = struct {
             var vpsize: gfx.Uniform = undefined;
             var scale: gfx.Uniform = undefined;
             var rect: gfx.Uniform = undefined;
+            var texrect: gfx.Uniform = undefined;
         };
         var vbo: gfx.Vbo = undefined;
         var vao: gfx.Vao = undefined;
-        const texture = struct {
-            var default: gfx.Texture = undefined;
-        };
+        var texture: gfx.Texture = undefined;
     };
     const button = struct {
-        const texture = struct {
-            var empty: gfx.Texture = undefined;
-            var focus: gfx.Texture = undefined;
-            var press: gfx.Texture = undefined;
-        };
+        var texture: gfx.Texture = undefined;
     };
     const text = struct {
         var program: gfx.Program = undefined;
@@ -93,9 +88,7 @@ const _data = struct {
         var vbo_pos: Array(gfx.Vbo) = undefined;
         var vbo_tex: Array(gfx.Vbo) = undefined;
         var vao: Array(gfx.Vao) = undefined;
-        const texture = struct {
-            var font: gfx.Texture = undefined;
-        };
+        var texture: gfx.Texture = undefined;
     };
 };
 
@@ -193,7 +186,6 @@ pub fn init(info: struct {
                 }
             }
         }
-
         _data.chunk.vbo_pos = try gfx.Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
         _data.chunk.vbo_nrm = try gfx.Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
         _data.chunk.vao = try gfx.Vao.init(&.{
@@ -206,26 +198,13 @@ pub fn init(info: struct {
         _data.panel.uniform.vpsize = try data.uniform(_data.panel.program, "vpsize");
         _data.panel.uniform.scale = try data.uniform(_data.panel.program, "scale");
         _data.panel.uniform.rect = try data.uniform(_data.panel.program, "rect");
-
-        //_data.panel.mesh = try data.mesh(.{
-        //    .name = "panel",
-        //    .buffers = &.{
-        //        .{gfx.Buffer.init(u8, .static)},
-        //        .{gfx.Buffer.init(u8, .dynamic)},
-        //    },
-        //    .indices = null,
-        //});
-
+        _data.panel.uniform.texrect = try data.uniform(_data.panel.program, "texrect");
         _data.panel.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
         _data.panel.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.panel.vbo }});
-
-        _data.panel.texture.default = try data.texture("panel/default.png");
+        _data.panel.texture = try data.texture("panel.png");
     }
     { // BUTTON
-
-        _data.button.texture.empty = try data.texture("button/empty.png");
-        _data.button.texture.focus = try data.texture("button/focus.png");
-        _data.button.texture.press = try data.texture("button/press.png");
+        _data.button.texture = try data.texture("button.png");
     }
     { // TEXT
         _data.text.program = try data.program("text");
@@ -236,7 +215,7 @@ pub fn init(info: struct {
         _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-        _data.text.texture.font = try data.texture("text/font.png");
+        _data.text.texture = try data.texture("text.png");
     }
 }
 
@@ -294,37 +273,42 @@ pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     // panel
-
     _data.panel.program.use();
-
+    _data.panel.texture.use();
     for (gui.panels.items) |item| {
         if (item.menu.show) {
-            _data.panel.texture.default.use();
             _data.panel.uniform.vpsize.set(window.size);
             _data.panel.uniform.scale.set(gui.scale);
             _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+            _data.panel.uniform.texrect.set(@Vector(4, i32){
+                0,
+                0,
+                @intCast(_data.panel.texture.size[0]),
+                @intCast(_data.panel.texture.size[1]),
+            });
             _data.panel.vao.draw(.triangle_strip);
         }
     }
 
     // button
+    _data.button.texture.use();
     for (gui.buttons.items) |item| {
         if (item.menu.show) {
-            switch (item.state) {
-                .empty => _data.button.texture.empty.use(),
-                .focus => _data.button.texture.focus.use(),
-                .press => _data.button.texture.press.use(),
-            }
             _data.panel.uniform.vpsize.set(window.size);
             _data.panel.uniform.scale.set(gui.scale);
             _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+            switch (item.state) {
+                .empty => _data.panel.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
+                .focus => _data.panel.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
+                .press => _data.panel.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
+            }
             _data.panel.vao.draw(.triangle_strip);
         }
     }
 
     // text
     _data.text.program.use();
-    _data.text.texture.font.use();
+    _data.text.texture.use();
     for (gui.texts.items, 0..) |t, i| {
         if (i == _data.text.vao.items.len or t.usage == .dynamic) {
             const s = struct {

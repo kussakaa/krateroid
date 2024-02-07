@@ -141,51 +141,63 @@ pub fn deinit() void {
 pub fn menu(info: struct {
     show: bool = true,
 }) !*Menu {
-    const m = Menu{
+    try menus.append(_allocator, Menu{
         .id = @intCast(menus.items.len),
         .show = info.show,
-    };
-    try menus.append(_allocator, m);
+    });
     return &menus.items[menus.items.len - 1];
 }
 
 pub fn panel(info: struct {
-    rect: Rect,
-    alignment: Alignment,
     menu: *const Menu,
+    rect: Rect,
+    alignment: Alignment = .{},
 }) !*const Panel {
-    const item = Panel{
+    try panels.append(_allocator, Panel{
         .rect = info.rect,
         .alignment = info.alignment,
         .menu = info.menu,
-    };
-    try panels.append(_allocator, item);
+    });
     return &panels.items[panels.items.len - 1];
 }
 
 pub fn button(info: struct {
+    menu: *const Menu,
     rect: Rect,
     alignment: Alignment = .{},
-    menu: *const Menu,
 }) !*const Button {
-    const item = Button{
+    try buttons.append(_allocator, Button{
         .id = @intCast(buttons.items.len),
         .rect = info.rect,
         .alignment = info.alignment,
         .menu = info.menu,
-    };
-    try buttons.append(_allocator, item);
+    });
     return &buttons.items[buttons.items.len - 1];
 }
 
-//pub fn slider(info: struct {}) !*const Slider {}
+pub fn slider(info: struct {
+    menu: *const Menu,
+    rect: Rect,
+    alignment: Alignment = .{},
+    steps: u32 = 0,
+    value: u32 = 0,
+}) !*const Slider {
+    try sliders.append(_allocator, Button{
+        .menu = info.menu,
+        .rect = info.rect,
+        .alignment = info.alignment,
+        .steps = info.steps,
+        .value = info.value,
+    });
+    return &sliders.items[sliders.items.len - 1];
+}
 
 pub fn text(data: []const u16, info: struct {
+    menu: *const Menu,
     pos: Pos,
     alignment: Alignment = .{},
     centered: bool = false,
     usage: Text.Usage = .static,
-    menu: *Menu,
 }) !*Text {
     const itemsize = calcTextSize(data);
     const itempos = if (info.centered)

@@ -2,21 +2,27 @@
 
 uniform ivec2 vpsize;
 uniform ivec4 rect;
+uniform ivec4 texrect;
 uniform int   scale;
-uniform sampler2D u_texture0;
+uniform sampler2D texture0;
 layout(location = 0) out vec4 f_color;
 
 void main()
 {
-    vec2 f_coord = vec2(gl_FragCoord.x, vpsize.y - gl_FragCoord.y);
+    vec2 fragpos = vec2(gl_FragCoord.x, vpsize.y - gl_FragCoord.y);
 
-    vec2 tex = vec2(0.5,0.5);
-    vec2 tex_size = vec2(textureSize(u_texture0, 0)) * vec2(scale);
+    vec2 texsize = vec2(textureSize(texture0, 0));
+    vec2 texrectsize = vec2(texrect.z - texrect.x, texrect.w - texrect.y);
+    vec2 tex = vec2(texrect.x + texrect.z, texrect.y + texrect.w)/2/texsize;
 
-    if (f_coord.x > rect.x && f_coord.x < rect.x + tex_size.x/2) tex.x = float(f_coord.x - rect.x) / float(tex_size.x);
-    if (f_coord.x < rect.z && f_coord.x > rect.z - tex_size.x/2) tex.x = float(f_coord.x - rect.z) / float(tex_size.x);
-    if (f_coord.y > rect.y && f_coord.y < rect.y + tex_size.y/2) tex.y = float(f_coord.y - rect.y) / float(tex_size.y);
-    if (f_coord.y < rect.w && f_coord.y > rect.w - tex_size.y/2) tex.y = float(f_coord.y - rect.w) / float(tex_size.y);
+    if (fragpos.x > rect.x && fragpos.x < rect.x + texrectsize.x*scale/2)
+        tex.x = float(fragpos.x - rect.x + texrect.x * scale) / float(texsize.x) / scale;
+    if (fragpos.x < rect.z && fragpos.x > rect.z - texrectsize.x*scale/2)
+        tex.x = float(fragpos.x - rect.z + texrect.z * scale) / float(texsize.x) / scale;
+    if (fragpos.y > rect.y && fragpos.y < rect.y + texrectsize.y*scale/2)
+        tex.y = float(fragpos.y - rect.y + texrect.y * scale) / float(texsize.y) / scale;
+    if (fragpos.y < rect.w && fragpos.y > rect.w - texrectsize.y*scale/2)
+        tex.y = float(fragpos.y - rect.w + texrect.w * scale) / float(texsize.y) / scale;
 
-    f_color = texture(u_texture0, tex);
+    f_color = texture(texture0, tex);
 }

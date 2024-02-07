@@ -323,7 +323,8 @@ pub fn main() !void {
                         try audio_engine.playSound("data/sound/focus.wav", null);
                     },
                     .unfocus => |_| {},
-                    .press => |id| {
+                    .press => |_| {},
+                    .unpress => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                         if (id == button_play.id)
                             menu_main.show = false;
@@ -338,7 +339,6 @@ pub fn main() !void {
                         if (id == button_exit.id)
                             break :loop;
                     },
-                    .unpress => |_| {},
                 },
             }
         }
