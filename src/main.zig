@@ -39,6 +39,8 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
+    var bg_color = Vec{ 0.2, 0.2, 0.2, 1.0 };
+
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
         var delta: @Vector(2, i32) = .{ 0, 0 };
@@ -176,11 +178,38 @@ pub fn main() !void {
         .centered = true,
     });
 
-    _ = try gui.slider(.{
+    const slider_bg_red = try gui.slider(.{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -32, -4 }, .max = .{ 32, 4 } },
+        .rect = .{ .min = .{ -27, -4 }, .max = .{ 32, 4 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = 20,
+        .value = bg_color[0],
+    });
+    _ = try gui.text(W("r"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, -4 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const slider_bg_green = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -27, 4 }, .max = .{ 32, 12 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[1],
+    });
+    _ = try gui.text(W("g"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, 4 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const slider_bg_blue = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -27, 12 }, .max = .{ 32, 20 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[2],
+    });
+    _ = try gui.text(W("b"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, 12 },
+        .alignment = .{ .v = .center, .h = .center },
     });
 
     // F3
@@ -272,7 +301,7 @@ pub fn main() !void {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
-                        if (is_camera_move) {
+                        if (is_camera_move and !menu_main.show and !menu_settings.show) {
                             const speed = 0.004;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
@@ -292,7 +321,7 @@ pub fn main() !void {
                             z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
-                        if (is_camera_rotate) {
+                        if (is_camera_rotate and !menu_main.show and !menu_settings.show) {
                             const speed = 0.005; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
@@ -307,7 +336,9 @@ pub fn main() !void {
                         gui.cursor.setPos(pos);
                     },
                     .scroll => |scroll| {
-                        camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
+                        if (!menu_main.show and !menu_settings.show) {
+                            camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
+                        }
                     },
                 },
                 .window => |w| switch (w) {
@@ -321,10 +352,10 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
-            if (e != .none) log.info("gui event: {}", .{e});
+            //if (e != .none) log.info("gui event: {}", .{e});
             switch (e) {
                 .none => break :guiproc,
-                .button => |b| switch (b) {
+                .button => |item| switch (item) {
                     .focus => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
                     },
@@ -346,7 +377,16 @@ pub fn main() !void {
                             break :loop;
                     },
                 },
-                else => {},
+                .slider => |item| switch (item) {
+                    .value => |s| {
+                        if (s.id == slider_bg_red.id)
+                            bg_color[0] = s.data;
+                        if (s.id == slider_bg_green.id)
+                            bg_color[1] = s.data;
+                        if (s.id == slider_bg_blue.id)
+                            bg_color[2] = s.data;
+                    },
+                },
             }
         }
 
@@ -370,7 +410,7 @@ pub fn main() !void {
         }
 
         window.clear(.{
-            .color = .{ 0.0, 0.0, 0.0, 1.0 },
+            .color = bg_color,
         });
         try drawer.draw();
         window.swap();

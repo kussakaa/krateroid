@@ -333,13 +333,16 @@ pub fn draw() !void {
                 _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 _data.panel.uniform.texrect.set(gui.rect(0, 8, 5, 16).vector());
                 _data.rect.vao.draw(.triangle_strip);
+
+                const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 5 * gui.scale);
+                const pos: i32 = @intFromFloat(item.value * len);
                 _data.panel.uniform.rect.set(
                     item.alignment.transform(gui.rect(
-                        item.rect.min[0] + item.value,
-                        item.rect.min[1],
-                        item.rect.min[0] + item.value + 5,
-                        item.rect.max[1],
-                    ).scale(gui.scale), window.size).vector(),
+                        item.rect.min[0] * gui.scale + pos,
+                        item.rect.min[1] * gui.scale,
+                        item.rect.min[0] * gui.scale + pos + 5 * gui.scale,
+                        item.rect.max[1] * gui.scale,
+                    ), window.size).vector(),
                 );
                 _data.panel.uniform.texrect.set(gui.rect(0, 0, 5, 8).vector());
                 _data.rect.vao.draw(.triangle_strip);

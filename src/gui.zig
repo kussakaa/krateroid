@@ -23,7 +23,10 @@ const Event = union(enum) {
         unpress: u32,
     },
     slider: union(enum) {
-        scroll: struct { id: u32, value: i32 },
+        value: struct {
+            id: u32,
+            data: f32,
+        },
     },
 };
 
@@ -57,11 +60,19 @@ pub const cursor = struct {
         }
 
         for (sliders.items) |*item| {
-            const vp_slider_rect = item.alignment.transform(item.rect.scale(scale), window.size);
-            if (is_press and item.menu.show and vp_slider_rect.isAroundPoint(pos)) {
-                const value = @divTrunc(pos[0] - vp_slider_rect.min[0], scale) - 2;
-                events.push(.{ .slider = .{ .scroll = .{ .id = item.id, .value = value } } });
+            var itemrect = item.rect;
+            itemrect.min[0] += 2;
+            itemrect.max[0] -= 3;
+            itemrect.max[1] -= 1;
+            const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
+            const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
+            if (is_press and item.menu.show and vprect.isAroundPoint(pos)) {
+                const value = @as(f32, @floatFromInt(pos[0] - vprect.min[0])) / vprectwidth;
                 item.value = value;
+                events.push(.{ .slider = .{ .value = .{
+                    .id = item.id,
+                    .data = value,
+                } } });
             }
         }
     }
@@ -78,11 +89,19 @@ pub const cursor = struct {
         }
 
         for (sliders.items) |*item| {
-            const vp_slider_rect = item.alignment.transform(item.rect.scale(scale), window.size);
-            if (vp_slider_rect.isAroundPoint(pos) and item.menu.show) {
-                const value = @divTrunc(pos[0] - vp_slider_rect.min[0], scale) - 2;
-                events.push(.{ .slider = .{ .scroll = .{ .id = item.id, .value = value } } });
+            var itemrect = item.rect;
+            itemrect.min[0] += 2;
+            itemrect.max[0] -= 3;
+            itemrect.max[1] -= 1;
+            const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
+            const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
+            if (is_press and item.menu.show and vprect.isAroundPoint(pos)) {
+                const value = @as(f32, @floatFromInt(pos[0] - vprect.min[0])) / vprectwidth;
                 item.value = value;
+                events.push(.{ .slider = .{ .value = .{
+                    .id = item.id,
+                    .data = value,
+                } } });
             }
         }
     }
@@ -208,7 +227,7 @@ pub fn slider(info: struct {
     rect: Rect,
     alignment: Alignment = .{},
     steps: i32 = 0,
-    value: i32 = 0,
+    value: f32 = 0.5,
 }) !*const Slider {
     try sliders.append(_allocator, Slider{
         .menu = info.menu,
