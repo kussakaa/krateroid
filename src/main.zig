@@ -39,7 +39,7 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
-    var bg_color = Vec{ 0.2, 0.2, 0.2, 1.0 };
+    var bg_color = Vec{ 0.1, 0.1, 0.1, 1.0 };
 
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
@@ -178,38 +178,44 @@ pub fn main() !void {
         .centered = true,
     });
 
-    const slider_bg_red = try gui.slider(.{
+    _ = try gui.text(W("background color"), .{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -27, -4 }, .max = .{ 32, 4 } },
+        .pos = .{ 0, -4 },
         .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[0],
+        .centered = true,
     });
     _ = try gui.text(W("r"), .{
         .menu = menu_settings,
-        .pos = .{ -32, -4 },
+        .pos = .{ -32, 0 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const slider_bg_red = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ -27, 0 }, .max = .{ 32, 8 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[0],
+    });
+    _ = try gui.text(W("g"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, 8 },
         .alignment = .{ .v = .center, .h = .center },
     });
     const slider_bg_green = try gui.slider(.{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -27, 4 }, .max = .{ 32, 12 } },
+        .rect = .{ .min = .{ -27, 8 }, .max = .{ 32, 16 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = bg_color[1],
     });
-    _ = try gui.text(W("g"), .{
+    _ = try gui.text(W("b"), .{
         .menu = menu_settings,
-        .pos = .{ -32, 4 },
+        .pos = .{ -32, 16 },
         .alignment = .{ .v = .center, .h = .center },
     });
     const slider_bg_blue = try gui.slider(.{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -27, 12 }, .max = .{ 32, 20 } },
+        .rect = .{ .min = .{ -27, 16 }, .max = .{ 32, 24 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = bg_color[2],
-    });
-    _ = try gui.text(W("b"), .{
-        .menu = menu_settings,
-        .pos = .{ -32, 12 },
-        .alignment = .{ .v = .center, .h = .center },
     });
 
     // F3
@@ -281,7 +287,8 @@ pub fn main() !void {
                         .press => |id| {
                             if (id == 1) {
                                 is_camera_move = true;
-                                gui.cursor.press();
+                                gui.cursor.press = true;
+                                gui.update();
                             }
                             if (id == 3) {
                                 is_camera_rotate = true;
@@ -290,7 +297,8 @@ pub fn main() !void {
                         .unpress => |id| {
                             if (id == 1) {
                                 is_camera_move = false;
-                                gui.cursor.unpress();
+                                gui.cursor.press = false;
+                                gui.update();
                             }
                             if (id == 3) {
                                 is_camera_rotate = false;
@@ -333,7 +341,8 @@ pub fn main() !void {
                             };
                         }
 
-                        gui.cursor.setPos(pos);
+                        gui.cursor.pos = pos;
+                        gui.update();
                     },
                     .scroll => |scroll| {
                         if (!menu_main.show and !menu_settings.show) {
@@ -352,7 +361,7 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
-            //if (e != .none) log.info("gui event: {}", .{e});
+            if (e != .none) log.info("gui event: {}", .{e});
             switch (e) {
                 .none => break :guiproc,
                 .button => |item| switch (item) {
@@ -378,6 +387,14 @@ pub fn main() !void {
                     },
                 },
                 .slider => |item| switch (item) {
+                    .focus => |_| {
+                        try audio_engine.playSound("data/sound/focus.wav", null);
+                    },
+                    .unfocus => |_| {},
+                    .press => |_| {},
+                    .unpress => |_| {
+                        try audio_engine.playSound("data/sound/press.wav", null);
+                    },
                     .value => |s| {
                         if (s.id == slider_bg_red.id)
                             bg_color[0] = s.data;

@@ -23,6 +23,10 @@ const Event = union(enum) {
         unpress: u32,
     },
     slider: union(enum) {
+        focus: u32,
+        unfocus: u32,
+        press: u32,
+        unpress: u32,
         value: struct {
             id: u32,
             data: f32,
@@ -40,17 +44,23 @@ pub var sliders: Array(Slider) = undefined;
 pub var texts: Array(Text) = undefined;
 
 pub const cursor = struct {
-    var pos: Pos = .{ 0, 0 };
-    var is_press: bool = false;
+    pub var pos: Pos = .{ 0, 0 };
+    pub var press: bool = false;
+};
 
-    pub fn setPos(p: Pos) void {
-        pos = p;
+pub fn update() void {
+    { // BUTTONS
         for (buttons.items) |*item| {
-            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
-                if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
-                if (is_press) {
+            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(cursor.pos)) {
+                if (cursor.press) {
+                    if (item.state != .press) {
+                        if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
+                        events.push(.{ .button = .{ .press = item.id } });
+                    }
                     item.state = .press;
                 } else {
+                    if (item.state == .press) events.push(.{ .button = .{ .unpress = item.id } });
+                    if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
                     item.state = .focus;
                 }
             } else {
@@ -58,66 +68,40 @@ pub const cursor = struct {
                 item.state = .empty;
             }
         }
-
-        for (sliders.items) |*item| {
+    }
+    { // SLIDERS
+        for (sliders.items) |*item| { // sliders
             var itemrect = item.rect;
             itemrect.min[0] += 2;
             itemrect.max[0] -= 3;
             itemrect.max[1] -= 1;
             const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
             const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
-            if (is_press and item.menu.show and vprect.isAroundPoint(pos)) {
-                const value = @as(f32, @floatFromInt(pos[0] - vprect.min[0])) / vprectwidth;
-                item.value = value;
-                events.push(.{ .slider = .{ .value = .{
-                    .id = item.id,
-                    .data = value,
-                } } });
-            }
-        }
-    }
-
-    pub fn press() void {
-        is_press = true;
-        for (buttons.items) |*item| {
-            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
-                item.state = .press;
-                events.push(.{ .button = .{ .press = item.id } });
+            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
+                if (cursor.press) {
+                    if (item.state != .press) {
+                        if (item.state == .empty) events.push(.{ .slider = .{ .focus = item.id } });
+                        events.push(.{ .slider = .{ .press = item.id } });
+                    }
+                    item.state = .press;
+                    const value = @as(f32, @floatFromInt(cursor.pos[0] - vprect.min[0])) / vprectwidth;
+                    item.value = value;
+                    events.push(.{ .slider = .{ .value = .{
+                        .id = item.id,
+                        .data = value,
+                    } } });
+                } else {
+                    if (item.state == .press) events.push(.{ .slider = .{ .unpress = item.id } });
+                    if (item.state == .empty) events.push(.{ .slider = .{ .focus = item.id } });
+                    item.state = .focus;
+                }
             } else {
-                item.state = .empty;
-            }
-        }
-
-        for (sliders.items) |*item| {
-            var itemrect = item.rect;
-            itemrect.min[0] += 2;
-            itemrect.max[0] -= 3;
-            itemrect.max[1] -= 1;
-            const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
-            const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
-            if (is_press and item.menu.show and vprect.isAroundPoint(pos)) {
-                const value = @as(f32, @floatFromInt(pos[0] - vprect.min[0])) / vprectwidth;
-                item.value = value;
-                events.push(.{ .slider = .{ .value = .{
-                    .id = item.id,
-                    .data = value,
-                } } });
-            }
-        }
-    }
-
-    pub fn unpress() void {
-        is_press = false;
-        for (buttons.items) |*item| {
-            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(pos)) {
-                item.state = .focus;
-                events.push(.{ .button = .{ .unpress = item.id } });
-            } else {
+                if (item.state != .empty) events.push(.{ .slider = .{ .unfocus = item.id } });
                 item.state = .empty;
             }
         }
     }
-};
+}
 
 const events = struct {
     var items: [16]Event = undefined;

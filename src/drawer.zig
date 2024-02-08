@@ -316,9 +316,9 @@ pub fn draw() !void {
                 _data.panel.uniform.scale.set(gui.scale);
                 _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.panel.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
-                    .focus => _data.panel.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
-                    .press => _data.panel.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
+                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 0, 8, 8).vector()),
+                    .focus => _data.panel.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
+                    .press => _data.panel.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
                 }
                 _data.rect.vao.draw(.triangle_strip);
             }
@@ -331,7 +331,11 @@ pub fn draw() !void {
                 _data.panel.uniform.vpsize.set(window.size);
                 _data.panel.uniform.scale.set(gui.scale);
                 _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
-                _data.panel.uniform.texrect.set(gui.rect(0, 8, 5, 16).vector());
+                switch (item.state) {
+                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 8, 5, 16).vector()),
+                    .focus => _data.panel.uniform.texrect.set(gui.rect(5, 8, 10, 16).vector()),
+                    .press => _data.panel.uniform.texrect.set(gui.rect(10, 8, 15, 16).vector()),
+                }
                 _data.rect.vao.draw(.triangle_strip);
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 5 * gui.scale);
@@ -344,7 +348,11 @@ pub fn draw() !void {
                         item.rect.max[1] * gui.scale,
                     ), window.size).vector(),
                 );
-                _data.panel.uniform.texrect.set(gui.rect(0, 0, 5, 8).vector());
+                switch (item.state) {
+                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 0, 5, 8).vector()),
+                    .focus => _data.panel.uniform.texrect.set(gui.rect(5, 0, 10, 8).vector()),
+                    .press => _data.panel.uniform.texrect.set(gui.rect(10, 0, 15, 8).vector()),
+                }
                 _data.rect.vao.draw(.triangle_strip);
             }
         }
