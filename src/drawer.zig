@@ -63,10 +63,6 @@ const _data = struct {
         var vao: gfx.Vao = undefined;
     };
     const rect = struct {
-        var vbo: gfx.Vbo = undefined;
-        var vao: gfx.Vao = undefined;
-    };
-    const panel = struct {
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -74,19 +70,19 @@ const _data = struct {
             var rect: gfx.Uniform = undefined;
             var texrect: gfx.Uniform = undefined;
         };
+        var vbo: gfx.Vbo = undefined;
+        var vao: gfx.Vao = undefined;
+    };
+    const panel = struct {
         var texture: gfx.Texture = undefined;
     };
     const button = struct {
         var texture: gfx.Texture = undefined;
     };
+    const switcher = struct {
+        var texture: gfx.Texture = undefined;
+    };
     const slider = struct {
-        //var program: gfx.Program = undefined;
-        //const uniform = struct {
-        //    var vpsize: gfx.Uniform = undefined;
-        //    var scale: gfx.Uniform = undefined;
-        //    var rect: gfx.Uniform = undefined;
-        //    var texrect: gfx.Uniform = undefined;
-        //};
         var texture: gfx.Texture = undefined;
     };
     const text = struct {
@@ -208,17 +204,20 @@ pub fn init(info: struct {
     { // RECT
         _data.rect.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
         _data.rect.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.rect.vbo }});
+        _data.rect.program = try data.program("rect");
+        _data.rect.uniform.vpsize = try data.uniform(_data.rect.program, "vpsize");
+        _data.rect.uniform.scale = try data.uniform(_data.rect.program, "scale");
+        _data.rect.uniform.rect = try data.uniform(_data.rect.program, "rect");
+        _data.rect.uniform.texrect = try data.uniform(_data.rect.program, "texrect");
     }
     { // PANEL
-        _data.panel.program = try data.program("panel");
-        _data.panel.uniform.vpsize = try data.uniform(_data.panel.program, "vpsize");
-        _data.panel.uniform.scale = try data.uniform(_data.panel.program, "scale");
-        _data.panel.uniform.rect = try data.uniform(_data.panel.program, "rect");
-        _data.panel.uniform.texrect = try data.uniform(_data.panel.program, "texrect");
         _data.panel.texture = try data.texture("panel.png");
     }
     { // BUTTON
         _data.button.texture = try data.texture("button.png");
+    }
+    { // SWITCHER
+        _data.switcher.texture = try data.texture("switcher.png");
     }
     { // SLIDER
         _data.slider.texture = try data.texture("slider.png");
@@ -252,10 +251,10 @@ pub fn deinit() void {
 }
 
 pub fn draw() !void {
+    gl.enable(gl.DEPTH_TEST);
     gl.polygonMode(gl.FRONT_AND_BACK, @intFromEnum(polygon_mode));
 
     { // CHUNK
-        gl.enable(gl.DEPTH_TEST);
         _data.chunk.program.use();
         _data.chunk.uniform.model.set(zm.identity());
         _data.chunk.uniform.view.set(camera.view);
@@ -267,9 +266,11 @@ pub fn draw() !void {
         _data.chunk.uniform.light.diffuse.set(light.diffuse);
         _data.chunk.uniform.light.specular.set(light.specular);
         _data.chunk.vao.draw(.triangles);
+    }
 
-        gl.disable(gl.DEPTH_TEST);
-        // line
+    gl.disable(gl.DEPTH_TEST);
+
+    { // LINE
         _data.line.program.use();
         for (world.lines.items) |l| {
             if (l.show) {
@@ -288,22 +289,21 @@ pub fn draw() !void {
         }
     }
 
-    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
+    //gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // PANEL
-        _data.panel.program.use();
+        _data.rect.program.use();
         _data.panel.texture.use();
         for (gui.panels.items) |item| {
             if (item.menu.show) {
-                _data.panel.uniform.vpsize.set(window.size);
-                _data.panel.uniform.scale.set(gui.scale);
-                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
-                _data.panel.uniform.texrect.set(@Vector(4, i32){
-                    0,
-                    0,
-                    @intCast(_data.panel.texture.size[0]),
-                    @intCast(_data.panel.texture.size[1]),
-                });
+                _data.rect.uniform.vpsize.set(window.size);
+                _data.rect.uniform.scale.set(gui.scale);
+                _data.rect.uniform.rect.set(
+                    item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
+                );
+                _data.rect.uniform.texrect.set(
+                    gui.rect(0, 0, @intCast(_data.panel.texture.size[0]), @intCast(_data.panel.texture.size[1])).vector(),
+                );
                 _data.rect.vao.draw(.triangle_strip);
             }
         }
@@ -312,13 +312,51 @@ pub fn draw() !void {
         _data.button.texture.use();
         for (gui.buttons.items) |item| {
             if (item.menu.show) {
-                _data.panel.uniform.vpsize.set(window.size);
-                _data.panel.uniform.scale.set(gui.scale);
-                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                _data.rect.uniform.vpsize.set(window.size);
+                _data.rect.uniform.scale.set(gui.scale);
+                _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 0, 8, 8).vector()),
-                    .focus => _data.panel.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
-                    .press => _data.panel.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
+                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 8, 8).vector()),
+                    .focus => _data.rect.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
+                    .press => _data.rect.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
+                }
+                _data.rect.vao.draw(.triangle_strip);
+            }
+        }
+    }
+    { // SWITCHER
+        _data.switcher.texture.use();
+        for (gui.switchers.items) |item| {
+            if (item.menu.show) {
+                _data.rect.uniform.vpsize.set(window.size);
+                _data.rect.uniform.scale.set(gui.scale);
+                _data.rect.uniform.rect.set(
+                    item.alignment.transform(gui.rect(
+                        item.pos[0] * gui.scale,
+                        item.pos[1] * gui.scale,
+                        (item.pos[0] + 11) * gui.scale,
+                        (item.pos[1] + 8) * gui.scale,
+                    ), window.size).vector(),
+                );
+                switch (item.state) {
+                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 6, 8).vector()),
+                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
+                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
+                }
+                _data.rect.vao.draw(.triangle_strip);
+
+                _data.rect.uniform.rect.set(
+                    item.alignment.transform(gui.rect(
+                        (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 3) * gui.scale,
+                        (item.pos[1]) * gui.scale,
+                        (item.pos[0] + 6 + @as(i32, @intFromBool(item.status)) * 3) * gui.scale,
+                        (item.pos[1] + 8) * gui.scale,
+                    ), window.size).vector(),
+                );
+                switch (item.state) {
+                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 8, 4, 16).vector()),
+                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 10, 16).vector()),
+                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 16, 16).vector()),
                 }
                 _data.rect.vao.draw(.triangle_strip);
             }
@@ -328,31 +366,26 @@ pub fn draw() !void {
         _data.slider.texture.use();
         for (gui.sliders.items) |item| {
             if (item.menu.show) {
-                _data.panel.uniform.vpsize.set(window.size);
-                _data.panel.uniform.scale.set(gui.scale);
-                _data.panel.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                _data.rect.uniform.vpsize.set(window.size);
+                _data.rect.uniform.scale.set(gui.scale);
+                _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 8, 5, 16).vector()),
-                    .focus => _data.panel.uniform.texrect.set(gui.rect(5, 8, 10, 16).vector()),
-                    .press => _data.panel.uniform.texrect.set(gui.rect(10, 8, 15, 16).vector()),
+                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 6, 8).vector()),
+                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
+                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
                 }
                 _data.rect.vao.draw(.triangle_strip);
 
-                const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 5 * gui.scale);
+                const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
-                _data.panel.uniform.rect.set(
+                _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.rect(
                         item.rect.min[0] * gui.scale + pos,
                         item.rect.min[1] * gui.scale,
-                        item.rect.min[0] * gui.scale + pos + 5 * gui.scale,
+                        item.rect.min[0] * gui.scale + pos + 6 * gui.scale,
                         item.rect.max[1] * gui.scale,
                     ), window.size).vector(),
                 );
-                switch (item.state) {
-                    .empty => _data.panel.uniform.texrect.set(gui.rect(0, 0, 5, 8).vector()),
-                    .focus => _data.panel.uniform.texrect.set(gui.rect(5, 0, 10, 8).vector()),
-                    .press => _data.panel.uniform.texrect.set(gui.rect(10, 0, 15, 8).vector()),
-                }
                 _data.rect.vao.draw(.triangle_strip);
             }
         }

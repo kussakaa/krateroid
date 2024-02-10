@@ -11,23 +11,34 @@ const Alignment = @import("gui/Alignment.zig");
 const Menu = @import("gui/Menu.zig");
 const Panel = @import("gui/Panel.zig");
 const Button = @import("gui/Button.zig");
-const Text = @import("gui/Text.zig");
+const Switcher = @import("gui/Switcher.zig");
 const Slider = @import("gui/Slider.zig");
+const Text = @import("gui/Text.zig");
 
 const Event = union(enum) {
     none,
     button: union(enum) {
-        focus: u32,
-        unfocus: u32,
-        press: u32,
-        unpress: u32,
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+    },
+    switcher: union(enum) {
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+        switched: struct {
+            id: u32,
+            data: bool,
+        },
     },
     slider: union(enum) {
-        focus: u32,
-        unfocus: u32,
-        press: u32,
-        unpress: u32,
-        value: struct {
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+        scrolled: struct {
             id: u32,
             data: f32,
         },
@@ -40,6 +51,7 @@ pub var scale: i32 = undefined;
 pub var menus: Array(Menu) = undefined;
 pub var panels: Array(Panel) = undefined;
 pub var buttons: Array(Button) = undefined;
+pub var switchers: Array(Switcher) = undefined;
 pub var sliders: Array(Slider) = undefined;
 pub var texts: Array(Text) = undefined;
 
@@ -51,52 +63,94 @@ pub const cursor = struct {
 pub fn update() void {
     { // BUTTONS
         for (buttons.items) |*item| {
-            if (item.menu.show and item.alignment.transform(item.rect.scale(scale), window.size).isAroundPoint(cursor.pos)) {
+            const vprect = item.alignment.transform(item.rect.scale(scale), window.size);
+            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
                 if (cursor.press) {
                     if (item.state != .press) {
-                        if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
-                        events.push(.{ .button = .{ .press = item.id } });
+                        if (item.state == .empty) events.push(.{ .button = .{ .focused = item.id } });
+                        events.push(.{ .button = .{ .pressed = item.id } });
                     }
                     item.state = .press;
                 } else {
-                    if (item.state == .press) events.push(.{ .button = .{ .unpress = item.id } });
-                    if (item.state == .empty) events.push(.{ .button = .{ .focus = item.id } });
+                    if (item.state == .press) events.push(.{ .button = .{ .unpressed = item.id } });
+                    if (item.state == .empty) events.push(.{ .button = .{ .focused = item.id } });
                     item.state = .focus;
                 }
             } else {
-                if (item.state != .empty) events.push(.{ .button = .{ .unfocus = item.id } });
+                if (item.state != .empty) events.push(.{ .button = .{ .unfocused = item.id } });
+                item.state = .empty;
+            }
+        }
+    }
+    { // SWITCHERS
+        for (switchers.items) |*item| {
+            const itemrect = Rect{
+                .min = .{
+                    item.pos[0],
+                    item.pos[1],
+                },
+                .max = .{
+                    item.pos[0] + 11,
+                    item.pos[1] + 8,
+                },
+            };
+            const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
+            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
+                if (cursor.press) {
+                    if (item.state != .press) {
+                        if (item.state == .empty) events.push(.{ .switcher = .{ .focused = item.id } });
+                        events.push(.{ .switcher = .{ .pressed = item.id } });
+                    }
+                    item.state = .press;
+                } else {
+                    if (item.state == .press) {
+                        events.push(.{ .switcher = .{ .unpressed = item.id } });
+                        item.status = !item.status;
+                        events.push(.{ .switcher = .{ .switched = .{ .id = item.id, .data = item.status } } });
+                    }
+                    if (item.state == .empty) events.push(.{ .switcher = .{ .focused = item.id } });
+                    item.state = .focus;
+                }
+            } else {
+                if (item.state != .empty) events.push(.{ .switcher = .{ .unfocused = item.id } });
                 item.state = .empty;
             }
         }
     }
     { // SLIDERS
         for (sliders.items) |*item| { // sliders
-            var itemrect = item.rect;
-            itemrect.min[0] += 2;
-            itemrect.max[0] -= 3;
-            itemrect.max[1] -= 1;
+            const itemrect = Rect{
+                .min = .{
+                    item.rect.min[0] + 2,
+                    item.rect.min[1],
+                },
+                .max = .{
+                    item.rect.max[0] - 2,
+                    item.rect.max[1],
+                },
+            };
             const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
             const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
             if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
                 if (cursor.press) {
                     if (item.state != .press) {
-                        if (item.state == .empty) events.push(.{ .slider = .{ .focus = item.id } });
-                        events.push(.{ .slider = .{ .press = item.id } });
+                        if (item.state == .empty) events.push(.{ .slider = .{ .focused = item.id } });
+                        events.push(.{ .slider = .{ .pressed = item.id } });
                     }
                     item.state = .press;
                     const value = @as(f32, @floatFromInt(cursor.pos[0] - vprect.min[0])) / vprectwidth;
                     item.value = value;
-                    events.push(.{ .slider = .{ .value = .{
+                    events.push(.{ .slider = .{ .scrolled = .{
                         .id = item.id,
                         .data = value,
                     } } });
                 } else {
-                    if (item.state == .press) events.push(.{ .slider = .{ .unpress = item.id } });
-                    if (item.state == .empty) events.push(.{ .slider = .{ .focus = item.id } });
+                    if (item.state == .press) events.push(.{ .slider = .{ .unpressed = item.id } });
+                    if (item.state == .empty) events.push(.{ .slider = .{ .focused = item.id } });
                     item.state = .focus;
                 }
             } else {
-                if (item.state != .empty) events.push(.{ .slider = .{ .unfocus = item.id } });
+                if (item.state != .empty) events.push(.{ .slider = .{ .unfocused = item.id } });
                 item.state = .empty;
             }
         }
@@ -146,6 +200,7 @@ pub fn init(info: struct {
     menus = try Array(Menu).initCapacity(_allocator, 32);
     panels = try Array(Panel).initCapacity(_allocator, 32);
     buttons = try Array(Button).initCapacity(_allocator, 32);
+    switchers = try Array(Switcher).initCapacity(_allocator, 32);
     sliders = try Array(Slider).initCapacity(_allocator, 32);
     texts = try Array(Text).initCapacity(_allocator, 32);
 
@@ -158,6 +213,7 @@ pub fn deinit() void {
     defer menus.deinit(_allocator);
     defer panels.deinit(_allocator);
     defer buttons.deinit(_allocator);
+    defer switchers.deinit(_allocator);
     defer sliders.deinit(_allocator);
     defer texts.deinit(_allocator);
 }
@@ -206,12 +262,28 @@ pub fn button(info: struct {
     return &buttons.items[buttons.items.len - 1];
 }
 
+pub fn switcher(info: struct {
+    menu: *const Menu,
+    pos: Pos,
+    alignment: Alignment = .{},
+    status: bool = false,
+}) !*const Switcher {
+    try switchers.append(_allocator, Switcher{
+        .menu = info.menu,
+        .id = @intCast(switchers.items.len),
+        .pos = info.pos,
+        .alignment = info.alignment,
+        .status = info.status,
+    });
+    return &switchers.items[switchers.items.len - 1];
+}
+
 pub fn slider(info: struct {
     menu: *const Menu,
     rect: Rect,
     alignment: Alignment = .{},
     steps: i32 = 0,
-    value: f32 = 0.5,
+    value: f32 = 0.0,
 }) !*const Slider {
     try sliders.append(_allocator, Slider{
         .menu = info.menu,

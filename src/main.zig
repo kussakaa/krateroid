@@ -163,7 +163,7 @@ pub fn main() !void {
 
     _ = try gui.panel(.{
         .menu = menu_settings,
-        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
+        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 49 } },
         .alignment = .{ .v = .center, .h = .center },
     });
     const button_settings_close = try gui.button(.{
@@ -216,6 +216,18 @@ pub fn main() !void {
         .rect = .{ .min = .{ -27, 16 }, .max = .{ 32, 24 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = bg_color[2],
+    });
+
+    _ = try gui.text(W("debug"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, 24 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.switcher(.{
+        .menu = menu_settings,
+        .pos = .{ 0, 24 },
+        .alignment = .{ .v = .center, .h = .center },
+        .status = false,
     });
 
     // F3
@@ -365,12 +377,12 @@ pub fn main() !void {
             switch (e) {
                 .none => break :guiproc,
                 .button => |item| switch (item) {
-                    .focus => |_| {
+                    .focused => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
                     },
-                    .unfocus => |_| {},
-                    .press => |_| {},
-                    .unpress => |id| {
+                    .unfocused => |_| {},
+                    .pressed => |_| {},
+                    .unpressed => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                         if (id == button_play.id)
                             menu_main.show = false;
@@ -386,16 +398,27 @@ pub fn main() !void {
                             break :loop;
                     },
                 },
-                .slider => |item| switch (item) {
-                    .focus => |_| {
+                .switcher => |item| switch (item) {
+                    .focused => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
                     },
-                    .unfocus => |_| {},
-                    .press => |_| {},
-                    .unpress => |_| {
+                    .unfocused => |_| {},
+                    .pressed => |_| {},
+                    .unpressed => |_| {},
+                    .switched => |_| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },
-                    .value => |s| {
+                },
+                .slider => |item| switch (item) {
+                    .focused => |_| {
+                        try audio_engine.playSound("data/sound/focus.wav", null);
+                    },
+                    .unfocused => |_| {},
+                    .pressed => |_| {},
+                    .unpressed => |_| {
+                        try audio_engine.playSound("data/sound/press.wav", null);
+                    },
+                    .scrolled => |s| {
                         if (s.id == slider_bg_red.id)
                             bg_color[0] = s.data;
                         if (s.id == slider_bg_green.id)
