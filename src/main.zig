@@ -39,7 +39,7 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
-    var bg_color = Vec{ 0.1, 0.1, 0.1, 1.0 };
+    var bg_color = Vec{ 0.0, 0.0, 0.0, 1.0 };
 
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
@@ -86,7 +86,30 @@ pub fn main() !void {
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
-    var menu_main = try gui.menu(.{
+    var menu_info = try gui.menu(.{ // MENU INFO
+        .show = false,
+    });
+    _ = try gui.text(W("krateroid 0.0.1"), .{
+        .menu = menu_info,
+        .pos = .{ 2, 1 },
+    });
+    _ = try gui.text(W("fps:"), .{
+        .menu = menu_info,
+        .pos = .{ 2, 9 },
+    });
+    var fps_str = [1]u16{'0'} ** 6;
+    _ = try gui.text(&fps_str, .{
+        .menu = menu_info,
+        .pos = .{ 16, 9 },
+        .usage = .dynamic,
+    });
+    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
+        .menu = menu_info,
+        .pos = .{ 2, -8 },
+        .alignment = .{ .v = .bottom },
+    });
+
+    var menu_main = try gui.menu(.{ // MENU MAIN
         .show = true,
     });
 
@@ -145,7 +168,7 @@ pub fn main() !void {
         .centered = true,
     });
 
-    var menu_settings = try gui.menu(.{
+    var menu_settings = try gui.menu(.{ // MENU SETTINGS
         .show = false,
     });
 
@@ -218,41 +241,16 @@ pub fn main() !void {
         .value = bg_color[2],
     });
 
-    _ = try gui.text(W("debug"), .{
+    _ = try gui.text(W("info [f3]"), .{
         .menu = menu_settings,
         .pos = .{ -32, 24 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.switcher(.{
+    var menu_settings_switcher_menu_info = try gui.switcher(.{
         .menu = menu_settings,
-        .pos = .{ 0, 24 },
+        .pos = .{ 20, 24 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = false,
-    });
-
-    // F3
-
-    var menu_info = try gui.menu(.{
-        .show = false,
-    });
-    _ = try gui.text(W("krateroid 0.0.1"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 1 },
-    });
-    _ = try gui.text(W("fps:"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 9 },
-    });
-    var fps_str = [1]u16{'0'} ** 6;
-    _ = try gui.text(&fps_str, .{
-        .menu = menu_info,
-        .pos = .{ 16, 9 },
-        .usage = .dynamic,
-    });
-    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
-        .menu = menu_info,
-        .pos = .{ 2, -8 },
-        .alignment = .{ .v = .bottom },
+        .status = menu_info.show,
     });
 
     try data.init(.{});
@@ -276,6 +274,7 @@ pub fn main() !void {
                         }
                         if (id == .f3) {
                             menu_info.show = !menu_info.show;
+                            menu_settings_switcher_menu_info.status = menu_info.show;
                             x_axis.show = !x_axis.show;
                             y_axis.show = !y_axis.show;
                             z_axis.show = !z_axis.show;
@@ -373,7 +372,7 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
-            if (e != .none) log.info("gui event: {}", .{e});
+            //if (e != .none) log.info("gui event: {}", .{e});
             switch (e) {
                 .none => break :guiproc,
                 .button => |item| switch (item) {
@@ -405,8 +404,10 @@ pub fn main() !void {
                     .unfocused => |_| {},
                     .pressed => |_| {},
                     .unpressed => |_| {},
-                    .switched => |_| {
+                    .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
+                        if (switched.id == menu_settings_switcher_menu_info.id)
+                            menu_info.show = switched.data;
                     },
                 },
                 .slider => |item| switch (item) {

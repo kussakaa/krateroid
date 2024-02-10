@@ -334,7 +334,7 @@ pub fn draw() !void {
                     item.alignment.transform(gui.rect(
                         item.pos[0] * gui.scale,
                         item.pos[1] * gui.scale,
-                        (item.pos[0] + 11) * gui.scale,
+                        (item.pos[0] + 12) * gui.scale,
                         (item.pos[1] + 8) * gui.scale,
                     ), window.size).vector(),
                 );
@@ -347,9 +347,9 @@ pub fn draw() !void {
 
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.rect(
-                        (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 3) * gui.scale,
+                        (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
                         (item.pos[1]) * gui.scale,
-                        (item.pos[0] + 6 + @as(i32, @intFromBool(item.status)) * 3) * gui.scale,
+                        (item.pos[0] + 6 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
                         (item.pos[1] + 8) * gui.scale,
                     ), window.size).vector(),
                 );

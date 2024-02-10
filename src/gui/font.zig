@@ -9,8 +9,8 @@ pub fn init() void {
     chars['#'] = .{ .pos = 7, .width = 5 };
     chars['$'] = .{ .pos = 12 };
     chars['\''] = .{ .pos = 15, .width = 1 };
-    chars['('] = .{ .pos = 16, .width = 1 };
-    chars[')'] = .{ .pos = 18, .width = 1 };
+    chars['('] = .{ .pos = 16, .width = 2 };
+    chars[')'] = .{ .pos = 18, .width = 2 };
     chars['*'] = .{ .pos = 20 };
     chars['+'] = .{ .pos = 23 };
     chars[','] = .{ .pos = 26, .width = 1 };

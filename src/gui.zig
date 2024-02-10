@@ -90,7 +90,7 @@ pub fn update() void {
                     item.pos[1],
                 },
                 .max = .{
-                    item.pos[0] + 11,
+                    item.pos[0] + 12,
                     item.pos[1] + 8,
                 },
             };
@@ -267,7 +267,7 @@ pub fn switcher(info: struct {
     pos: Pos,
     alignment: Alignment = .{},
     status: bool = false,
-}) !*const Switcher {
+}) !*Switcher {
     try switchers.append(_allocator, Switcher{
         .menu = info.menu,
         .id = @intCast(switchers.items.len),
