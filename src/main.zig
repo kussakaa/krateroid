@@ -267,7 +267,7 @@ pub fn main() !void {
                 .none => break :inputproc,
                 .quit => break :loop,
                 .key => |k| switch (k) {
-                    .press => |id| {
+                    .pressed => |id| {
                         if (id == .escape) {
                             menu_main.show = true;
                             menu_settings.show = false;
@@ -291,32 +291,30 @@ pub fn main() !void {
                         if (id == .kp_minus) gui.scale = @max(gui.scale - 1, 1);
                         if (id == .kp_plus) gui.scale = @min(gui.scale + 1, 8);
                     },
-                    .unpress => |_| {},
+                    .unpressed => |_| {},
                 },
                 .mouse => |m| switch (m) {
-                    .button => |b| switch (b) {
-                        .press => |id| {
-                            if (id == 1) {
-                                is_camera_move = true;
-                                gui.cursor.press = true;
-                                gui.update();
-                            }
-                            if (id == 3) {
-                                is_camera_rotate = true;
-                            }
-                        },
-                        .unpress => |id| {
-                            if (id == 1) {
-                                is_camera_move = false;
-                                gui.cursor.press = false;
-                                gui.update();
-                            }
-                            if (id == 3) {
-                                is_camera_rotate = false;
-                            }
-                        },
+                    .pressed => |id| {
+                        if (id == 1) {
+                            is_camera_move = true;
+                            gui.cursor.press = true;
+                            gui.update();
+                        }
+                        if (id == 3) {
+                            is_camera_rotate = true;
+                        }
                     },
-                    .pos => |pos| {
+                    .unpressed => |id| {
+                        if (id == 1) {
+                            is_camera_move = false;
+                            gui.cursor.press = false;
+                            gui.update();
+                        }
+                        if (id == 3) {
+                            is_camera_rotate = false;
+                        }
+                    },
+                    .moved => |pos| {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
@@ -355,14 +353,14 @@ pub fn main() !void {
                         gui.cursor.pos = pos;
                         gui.update();
                     },
-                    .scroll => |scroll| {
+                    .scrolled => |scroll| {
                         if (!menu_main.show and !menu_settings.show) {
                             camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
                         }
                     },
                 },
                 .window => |w| switch (w) {
-                    .size => |s| {
+                    .resized => |s| {
                         window.resize(s);
                     },
                 },

@@ -239,7 +239,7 @@ pub fn panel(info: struct {
     menu: *const Menu,
     rect: Rect,
     alignment: Alignment = .{},
-}) !*const Panel {
+}) !*Panel {
     try panels.append(_allocator, Panel{
         .menu = info.menu,
         .rect = info.rect,
@@ -252,7 +252,7 @@ pub fn button(info: struct {
     menu: *const Menu,
     rect: Rect,
     alignment: Alignment = .{},
-}) !*const Button {
+}) !*Button {
     try buttons.append(_allocator, Button{
         .menu = info.menu,
         .id = @intCast(buttons.items.len),
@@ -284,7 +284,7 @@ pub fn slider(info: struct {
     alignment: Alignment = .{},
     steps: i32 = 0,
     value: f32 = 0.0,
-}) !*const Slider {
+}) !*Slider {
     try sliders.append(_allocator, Slider{
         .menu = info.menu,
         .id = @intCast(sliders.items.len),
@@ -309,15 +309,13 @@ pub fn text(data: []const u16, info: struct {
     else
         info.pos;
 
-    const t = Text{
+    try texts.append(_allocator, Text{
         .menu = info.menu,
         .data = data,
         .rect = .{ .min = itempos, .max = itempos + itemsize },
         .alignment = info.alignment,
         .usage = info.usage,
-    };
-
-    try texts.append(_allocator, t);
+    });
     return &texts.items[texts.items.len - 1];
 }
 

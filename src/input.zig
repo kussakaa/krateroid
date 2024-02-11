@@ -6,33 +6,31 @@ pub fn pollEvent() union(enum) {
     none,
     quit,
     key: union(enum) {
-        press: sdl.Scancode,
-        unpress: sdl.Scancode,
+        pressed: sdl.Scancode,
+        unpressed: sdl.Scancode,
     },
     mouse: union(enum) {
-        button: union(enum) {
-            press: u8,
-            unpress: u8,
-        },
-        pos: Pos,
-        scroll: i32,
+        pressed: u8,
+        unpressed: u8,
+        moved: Pos,
+        scrolled: i32,
     },
     window: union(enum) {
-        size: Size,
+        resized: Size,
     },
 } {
     var event: sdl.Event = undefined;
     if (!sdl.pollEvent(&event)) return .none;
     return switch (event.type) {
         .quit => .quit,
-        .keydown => .{ .key = .{ .press = event.key.keysym.scancode } },
-        .keyup => .{ .key = .{ .unpress = event.key.keysym.scancode } },
-        .mousebuttondown => .{ .mouse = .{ .button = .{ .press = event.button.button } } },
-        .mousebuttonup => .{ .mouse = .{ .button = .{ .unpress = event.button.button } } },
-        .mousemotion => .{ .mouse = .{ .pos = .{ event.motion.x, event.motion.y } } },
-        .mousewheel => .{ .mouse = .{ .scroll = event.wheel.y } },
+        .keydown => .{ .key = .{ .pressed = event.key.keysym.scancode } },
+        .keyup => .{ .key = .{ .unpressed = event.key.keysym.scancode } },
+        .mousebuttondown => .{ .mouse = .{ .pressed = event.button.button } },
+        .mousebuttonup => .{ .mouse = .{ .unpressed = event.button.button } },
+        .mousemotion => .{ .mouse = .{ .moved = .{ event.motion.x, event.motion.y } } },
+        .mousewheel => .{ .mouse = .{ .scrolled = event.wheel.y } },
         .windowevent => switch (event.window.event) {
-            .size_changed => .{ .window = .{ .size = .{ event.window.data1, event.window.data2 } } },
+            .size_changed => .{ .window = .{ .resized = .{ event.window.data1, event.window.data2 } } },
             else => .none,
         },
         else => .none,
