@@ -7,7 +7,6 @@ const window = @import("window.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gfx = @import("gfx.zig");
-const data = @import("data.zig");
 const gui = @import("gui.zig");
 
 const mct = @import("drawer/mct.zig");
@@ -118,25 +117,25 @@ pub fn init(info: struct {
     gl.frontFace(gl.CW);
 
     { // LINE
-        _data.line.program = try data.program("line");
-        _data.line.uniform.model = try data.uniform(_data.line.program, "model");
-        _data.line.uniform.view = try data.uniform(_data.line.program, "view");
-        _data.line.uniform.proj = try data.uniform(_data.line.program, "proj");
-        _data.line.uniform.color = try data.uniform(_data.line.program, "color");
+        _data.line.program = try gfx.program("line");
+        _data.line.uniform.model = try gfx.uniform(_data.line.program, "model");
+        _data.line.uniform.view = try gfx.uniform(_data.line.program, "view");
+        _data.line.uniform.proj = try gfx.uniform(_data.line.program, "proj");
+        _data.line.uniform.color = try gfx.uniform(_data.line.program, "color");
         _data.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
         _data.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.line.vbo }});
     }
     { // CHUNK
-        _data.chunk.program = try data.program("chunk");
-        _data.chunk.uniform.model = try data.uniform(_data.chunk.program, "model");
-        _data.chunk.uniform.view = try data.uniform(_data.chunk.program, "view");
-        _data.chunk.uniform.proj = try data.uniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.color = try data.uniform(_data.chunk.program, "color");
-        _data.chunk.uniform.light.color = try data.uniform(_data.chunk.program, "light.color");
-        _data.chunk.uniform.light.direction = try data.uniform(_data.chunk.program, "light.direction");
-        _data.chunk.uniform.light.ambient = try data.uniform(_data.chunk.program, "light.ambient");
-        _data.chunk.uniform.light.diffuse = try data.uniform(_data.chunk.program, "light.diffuse");
-        _data.chunk.uniform.light.specular = try data.uniform(_data.chunk.program, "light.specular");
+        _data.chunk.program = try gfx.program("chunk");
+        _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try gfx.uniform(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try gfx.uniform(_data.chunk.program, "proj");
+        _data.chunk.uniform.color = try gfx.uniform(_data.chunk.program, "color");
+        _data.chunk.uniform.light.color = try gfx.uniform(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try gfx.uniform(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try gfx.uniform(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try gfx.uniform(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try gfx.uniform(_data.chunk.program, "light.specular");
 
         const s = struct {
             var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
@@ -204,34 +203,34 @@ pub fn init(info: struct {
     { // RECT
         _data.rect.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
         _data.rect.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.rect.vbo }});
-        _data.rect.program = try data.program("rect");
-        _data.rect.uniform.vpsize = try data.uniform(_data.rect.program, "vpsize");
-        _data.rect.uniform.scale = try data.uniform(_data.rect.program, "scale");
-        _data.rect.uniform.rect = try data.uniform(_data.rect.program, "rect");
-        _data.rect.uniform.texrect = try data.uniform(_data.rect.program, "texrect");
+        _data.rect.program = try gfx.program("rect");
+        _data.rect.uniform.vpsize = try gfx.uniform(_data.rect.program, "vpsize");
+        _data.rect.uniform.scale = try gfx.uniform(_data.rect.program, "scale");
+        _data.rect.uniform.rect = try gfx.uniform(_data.rect.program, "rect");
+        _data.rect.uniform.texrect = try gfx.uniform(_data.rect.program, "texrect");
     }
     { // PANEL
-        _data.panel.texture = try data.texture("panel.png");
+        _data.panel.texture = try gfx.texture("panel.png");
     }
     { // BUTTON
-        _data.button.texture = try data.texture("button.png");
+        _data.button.texture = try gfx.texture("button.png");
     }
     { // SWITCHER
-        _data.switcher.texture = try data.texture("switcher.png");
+        _data.switcher.texture = try gfx.texture("switcher.png");
     }
     { // SLIDER
-        _data.slider.texture = try data.texture("slider.png");
+        _data.slider.texture = try gfx.texture("slider.png");
     }
     { // TEXT
-        _data.text.program = try data.program("text");
-        _data.text.uniform.vpsize = try data.uniform(_data.text.program, "vpsize");
-        _data.text.uniform.scale = try data.uniform(_data.text.program, "scale");
-        _data.text.uniform.pos = try data.uniform(_data.text.program, "pos");
-        _data.text.uniform.color = try data.uniform(_data.text.program, "color");
+        _data.text.program = try gfx.program("text");
+        _data.text.uniform.vpsize = try gfx.uniform(_data.text.program, "vpsize");
+        _data.text.uniform.scale = try gfx.uniform(_data.text.program, "scale");
+        _data.text.uniform.pos = try gfx.uniform(_data.text.program, "pos");
+        _data.text.uniform.color = try gfx.uniform(_data.text.program, "color");
         _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-        _data.text.texture = try data.texture("text.png");
+        _data.text.texture = try gfx.texture("text.png");
     }
 }
 
@@ -410,28 +409,28 @@ pub fn draw() !void {
 
                     const width = gui.font.chars[cid].width;
                     const uvpos = gui.font.chars[cid].pos;
-                    const uvwidth = gui.font.chars[cid].width;
+                    const uvwidth = width;
 
                     // triangle 1
                     s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 0;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
                     s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 8;
+                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
+                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
                     s.vbo_tex_data[cnt * 6 + 0] = uvpos;
-                    s.vbo_tex_data[cnt * 6 + 1] = uvpos;
+                    s.vbo_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
                     s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
 
                     // triangle 2
                     s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 8;
-                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos + width;
+                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
+                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
                     s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
                     s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 0;
+                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
                     s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-                    s.vbo_tex_data[cnt * 6 + 4] = uvpos + uvwidth;
+                    s.vbo_tex_data[cnt * 6 + 4] = uvpos;
                     s.vbo_tex_data[cnt * 6 + 5] = uvpos;
 
                     pos += width + 1;

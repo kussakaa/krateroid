@@ -12,7 +12,7 @@ const Mat = zm.Mat;
 
 const window = @import("window.zig");
 const input = @import("input.zig");
-const data = @import("data.zig");
+const gfx = @import("gfx.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gui = @import("gui.zig");
@@ -253,8 +253,8 @@ pub fn main() !void {
         .status = menu_info.show,
     });
 
-    try data.init(.{});
-    defer data.deinit();
+    try gfx.init(.{});
+    defer gfx.deinit();
 
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();

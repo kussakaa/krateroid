@@ -15,36 +15,6 @@ const Switcher = @import("gui/Switcher.zig");
 const Slider = @import("gui/Slider.zig");
 const Text = @import("gui/Text.zig");
 
-const Event = union(enum) {
-    none,
-    button: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
-    },
-    switcher: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
-        switched: struct {
-            id: u32,
-            data: bool,
-        },
-    },
-    slider: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
-        scrolled: struct {
-            id: u32,
-            data: f32,
-        },
-    },
-};
-
 pub const font = @import("gui/font.zig");
 var _allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
@@ -54,6 +24,34 @@ pub var buttons: Array(Button) = undefined;
 pub var switchers: Array(Switcher) = undefined;
 pub var sliders: Array(Slider) = undefined;
 pub var texts: Array(Text) = undefined;
+
+pub fn init(info: struct {
+    allocator: Allocator = std.heap.page_allocator,
+    scale: i32 = 3,
+}) !void {
+    _allocator = info.allocator;
+    scale = info.scale;
+    font.init();
+    menus = try Array(Menu).initCapacity(_allocator, 32);
+    panels = try Array(Panel).initCapacity(_allocator, 32);
+    buttons = try Array(Button).initCapacity(_allocator, 32);
+    switchers = try Array(Switcher).initCapacity(_allocator, 32);
+    sliders = try Array(Slider).initCapacity(_allocator, 32);
+    texts = try Array(Text).initCapacity(_allocator, 32);
+
+    for (0..events.items.len) |i| {
+        events.items[i] = .none;
+    }
+}
+
+pub fn deinit() void {
+    defer menus.deinit(_allocator);
+    defer panels.deinit(_allocator);
+    defer buttons.deinit(_allocator);
+    defer switchers.deinit(_allocator);
+    defer sliders.deinit(_allocator);
+    defer texts.deinit(_allocator);
+}
 
 pub const cursor = struct {
     pub var pos: Pos = .{ 0, 0 };
@@ -157,6 +155,36 @@ pub fn update() void {
     }
 }
 
+const Event = union(enum) {
+    none,
+    button: union(enum) {
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+    },
+    switcher: union(enum) {
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+        switched: struct {
+            id: u32,
+            data: bool,
+        },
+    },
+    slider: union(enum) {
+        focused: u32,
+        unfocused: u32,
+        pressed: u32,
+        unpressed: u32,
+        scrolled: struct {
+            id: u32,
+            data: f32,
+        },
+    },
+};
+
 const events = struct {
     var items: [16]Event = undefined;
     var current: usize = 0;
@@ -188,34 +216,6 @@ const events = struct {
 
 pub fn pollEvent() Event {
     return events.pop();
-}
-
-pub fn init(info: struct {
-    allocator: Allocator = std.heap.page_allocator,
-    scale: i32 = 3,
-}) !void {
-    _allocator = info.allocator;
-    scale = info.scale;
-    font.init();
-    menus = try Array(Menu).initCapacity(_allocator, 32);
-    panels = try Array(Panel).initCapacity(_allocator, 32);
-    buttons = try Array(Button).initCapacity(_allocator, 32);
-    switchers = try Array(Switcher).initCapacity(_allocator, 32);
-    sliders = try Array(Slider).initCapacity(_allocator, 32);
-    texts = try Array(Text).initCapacity(_allocator, 32);
-
-    for (0..events.items.len) |i| {
-        events.items[i] = .none;
-    }
-}
-
-pub fn deinit() void {
-    defer menus.deinit(_allocator);
-    defer panels.deinit(_allocator);
-    defer buttons.deinit(_allocator);
-    defer switchers.deinit(_allocator);
-    defer sliders.deinit(_allocator);
-    defer texts.deinit(_allocator);
 }
 
 pub fn rect(x1: i32, y1: i32, x2: i32, y2: i32) Rect {
