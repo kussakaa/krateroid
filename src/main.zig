@@ -86,29 +86,6 @@ pub fn main() !void {
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
-    var menu_info = try gui.menu(.{ // MENU INFO
-        .show = false,
-    });
-    _ = try gui.text(W("krateroid 0.0.1"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 1 },
-    });
-    _ = try gui.text(W("fps:"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 9 },
-    });
-    var fps_str = [1]u16{'0'} ** 6;
-    _ = try gui.text(&fps_str, .{
-        .menu = menu_info,
-        .pos = .{ 16, 9 },
-        .usage = .dynamic,
-    });
-    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
-        .menu = menu_info,
-        .pos = .{ 2, -8 },
-        .alignment = .{ .v = .bottom },
-    });
-
     var menu_main = try gui.menu(.{ // MENU MAIN
         .show = true,
     });
@@ -241,16 +218,63 @@ pub fn main() !void {
         .value = bg_color[2],
     });
 
-    _ = try gui.text(W("info [f3]"), .{
+    var is_info_show = false;
+    var menu_info = try gui.menu(.{ // MENU INFO
+        .show = is_info_show,
+    });
+    _ = try gui.text(W("krateroid 0.0.1"), .{
+        .menu = menu_info,
+        .pos = .{ 2, 1 },
+    });
+    _ = try gui.text(W("fps:"), .{
+        .menu = menu_info,
+        .pos = .{ 2, 9 },
+    });
+    var fps_str = [1]u16{'0'} ** 6;
+    _ = try gui.text(&fps_str, .{
+        .menu = menu_info,
+        .pos = .{ 16, 9 },
+        .usage = .dynamic,
+    });
+    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
+        .menu = menu_info,
+        .pos = .{ 2, -8 },
+        .alignment = .{ .v = .bottom },
+    });
+
+    _ = try gui.text(W("info"), .{
         .menu = menu_settings,
-        .pos = .{ -32, 24 },
+        .pos = .{ -32, 26 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    var menu_settings_switcher_menu_info = try gui.switcher(.{
+    _ = try gui.text(W("[f3]"), .{
         .menu = menu_settings,
-        .pos = .{ 20, 24 },
+        .pos = .{ 5, 26 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = menu_info.show,
+    });
+    var menu_settings_switcher_show_info = try gui.switcher(.{
+        .menu = menu_settings,
+        .pos = .{ 20, 26 },
+        .alignment = .{ .v = .center, .h = .center },
+        .status = is_info_show,
+    });
+
+    var is_show_grid = false;
+    _ = try gui.text(W("grid"), .{
+        .menu = menu_settings,
+        .pos = .{ -32, 34 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("[f5]"), .{
+        .menu = menu_settings,
+        .pos = .{ 5, 34 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    var menu_settings_switcher_show_grid = try gui.switcher(.{
+        .menu = menu_settings,
+        .pos = .{ 20, 34 },
+        .alignment = .{ .v = .center, .h = .center },
+        .status = is_show_grid,
     });
 
     try gfx.init(.{});
@@ -258,8 +282,6 @@ pub fn main() !void {
 
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
-
-    var is_debug_polygons = false;
 
     loop: while (true) {
         inputproc: while (true) {
@@ -273,15 +295,17 @@ pub fn main() !void {
                             menu_settings.show = false;
                         }
                         if (id == .f3) {
-                            menu_info.show = !menu_info.show;
-                            menu_settings_switcher_menu_info.status = menu_info.show;
-                            x_axis.show = !x_axis.show;
-                            y_axis.show = !y_axis.show;
-                            z_axis.show = !z_axis.show;
+                            is_info_show = !is_info_show;
+                            menu_info.show = is_info_show;
+                            x_axis.show = is_info_show;
+                            y_axis.show = is_info_show;
+                            z_axis.show = is_info_show;
+                            menu_settings_switcher_show_info.status = is_info_show;
                         }
                         if (id == .f5) {
-                            is_debug_polygons = !is_debug_polygons;
-                            if (is_debug_polygons) {
+                            is_show_grid = !is_show_grid;
+                            menu_settings_switcher_show_grid.status = is_show_grid;
+                            if (is_show_grid) {
                                 drawer.polygon_mode = .line;
                             } else {
                                 drawer.polygon_mode = .fill;
@@ -381,18 +405,17 @@ pub fn main() !void {
                     .pressed => |_| {},
                     .unpressed => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (id == button_play.id)
+                        if (id == button_play.id) {
                             menu_main.show = false;
-                        if (id == button_settings.id) {
+                        } else if (id == button_settings.id) {
                             menu_settings.show = true;
                             menu_main.show = false;
-                        }
-                        if (id == button_settings_close.id) {
+                        } else if (id == button_settings_close.id) {
                             menu_settings.show = false;
                             menu_main.show = true;
-                        }
-                        if (id == button_exit.id)
+                        } else if (id == button_exit.id) {
                             break :loop;
+                        }
                     },
                 },
                 .switcher => |item| switch (item) {
@@ -404,8 +427,20 @@ pub fn main() !void {
                     .unpressed => |_| {},
                     .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (switched.id == menu_settings_switcher_menu_info.id)
-                            menu_info.show = switched.data;
+                        if (switched.id == menu_settings_switcher_show_info.id) {
+                            is_info_show = switched.data;
+                            menu_info.show = is_info_show;
+                            x_axis.show = is_info_show;
+                            y_axis.show = is_info_show;
+                            z_axis.show = is_info_show;
+                        } else if (switched.id == menu_settings_switcher_show_grid.id) {
+                            is_show_grid = switched.data;
+                            if (is_show_grid) {
+                                drawer.polygon_mode = .line;
+                            } else {
+                                drawer.polygon_mode = .fill;
+                            }
+                        }
                     },
                 },
                 .slider => |item| switch (item) {

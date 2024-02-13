@@ -10,7 +10,7 @@ const Type = enum(u32) {
 };
 
 const Self = @This();
-id: u32, // индекс шейдера
+id: u32,
 
 pub fn init(
     allocator: Allocator,
@@ -21,10 +21,9 @@ pub fn init(
     gl.shaderSource(id, 1, &source.ptr, @ptrCast(&.{@as(gl.Int, @intCast(source.len))}));
     gl.compileShader(id);
 
+    // error catching
     var succes: i32 = 1;
     gl.getShaderiv(id, gl.COMPILE_STATUS, &succes);
-
-    // вывод ошибки если шейдер не скомпилировался
     if (succes == 0) {
         var info_log_len: i32 = 0;
         gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
@@ -36,12 +35,10 @@ pub fn init(
     }
 
     const self = Self{ .id = id };
-    //log.debug("init {}", .{self});
     return self;
 }
 
 pub fn deinit(self: Self) void {
-    //log.debug("deinit {}", .{self});
     gl.deleteShader(self.id);
 }
 

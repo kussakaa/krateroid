@@ -13,17 +13,18 @@ name: []const u8,
 pub fn init(
     allocator: Allocator,
     name: []const u8,
-    shaders: []const Shader,
+    shaders: struct {
+        vertex: ?Shader = null,
+        fragment: ?Shader = null,
+    },
 ) !Self {
     const id = gl.createProgram();
-    for (shaders) |shader| {
-        gl.attachShader(id, shader.id);
-    }
 
-    // компоновка шейдерной программы
+    if (shaders.vertex) |vertex| gl.attachShader(id, vertex.id);
+    if (shaders.fragment) |fragment| gl.attachShader(id, fragment.id);
     gl.linkProgram(id);
 
-    // вывод ошибки если программа не скомпоновалась
+    // error catching
     var succes: i32 = 1;
     gl.getProgramiv(id, gl.LINK_STATUS, &succes);
     if (succes <= 0) {
@@ -36,9 +37,8 @@ pub fn init(
         return error.ShaderProgramLinkage;
     }
 
-    for (shaders) |shader| {
-        gl.detachShader(id, shader.id);
-    }
+    if (shaders.vertex) |vertex| gl.detachShader(id, vertex.id);
+    if (shaders.fragment) |fragment| gl.detachShader(id, fragment.id);
 
     const self = Self{ .name = name, .id = id };
     //log.debug("init {}", .{self});

@@ -14,7 +14,6 @@ len: u32,
 pub fn init(attribs: []const struct { size: u32, vbo: Vbo }) !Self {
     var id: u32 = undefined;
 
-    // создание объекта аттрибутов вершин
     gl.genVertexArrays(1, &id);
     gl.bindVertexArray(id);
 

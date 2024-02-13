@@ -117,25 +117,25 @@ pub fn init(info: struct {
     gl.frontFace(gl.CW);
 
     { // LINE
-        _data.line.program = try gfx.program("line");
-        _data.line.uniform.model = try gfx.uniform(_data.line.program, "model");
-        _data.line.uniform.view = try gfx.uniform(_data.line.program, "view");
-        _data.line.uniform.proj = try gfx.uniform(_data.line.program, "proj");
-        _data.line.uniform.color = try gfx.uniform(_data.line.program, "color");
+        _data.line.program = try gfx.addProgram("line");
+        _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
+        _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
+        _data.line.uniform.proj = try gfx.getUniform(_data.line.program, "proj");
+        _data.line.uniform.color = try gfx.getUniform(_data.line.program, "color");
         _data.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
         _data.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.line.vbo }});
     }
     { // CHUNK
-        _data.chunk.program = try gfx.program("chunk");
-        _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
-        _data.chunk.uniform.view = try gfx.uniform(_data.chunk.program, "view");
-        _data.chunk.uniform.proj = try gfx.uniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.color = try gfx.uniform(_data.chunk.program, "color");
-        _data.chunk.uniform.light.color = try gfx.uniform(_data.chunk.program, "light.color");
-        _data.chunk.uniform.light.direction = try gfx.uniform(_data.chunk.program, "light.direction");
-        _data.chunk.uniform.light.ambient = try gfx.uniform(_data.chunk.program, "light.ambient");
-        _data.chunk.uniform.light.diffuse = try gfx.uniform(_data.chunk.program, "light.diffuse");
-        _data.chunk.uniform.light.specular = try gfx.uniform(_data.chunk.program, "light.specular");
+        _data.chunk.program = try gfx.addProgram("chunk");
+        _data.chunk.uniform.model = try gfx.getUniform(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try gfx.getUniform(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try gfx.getUniform(_data.chunk.program, "proj");
+        _data.chunk.uniform.color = try gfx.getUniform(_data.chunk.program, "color");
+        _data.chunk.uniform.light.color = try gfx.getUniform(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try gfx.getUniform(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try gfx.getUniform(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try gfx.getUniform(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try gfx.getUniform(_data.chunk.program, "light.specular");
 
         const s = struct {
             var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
@@ -203,34 +203,34 @@ pub fn init(info: struct {
     { // RECT
         _data.rect.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
         _data.rect.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.rect.vbo }});
-        _data.rect.program = try gfx.program("rect");
-        _data.rect.uniform.vpsize = try gfx.uniform(_data.rect.program, "vpsize");
-        _data.rect.uniform.scale = try gfx.uniform(_data.rect.program, "scale");
-        _data.rect.uniform.rect = try gfx.uniform(_data.rect.program, "rect");
-        _data.rect.uniform.texrect = try gfx.uniform(_data.rect.program, "texrect");
+        _data.rect.program = try gfx.addProgram("rect");
+        _data.rect.uniform.vpsize = try gfx.getUniform(_data.rect.program, "vpsize");
+        _data.rect.uniform.scale = try gfx.getUniform(_data.rect.program, "scale");
+        _data.rect.uniform.rect = try gfx.getUniform(_data.rect.program, "rect");
+        _data.rect.uniform.texrect = try gfx.getUniform(_data.rect.program, "texrect");
     }
     { // PANEL
-        _data.panel.texture = try gfx.texture("panel.png");
+        _data.panel.texture = try gfx.addTexture("panel.png");
     }
     { // BUTTON
-        _data.button.texture = try gfx.texture("button.png");
+        _data.button.texture = try gfx.addTexture("button.png");
     }
     { // SWITCHER
-        _data.switcher.texture = try gfx.texture("switcher.png");
+        _data.switcher.texture = try gfx.addTexture("switcher.png");
     }
     { // SLIDER
-        _data.slider.texture = try gfx.texture("slider.png");
+        _data.slider.texture = try gfx.addTexture("slider.png");
     }
     { // TEXT
-        _data.text.program = try gfx.program("text");
-        _data.text.uniform.vpsize = try gfx.uniform(_data.text.program, "vpsize");
-        _data.text.uniform.scale = try gfx.uniform(_data.text.program, "scale");
-        _data.text.uniform.pos = try gfx.uniform(_data.text.program, "pos");
-        _data.text.uniform.color = try gfx.uniform(_data.text.program, "color");
+        _data.text.program = try gfx.addProgram("text");
+        _data.text.uniform.vpsize = try gfx.getUniform(_data.text.program, "vpsize");
+        _data.text.uniform.scale = try gfx.getUniform(_data.text.program, "scale");
+        _data.text.uniform.pos = try gfx.getUniform(_data.text.program, "pos");
+        _data.text.uniform.color = try gfx.getUniform(_data.text.program, "color");
         _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
         _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-        _data.text.texture = try gfx.texture("text.png");
+        _data.text.texture = try gfx.addTexture("text.png");
     }
 }
 
@@ -288,7 +288,7 @@ pub fn draw() !void {
         }
     }
 
-    //gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
+    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // PANEL
         _data.rect.program.use();

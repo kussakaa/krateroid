@@ -1,22 +1,16 @@
-const std = @import("std");
 const gl = @import("zopengl").bindings;
-
-const log = std.log.scoped(.gfx);
 
 const Program = @import("Program.zig");
 const Self = @This();
 
 id: gl.Int,
 
-// получение индекса юниформы в шейдерной программе
 pub fn init(program: Program, name: [:0]const u8) !Self {
     const id = gl.getUniformLocation(program.id, name);
     const self = Self{ .id = id };
-    //log.debug("init {}", .{self});
     return self;
 }
 
-// отправление значения юниформы в программу
 pub fn set(self: Self, value: anytype) void {
     const id = self.id;
     switch (comptime @TypeOf(value)) {
@@ -53,6 +47,6 @@ pub fn set(self: Self, value: anytype) void {
             };
             gl.uniformMatrix4fv(id, 1, gl.FALSE, &array);
         },
-        else => @compileError("gfx.Program.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
+        else => @compileError("gfx.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
     }
 }
