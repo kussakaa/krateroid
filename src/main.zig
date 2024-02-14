@@ -1,5 +1,6 @@
 const std = @import("std");
 const zm = @import("zmath");
+const gl = @import("zopengl").bindings;
 const stb = @import("zstbi");
 const audio = @import("zaudio");
 
@@ -306,9 +307,9 @@ pub fn main() !void {
                             is_show_grid = !is_show_grid;
                             menu_settings_switcher_show_grid.status = is_show_grid;
                             if (is_show_grid) {
-                                drawer.polygon_mode = .line;
+                                drawer.polygon_mode = gl.LINE;
                             } else {
-                                drawer.polygon_mode = .fill;
+                                drawer.polygon_mode = gl.FILL;
                             }
                         }
                         if (id == .f10) break :loop;
@@ -436,9 +437,9 @@ pub fn main() !void {
                         } else if (switched.id == menu_settings_switcher_show_grid.id) {
                             is_show_grid = switched.data;
                             if (is_show_grid) {
-                                drawer.polygon_mode = .line;
+                                drawer.polygon_mode = gl.LINE;
                             } else {
-                                drawer.polygon_mode = .fill;
+                                drawer.polygon_mode = gl.FILL;
                             }
                         }
                     },

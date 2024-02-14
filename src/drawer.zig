@@ -21,8 +21,8 @@ const Mat = zm.Mat;
 const Vec = zm.Vec;
 const Color = Vec;
 
-pub var polygon_mode: gfx.PolygonMode = undefined;
 var _allocator: Allocator = undefined;
+pub var polygon_mode: gl.Enum = gl.FILL;
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
     var direction: Vec = .{ 1.0, 0.5, 1.0, 1.0 };
@@ -32,6 +32,8 @@ const light = struct {
 };
 const _data = struct {
     const line = struct {
+        var buffer: gfx.Buffer = undefined;
+        var vertex_array: gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -39,10 +41,11 @@ const _data = struct {
             var proj: gfx.Uniform = undefined;
             var color: gfx.Uniform = undefined;
         };
-        var vbo: gfx.Vbo = undefined;
-        var vao: gfx.Vao = undefined;
     };
     const chunk = struct {
+        var buffer_pos: gfx.Buffer = undefined;
+        var buffer_nrm: gfx.Buffer = undefined;
+        var vertex_array: gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -57,11 +60,10 @@ const _data = struct {
                 var specular: gfx.Uniform = undefined;
             };
         };
-        var vbo_pos: gfx.Vbo = undefined;
-        var vbo_nrm: gfx.Vbo = undefined;
-        var vao: gfx.Vao = undefined;
     };
     const rect = struct {
+        var buffer: gfx.Buffer = undefined;
+        var vertex_array: gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -69,8 +71,6 @@ const _data = struct {
             var rect: gfx.Uniform = undefined;
             var texrect: gfx.Uniform = undefined;
         };
-        var vbo: gfx.Vbo = undefined;
-        var vao: gfx.Vao = undefined;
     };
     const panel = struct {
         var texture: gfx.Texture = undefined;
@@ -85,6 +85,9 @@ const _data = struct {
         var texture: gfx.Texture = undefined;
     };
     const text = struct {
+        var buffers_pos: Array(gfx.Buffer) = undefined;
+        var buffers_tex: Array(gfx.Buffer) = undefined;
+        var vertex_arrays: Array(gfx.VertexArray) = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -92,19 +95,14 @@ const _data = struct {
             var pos: gfx.Uniform = undefined;
             var color: gfx.Uniform = undefined;
         };
-        var vbo_pos: Array(gfx.Vbo) = undefined;
-        var vbo_tex: Array(gfx.Vbo) = undefined;
-        var vao: Array(gfx.Vao) = undefined;
         var texture: gfx.Texture = undefined;
     };
 };
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
-    polygon_mode: gfx.PolygonMode = .fill,
 }) !void {
     _allocator = info.allocator;
-    polygon_mode = info.polygon_mode;
 
     gl.enable(gl.MULTISAMPLE);
     gl.enable(gl.LINE_SMOOTH);
@@ -117,29 +115,25 @@ pub fn init(info: struct {
     gl.frontFace(gl.CW);
 
     { // LINE
-        _data.line.program = try gfx.addProgram("line");
+        _data.line.buffer = try gfx.getBuffer("line");
+        _data.line.buffer.data(.array, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
+        _data.line.buffer.data_type = .u8;
+        _data.line.buffer.vertex_size = 3;
+        _data.line.vertex_array = try gfx.getVertexArray("line");
+        _data.line.vertex_array.bindBuffer(0, _data.line.buffer);
+        _data.line.vertex_array.mode = .lines;
+        _data.line.vertex_array.count = 2;
+        _data.line.program = try gfx.getProgram("line");
         _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
         _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
         _data.line.uniform.proj = try gfx.getUniform(_data.line.program, "proj");
         _data.line.uniform.color = try gfx.getUniform(_data.line.program, "color");
-        _data.line.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 1 }, .static);
-        _data.line.vao = try gfx.Vao.init(&.{.{ .size = 3, .vbo = _data.line.vbo }});
     }
     { // CHUNK
-        _data.chunk.program = try gfx.addProgram("chunk");
-        _data.chunk.uniform.model = try gfx.getUniform(_data.chunk.program, "model");
-        _data.chunk.uniform.view = try gfx.getUniform(_data.chunk.program, "view");
-        _data.chunk.uniform.proj = try gfx.getUniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.color = try gfx.getUniform(_data.chunk.program, "color");
-        _data.chunk.uniform.light.color = try gfx.getUniform(_data.chunk.program, "light.color");
-        _data.chunk.uniform.light.direction = try gfx.getUniform(_data.chunk.program, "light.direction");
-        _data.chunk.uniform.light.ambient = try gfx.getUniform(_data.chunk.program, "light.ambient");
-        _data.chunk.uniform.light.diffuse = try gfx.getUniform(_data.chunk.program, "light.diffuse");
-        _data.chunk.uniform.light.specular = try gfx.getUniform(_data.chunk.program, "light.specular");
 
         const s = struct {
-            var vbo_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
-            var vbo_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
+            var buffer_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
+            var buffer_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
         };
 
         const chunk = world.chunks[0][0].?;
@@ -166,92 +160,110 @@ pub fn init(info: struct {
                         const v2 = mct.edge[mct.tri[index][i + 1]];
                         const v3 = mct.edge[mct.tri[index][i + 2]];
 
-                        s.vbo_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
-                        s.vbo_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
-                        s.vbo_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
-                        s.vbo_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
-                        s.vbo_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
-                        s.vbo_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
-                        s.vbo_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
-                        s.vbo_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
-                        s.vbo_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
+                        s.buffer_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
+                        s.buffer_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
+                        s.buffer_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
+                        s.buffer_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
+                        s.buffer_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
+                        s.buffer_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
+                        s.buffer_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
+                        s.buffer_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
+                        s.buffer_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
 
                         const n = zm.cross3(v2 - v1, v3 - v1);
 
-                        s.vbo_nrm_data[(cnt + 0) * 3 + 0] = n[0];
-                        s.vbo_nrm_data[(cnt + 0) * 3 + 1] = n[1];
-                        s.vbo_nrm_data[(cnt + 0) * 3 + 2] = n[2];
-                        s.vbo_nrm_data[(cnt + 1) * 3 + 0] = n[0];
-                        s.vbo_nrm_data[(cnt + 1) * 3 + 1] = n[1];
-                        s.vbo_nrm_data[(cnt + 1) * 3 + 2] = n[2];
-                        s.vbo_nrm_data[(cnt + 2) * 3 + 0] = n[0];
-                        s.vbo_nrm_data[(cnt + 2) * 3 + 1] = n[1];
-                        s.vbo_nrm_data[(cnt + 2) * 3 + 2] = n[2];
+                        s.buffer_nrm_data[(cnt + 0) * 3 + 0] = n[0];
+                        s.buffer_nrm_data[(cnt + 0) * 3 + 1] = n[1];
+                        s.buffer_nrm_data[(cnt + 0) * 3 + 2] = n[2];
+                        s.buffer_nrm_data[(cnt + 1) * 3 + 0] = n[0];
+                        s.buffer_nrm_data[(cnt + 1) * 3 + 1] = n[1];
+                        s.buffer_nrm_data[(cnt + 1) * 3 + 2] = n[2];
+                        s.buffer_nrm_data[(cnt + 2) * 3 + 0] = n[0];
+                        s.buffer_nrm_data[(cnt + 2) * 3 + 1] = n[1];
+                        s.buffer_nrm_data[(cnt + 2) * 3 + 2] = n[2];
 
                         cnt += 3;
                     }
                 }
             }
         }
-        _data.chunk.vbo_pos = try gfx.Vbo.init(f32, s.vbo_pos_data[0..(cnt * 3)], .static);
-        _data.chunk.vbo_nrm = try gfx.Vbo.init(f32, s.vbo_nrm_data[0..(cnt * 3)], .static);
-        _data.chunk.vao = try gfx.Vao.init(&.{
-            .{ .size = 3, .vbo = _data.chunk.vbo_pos },
-            .{ .size = 3, .vbo = _data.chunk.vbo_nrm },
-        });
+
+        _data.chunk.buffer_pos = try gfx.getBuffer("chunk_pos");
+        _data.chunk.buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_pos.data_type = .f32;
+        _data.chunk.buffer_pos.vertex_size = 3;
+        _data.chunk.buffer_nrm = try gfx.getBuffer("chunk_nrm");
+        _data.chunk.buffer_nrm.data(.array, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_nrm.data_type = .f32;
+        _data.chunk.buffer_nrm.vertex_size = 3;
+
+        _data.chunk.vertex_array = try gfx.getVertexArray("chunk");
+        _data.chunk.vertex_array.bindBuffer(0, _data.chunk.buffer_pos);
+        _data.chunk.vertex_array.bindBuffer(1, _data.chunk.buffer_nrm);
+        _data.chunk.vertex_array.count = @intCast(cnt);
+        _data.chunk.vertex_array.mode = .triangles;
+
+        _data.chunk.program = try gfx.getProgram("chunk");
+        _data.chunk.uniform.model = try gfx.getUniform(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try gfx.getUniform(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try gfx.getUniform(_data.chunk.program, "proj");
+        _data.chunk.uniform.color = try gfx.getUniform(_data.chunk.program, "color");
+        _data.chunk.uniform.light.color = try gfx.getUniform(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try gfx.getUniform(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try gfx.getUniform(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try gfx.getUniform(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try gfx.getUniform(_data.chunk.program, "light.specular");
     }
     { // RECT
-        _data.rect.vbo = try gfx.Vbo.init(u8, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static);
-        _data.rect.vao = try gfx.Vao.init(&.{.{ .size = 2, .vbo = _data.rect.vbo }});
-        _data.rect.program = try gfx.addProgram("rect");
+        _data.rect.buffer = try gfx.getBuffer("rect");
+        _data.rect.buffer.data(.array, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
+        _data.rect.buffer.data_type = .u8;
+        _data.rect.buffer.vertex_size = 2;
+        _data.rect.vertex_array = try gfx.getVertexArray("rect");
+        _data.rect.vertex_array.bindBuffer(0, _data.rect.buffer);
+        _data.rect.vertex_array.mode = .triangle_strip;
+        _data.rect.vertex_array.count = 4;
+
+        _data.rect.program = try gfx.getProgram("rect");
         _data.rect.uniform.vpsize = try gfx.getUniform(_data.rect.program, "vpsize");
         _data.rect.uniform.scale = try gfx.getUniform(_data.rect.program, "scale");
         _data.rect.uniform.rect = try gfx.getUniform(_data.rect.program, "rect");
         _data.rect.uniform.texrect = try gfx.getUniform(_data.rect.program, "texrect");
     }
     { // PANEL
-        _data.panel.texture = try gfx.addTexture("panel.png");
+        _data.panel.texture = try gfx.getTexture("panel.png");
     }
     { // BUTTON
-        _data.button.texture = try gfx.addTexture("button.png");
+        _data.button.texture = try gfx.getTexture("button.png");
     }
     { // SWITCHER
-        _data.switcher.texture = try gfx.addTexture("switcher.png");
+        _data.switcher.texture = try gfx.getTexture("switcher.png");
     }
     { // SLIDER
-        _data.slider.texture = try gfx.addTexture("slider.png");
+        _data.slider.texture = try gfx.getTexture("slider.png");
     }
     { // TEXT
-        _data.text.program = try gfx.addProgram("text");
+        _data.text.buffers_pos = try Array(gfx.Buffer).initCapacity(_allocator, 32);
+        _data.text.buffers_tex = try Array(gfx.Buffer).initCapacity(_allocator, 32);
+        _data.text.vertex_arrays = try Array(gfx.VertexArray).initCapacity(_allocator, 32);
+        _data.text.program = try gfx.getProgram("text");
         _data.text.uniform.vpsize = try gfx.getUniform(_data.text.program, "vpsize");
         _data.text.uniform.scale = try gfx.getUniform(_data.text.program, "scale");
         _data.text.uniform.pos = try gfx.getUniform(_data.text.program, "pos");
         _data.text.uniform.color = try gfx.getUniform(_data.text.program, "color");
-        _data.text.vbo_pos = try Array(gfx.Vbo).initCapacity(_allocator, 32);
-        _data.text.vbo_tex = try Array(gfx.Vbo).initCapacity(_allocator, 32);
-        _data.text.vao = try Array(gfx.Vao).initCapacity(_allocator, 32);
-        _data.text.texture = try gfx.addTexture("text.png");
+        _data.text.texture = try gfx.getTexture("text.png");
     }
 }
 
 pub fn deinit() void {
-    defer _data.line.vbo.deinit();
-    defer _data.line.vao.deinit();
-    defer _data.chunk.vbo_pos.deinit();
-    defer _data.chunk.vao.deinit();
-    defer _data.rect.vbo.deinit();
-    defer _data.rect.vao.deinit();
-    defer _data.text.vbo_pos.deinit(_allocator);
-    defer _data.text.vbo_tex.deinit(_allocator);
-    defer _data.text.vao.deinit(_allocator);
-    defer for (_data.text.vao.items) |item| item.deinit();
-    defer for (_data.text.vbo_tex.items) |item| item.deinit();
-    defer for (_data.text.vbo_pos.items) |item| item.deinit();
+    defer _data.text.buffers_pos.deinit(_allocator);
+    defer _data.text.buffers_tex.deinit(_allocator);
+    defer _data.text.vertex_arrays.deinit(_allocator);
 }
 
 pub fn draw() !void {
     gl.enable(gl.DEPTH_TEST);
-    gl.polygonMode(gl.FRONT_AND_BACK, @intFromEnum(polygon_mode));
+    gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 
     { // CHUNK
         _data.chunk.program.use();
@@ -264,7 +276,7 @@ pub fn draw() !void {
         _data.chunk.uniform.light.ambient.set(light.ambient);
         _data.chunk.uniform.light.diffuse.set(light.diffuse);
         _data.chunk.uniform.light.specular.set(light.specular);
-        _data.chunk.vao.draw(.triangles);
+        _data.chunk.vertex_array.draw();
     }
 
     gl.disable(gl.DEPTH_TEST);
@@ -283,7 +295,7 @@ pub fn draw() !void {
                 _data.line.uniform.view.set(camera.view);
                 _data.line.uniform.proj.set(camera.proj);
                 _data.line.uniform.color.set(l.color);
-                _data.line.vao.draw(.lines);
+                _data.line.vertex_array.draw();
             }
         }
     }
@@ -303,7 +315,7 @@ pub fn draw() !void {
                 _data.rect.uniform.texrect.set(
                     gui.rect(0, 0, @intCast(_data.panel.texture.size[0]), @intCast(_data.panel.texture.size[1])).vector(),
                 );
-                _data.rect.vao.draw(.triangle_strip);
+                _data.rect.vertex_array.draw();
             }
         }
     }
@@ -319,7 +331,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
                 }
-                _data.rect.vao.draw(.triangle_strip);
+                _data.rect.vertex_array.draw();
             }
         }
     }
@@ -342,7 +354,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
                 }
-                _data.rect.vao.draw(.triangle_strip);
+                _data.rect.vertex_array.draw();
 
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.rect(
@@ -357,7 +369,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 10, 16).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 16, 16).vector()),
                 }
-                _data.rect.vao.draw(.triangle_strip);
+                _data.rect.vertex_array.draw();
             }
         }
     }
@@ -373,7 +385,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
                 }
-                _data.rect.vao.draw(.triangle_strip);
+                _data.rect.vertex_array.draw();
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
@@ -385,7 +397,12 @@ pub fn draw() !void {
                         item.rect.max[1] * gui.scale,
                     ), window.size).vector(),
                 );
-                _data.rect.vao.draw(.triangle_strip);
+                switch (item.state) {
+                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 8, 6, 16).vector()),
+                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 12, 16).vector()),
+                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 18, 16).vector()),
+                }
+                _data.rect.vertex_array.draw();
             }
         }
     }
@@ -393,10 +410,10 @@ pub fn draw() !void {
         _data.text.program.use();
         _data.text.texture.use();
         for (gui.texts.items, 0..) |t, i| {
-            if (i == _data.text.vao.items.len or t.usage == .dynamic) {
+            if (i == _data.text.vertex_arrays.items.len or t.usage == .dynamic) {
                 const s = struct {
-                    var vbo_pos_data: [4096]u16 = [1]u16{0} ** 4096;
-                    var vbo_tex_data: [2048]u16 = [1]u16{0} ** 2048;
+                    var buffer_pos_data: [4096]u16 = [1]u16{0} ** 4096;
+                    var buffer_tex_data: [2048]u16 = [1]u16{0} ** 2048;
                 };
 
                 var pos: u16 = 0;
@@ -412,50 +429,65 @@ pub fn draw() !void {
                     const uvwidth = width;
 
                     // triangle 1
-                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
-                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
-                    s.vbo_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
-                    s.vbo_tex_data[cnt * 6 + 0] = uvpos;
-                    s.vbo_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
-                    s.vbo_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
+                    s.buffer_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
+                    s.buffer_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
+                    s.buffer_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
+                    s.buffer_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+                    s.buffer_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
+                    s.buffer_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
+                    s.buffer_tex_data[cnt * 6 + 0] = uvpos;
+                    s.buffer_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
+                    s.buffer_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
 
                     // triangle 2
-                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-                    s.vbo_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
-                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
-                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-                    s.vbo_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
-                    s.vbo_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-                    s.vbo_tex_data[cnt * 6 + 4] = uvpos;
-                    s.vbo_tex_data[cnt * 6 + 5] = uvpos;
+                    s.buffer_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
+                    s.buffer_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
+                    s.buffer_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
+                    s.buffer_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
+                    s.buffer_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
+                    s.buffer_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
+                    s.buffer_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
+                    s.buffer_tex_data[cnt * 6 + 4] = uvpos;
+                    s.buffer_tex_data[cnt * 6 + 5] = uvpos;
 
                     pos += width + 1;
                     cnt += 1;
                 }
 
-                if (i == _data.text.vao.items.len) {
-                    const usage: gfx.Usage = switch (t.usage) {
-                        .static => .static,
-                        .dynamic => .dynamic,
+                if (i == _data.text.vertex_arrays.items.len) {
+                    const usage: gfx.Buffer.Usage = switch (t.usage) {
+                        .static => .static_draw,
+                        .dynamic => .dynamic_draw,
                     };
 
-                    const vbo_pos = try gfx.Vbo.init(u16, s.vbo_pos_data[0..(cnt * 12)], usage);
-                    const vbo_tex = try gfx.Vbo.init(u16, s.vbo_tex_data[0..(cnt * 6)], usage);
-                    const vao = try gfx.Vao.init(&.{
-                        .{ .size = 2, .vbo = vbo_pos },
-                        .{ .size = 1, .vbo = vbo_tex },
-                    });
+                    const buffer_pos_name = try std.mem.concatWithSentinel(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), " pos" }, 0);
+                    defer _allocator.free(buffer_pos_name);
+                    var buffer_pos = try gfx.getBuffer(buffer_pos_name);
+                    buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]), usage);
+                    buffer_pos.data_type = .u16;
+                    buffer_pos.vertex_size = 2;
 
-                    try _data.text.vbo_pos.append(_allocator, vbo_pos);
-                    try _data.text.vbo_tex.append(_allocator, vbo_tex);
-                    try _data.text.vao.append(_allocator, vao);
+                    const buffer_tex_name = try std.mem.concatWithSentinel(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), " tex" }, 0);
+                    defer _allocator.free(buffer_tex_name);
+                    var buffer_tex = try gfx.getBuffer(buffer_tex_name);
+                    buffer_tex.data(.array, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]), usage);
+                    buffer_tex.data_type = .u16;
+                    buffer_tex.vertex_size = 1;
+
+                    const vertex_array_name = try std.mem.concatWithSentinel(_allocator, u8, &.{std.mem.sliceAsBytes(t.data)}, 0);
+                    defer _allocator.free(vertex_array_name);
+                    var vertex_array = try gfx.getVertexArray(vertex_array_name);
+                    vertex_array.bindBuffer(0, buffer_pos);
+                    vertex_array.bindBuffer(1, buffer_tex);
+                    vertex_array.count = @intCast(cnt * 6);
+                    vertex_array.mode = .triangles;
+
+                    try _data.text.buffers_pos.append(_allocator, buffer_pos);
+                    try _data.text.buffers_tex.append(_allocator, buffer_tex);
+                    try _data.text.vertex_arrays.append(_allocator, vertex_array);
                 } else {
-                    try _data.text.vbo_pos.items[i].subdata(u16, s.vbo_pos_data[0..(cnt * 12)]);
-                    try _data.text.vbo_tex.items[i].subdata(u16, s.vbo_tex_data[0..(cnt * 6)]);
+                    _data.text.buffers_pos.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]));
+                    _data.text.buffers_tex.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]));
                 }
             }
 
@@ -466,7 +498,7 @@ pub fn draw() !void {
                 _data.text.uniform.scale.set(gui.scale);
                 _data.text.uniform.pos.set(pos);
                 _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-                _data.text.vao.items[i].draw(.triangles);
+                _data.text.vertex_arrays.items[i].draw();
             }
         }
     }
