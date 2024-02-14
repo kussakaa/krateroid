@@ -26,7 +26,7 @@ pub fn deinit(self: Self) void {
     gl.deleteVertexArrays(1, &self.id);
 }
 
-pub fn bindBuffer(self: Self, i: gl.Uint, buffer: Buffer) void {
+pub fn bindBuffer(self: Self, i: gl.Uint, buffer: *const Buffer) void {
     gl.bindVertexArray(self.id);
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer.id);
     gl.enableVertexAttribArray(i);

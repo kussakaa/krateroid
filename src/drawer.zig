@@ -32,8 +32,8 @@ const light = struct {
 };
 const _data = struct {
     const line = struct {
-        var buffer: gfx.Buffer = undefined;
-        var vertex_array: gfx.VertexArray = undefined;
+        var buffer: *gfx.Buffer = undefined;
+        var vertex_array: *gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -43,9 +43,9 @@ const _data = struct {
         };
     };
     const chunk = struct {
-        var buffer_pos: gfx.Buffer = undefined;
-        var buffer_nrm: gfx.Buffer = undefined;
-        var vertex_array: gfx.VertexArray = undefined;
+        var buffer_pos: *gfx.Buffer = undefined;
+        var buffer_nrm: *gfx.Buffer = undefined;
+        var vertex_array: *gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -62,8 +62,8 @@ const _data = struct {
         };
     };
     const rect = struct {
-        var buffer: gfx.Buffer = undefined;
-        var vertex_array: gfx.VertexArray = undefined;
+        var buffer: *gfx.Buffer = undefined;
+        var vertex_array: *gfx.VertexArray = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -73,21 +73,18 @@ const _data = struct {
         };
     };
     const panel = struct {
-        var texture: gfx.Texture = undefined;
+        var texture: *gfx.Texture = undefined;
     };
     const button = struct {
-        var texture: gfx.Texture = undefined;
+        var texture: *gfx.Texture = undefined;
     };
     const switcher = struct {
-        var texture: gfx.Texture = undefined;
+        var texture: *gfx.Texture = undefined;
     };
     const slider = struct {
-        var texture: gfx.Texture = undefined;
+        var texture: *gfx.Texture = undefined;
     };
     const text = struct {
-        var buffers_pos: Array(gfx.Buffer) = undefined;
-        var buffers_tex: Array(gfx.Buffer) = undefined;
-        var vertex_arrays: Array(gfx.VertexArray) = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -95,7 +92,7 @@ const _data = struct {
             var pos: gfx.Uniform = undefined;
             var color: gfx.Uniform = undefined;
         };
-        var texture: gfx.Texture = undefined;
+        var texture: *gfx.Texture = undefined;
     };
 };
 
@@ -243,9 +240,6 @@ pub fn init(info: struct {
         _data.slider.texture = try gfx.getTexture("slider.png");
     }
     { // TEXT
-        _data.text.buffers_pos = try Array(gfx.Buffer).initCapacity(_allocator, 32);
-        _data.text.buffers_tex = try Array(gfx.Buffer).initCapacity(_allocator, 32);
-        _data.text.vertex_arrays = try Array(gfx.VertexArray).initCapacity(_allocator, 32);
         _data.text.program = try gfx.getProgram("text");
         _data.text.uniform.vpsize = try gfx.getUniform(_data.text.program, "vpsize");
         _data.text.uniform.scale = try gfx.getUniform(_data.text.program, "scale");
@@ -255,11 +249,7 @@ pub fn init(info: struct {
     }
 }
 
-pub fn deinit() void {
-    defer _data.text.buffers_pos.deinit(_allocator);
-    defer _data.text.buffers_tex.deinit(_allocator);
-    defer _data.text.vertex_arrays.deinit(_allocator);
-}
+pub fn deinit() void {}
 
 pub fn draw() !void {
     gl.enable(gl.DEPTH_TEST);
@@ -375,10 +365,10 @@ pub fn draw() !void {
     }
     { // SLIDER
         _data.slider.texture.use();
+        _data.rect.uniform.vpsize.set(window.size);
+        _data.rect.uniform.scale.set(gui.scale);
         for (gui.sliders.items) |item| {
             if (item.menu.show) {
-                _data.rect.uniform.vpsize.set(window.size);
-                _data.rect.uniform.scale.set(gui.scale);
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
                     .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 6, 8).vector()),
@@ -409,97 +399,93 @@ pub fn draw() !void {
     { // TEXT
         _data.text.program.use();
         _data.text.texture.use();
-        for (gui.texts.items, 0..) |t, i| {
-            if (i == _data.text.vertex_arrays.items.len or t.usage == .dynamic) {
-                const s = struct {
-                    var buffer_pos_data: [4096]u16 = [1]u16{0} ** 4096;
-                    var buffer_tex_data: [2048]u16 = [1]u16{0} ** 2048;
-                };
-
-                var pos: u16 = 0;
-                var cnt: usize = 0;
-                for (t.data) |cid| {
-                    if (cid == ' ') {
-                        pos += 3;
-                        continue;
-                    }
-
-                    const width = gui.font.chars[cid].width;
-                    const uvpos = gui.font.chars[cid].pos;
-                    const uvwidth = width;
-
-                    // triangle 1
-                    s.buffer_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-                    s.buffer_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
-                    s.buffer_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-                    s.buffer_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
-                    s.buffer_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
-                    s.buffer_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
-                    s.buffer_tex_data[cnt * 6 + 0] = uvpos;
-                    s.buffer_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
-                    s.buffer_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
-
-                    // triangle 2
-                    s.buffer_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-                    s.buffer_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
-                    s.buffer_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
-                    s.buffer_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
-                    s.buffer_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-                    s.buffer_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
-                    s.buffer_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-                    s.buffer_tex_data[cnt * 6 + 4] = uvpos;
-                    s.buffer_tex_data[cnt * 6 + 5] = uvpos;
-
-                    pos += width + 1;
-                    cnt += 1;
-                }
-
-                if (i == _data.text.vertex_arrays.items.len) {
-                    const usage: gfx.Buffer.Usage = switch (t.usage) {
-                        .static => .static_draw,
-                        .dynamic => .dynamic_draw,
-                    };
-
-                    const buffer_pos_name = try std.mem.concatWithSentinel(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), " pos" }, 0);
-                    defer _allocator.free(buffer_pos_name);
-                    var buffer_pos = try gfx.getBuffer(buffer_pos_name);
-                    buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]), usage);
-                    buffer_pos.data_type = .u16;
-                    buffer_pos.vertex_size = 2;
-
-                    const buffer_tex_name = try std.mem.concatWithSentinel(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), " tex" }, 0);
-                    defer _allocator.free(buffer_tex_name);
-                    var buffer_tex = try gfx.getBuffer(buffer_tex_name);
-                    buffer_tex.data(.array, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]), usage);
-                    buffer_tex.data_type = .u16;
-                    buffer_tex.vertex_size = 1;
-
-                    const vertex_array_name = try std.mem.concatWithSentinel(_allocator, u8, &.{std.mem.sliceAsBytes(t.data)}, 0);
-                    defer _allocator.free(vertex_array_name);
-                    var vertex_array = try gfx.getVertexArray(vertex_array_name);
-                    vertex_array.bindBuffer(0, buffer_pos);
-                    vertex_array.bindBuffer(1, buffer_tex);
-                    vertex_array.count = @intCast(cnt * 6);
-                    vertex_array.mode = .triangles;
-
-                    try _data.text.buffers_pos.append(_allocator, buffer_pos);
-                    try _data.text.buffers_tex.append(_allocator, buffer_tex);
-                    try _data.text.vertex_arrays.append(_allocator, vertex_array);
-                } else {
-                    _data.text.buffers_pos.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]));
-                    _data.text.buffers_tex.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]));
-                }
-            }
-
-            if (t.menu.show) {
-                const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
-
-                _data.text.uniform.vpsize.set(window.size);
-                _data.text.uniform.scale.set(gui.scale);
-                _data.text.uniform.pos.set(pos);
-                _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-                _data.text.vertex_arrays.items[i].draw();
-            }
-        }
+        _data.text.uniform.vpsize.set(window.size);
+        _data.text.uniform.scale.set(gui.scale);
+        _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+        //_data.text.uniform.pos.set(pos);
+        //for (gui.texts.items, 0..) |t, i| {
+        //    if (i == _data.text.vertex_arrays.items.len or t.usage == .dynamic) {
+        //        const s = struct {
+        //            var buffer_pos_data: [4096]u16 = [1]u16{0} ** 4096;
+        //            var buffer_tex_data: [2048]u16 = [1]u16{0} ** 2048;
+        //        };
+        //
+        //        var pos: u16 = 0;
+        //        var cnt: usize = 0;
+        //        for (t.data) |cid| {
+        //            if (cid == ' ') {
+        //                pos += 3;
+        //                continue;
+        //            }
+        //
+        //            const width = gui.font.chars[cid].width;
+        //            const uvpos = gui.font.chars[cid].pos;
+        //            const uvwidth = width;
+        //
+        //            // triangle 1
+        //            s.buffer_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
+        //            s.buffer_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
+        //            s.buffer_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
+        //            s.buffer_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
+        //            s.buffer_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
+        //            s.buffer_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
+        //            s.buffer_tex_data[cnt * 6 + 0] = uvpos;
+        //            s.buffer_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
+        //            s.buffer_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
+        //
+        //            // triangle 2
+        //            s.buffer_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
+        //            s.buffer_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
+        //            s.buffer_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
+        //            s.buffer_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
+        //            s.buffer_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
+        //            s.buffer_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
+        //            s.buffer_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
+        //            s.buffer_tex_data[cnt * 6 + 4] = uvpos;
+        //            s.buffer_tex_data[cnt * 6 + 5] = uvpos;
+        //
+        //            pos += width + 1;
+        //            cnt += 1;
+        //        }
+        //
+        //        if (i == _data.text.vertex_arrays.items.len) {
+        //            const usage: gfx.Buffer.Usage = switch (t.usage) {
+        //                .static => .static_draw,
+        //                .dynamic => .dynamic_draw,
+        //            };
+        //
+        //            const buffer_pos_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_buffer_pos" });
+        //            var buffer_pos = try gfx.getBuffer(buffer_pos_name);
+        //            buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]), usage);
+        //            buffer_pos.data_type = .u16;
+        //            buffer_pos.vertex_size = 2;
+        //
+        //            const buffer_tex_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_buffer_tex" });
+        //            var buffer_tex = try gfx.getBuffer(buffer_tex_name);
+        //            buffer_tex.data(.array, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]), usage);
+        //            buffer_tex.data_type = .u16;
+        //            buffer_tex.vertex_size = 1;
+        //
+        //            const vertex_array_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_vertex_array" }, 0);
+        //            var vertex_array = try gfx.getVertexArray(vertex_array_name);
+        //            vertex_array.bindBuffer(0, buffer_pos);
+        //            vertex_array.bindBuffer(1, buffer_tex);
+        //            vertex_array.count = @intCast(cnt * 6);
+        //            vertex_array.mode = .triangles;
+        //
+        //            try _data.text.buffers_pos.append(_allocator, buffer_pos);
+        //            try _data.text.buffers_tex.append(_allocator, buffer_tex);
+        //            try _data.text.vertex_arrays.append(_allocator, vertex_array);
+        //        } else {
+        //            _data.text.buffers_pos.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]));
+        //            _data.text.buffers_tex.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]));
+        //        }
+        //    }
+        //
+        //    if (t.menu.show) {
+        //        const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
+        //        _data.text.vertex_arrays.items[i].draw();
+        //    }
+        //}
     }
 }

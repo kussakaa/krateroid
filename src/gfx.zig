@@ -39,28 +39,28 @@ pub fn deinit() void {
     _textures.deinit(_allocator);
 }
 
-pub fn getBuffer(name: []const u8) !Buffer {
-    if (_buffers.get(name)) |buffer| {
+pub fn getBuffer(name: []const u8) !*Buffer {
+    if (_buffers.getPtr(name)) |buffer| {
         return buffer;
     } else {
         log.debug("init buffer {s}", .{name});
         try _buffers.put(_allocator, name, Buffer.init(name));
-        return _buffers.get(name).?;
+        return _buffers.getPtr(name).?;
     }
 }
 
-pub fn getVertexArray(name: []const u8) !VertexArray {
-    if (_vertex_arrays.get(name)) |vertex_array| {
+pub fn getVertexArray(name: []const u8) !*VertexArray {
+    if (_vertex_arrays.getPtr(name)) |vertex_array| {
         return vertex_array;
     } else {
         log.debug("init vertex array {s}", .{name});
         try _vertex_arrays.put(_allocator, name, VertexArray.init(name));
-        return _vertex_arrays.get(name).?;
+        return _vertex_arrays.getPtr(name).?;
     }
 }
 
-pub fn getTexture(path: []const u8) !Texture {
-    if (_textures.get(path)) |program| {
+pub fn getTexture(path: []const u8) !*Texture {
+    if (_textures.getPtr(path)) |program| {
         return program;
     } else {
         const prefix = "data/texture/";
@@ -70,7 +70,7 @@ pub fn getTexture(path: []const u8) !Texture {
 
         log.debug("init texture {s}", .{path});
         try _textures.put(_allocator, path, try Texture.init(fullpath));
-        return _textures.get(path).?;
+        return _textures.getPtr(path).?;
     }
 }
 
