@@ -33,7 +33,7 @@ const light = struct {
 const _data = struct {
     const line = struct {
         var buffer: *gfx.Buffer = undefined;
-        var vertex_array: *gfx.VertexArray = undefined;
+        var mesh: *gfx.Mesh = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -45,7 +45,7 @@ const _data = struct {
     const chunk = struct {
         var buffer_pos: *gfx.Buffer = undefined;
         var buffer_nrm: *gfx.Buffer = undefined;
-        var vertex_array: *gfx.VertexArray = undefined;
+        var mesh: *gfx.Mesh = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var model: gfx.Uniform = undefined;
@@ -63,7 +63,7 @@ const _data = struct {
     };
     const rect = struct {
         var buffer: *gfx.Buffer = undefined;
-        var vertex_array: *gfx.VertexArray = undefined;
+        var mesh: *gfx.Mesh = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
             var vpsize: gfx.Uniform = undefined;
@@ -114,13 +114,13 @@ pub fn init(info: struct {
 
     { // LINE
         _data.line.buffer = try gfx.getBuffer("line");
-        _data.line.buffer.data(.array, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
+        _data.line.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
         _data.line.buffer.data_type = .u8;
         _data.line.buffer.vertex_size = 3;
-        _data.line.vertex_array = try gfx.getVertexArray("line");
-        _data.line.vertex_array.bindBuffer(0, _data.line.buffer);
-        _data.line.vertex_array.mode = .lines;
-        _data.line.vertex_array.count = 2;
+        _data.line.mesh = try gfx.getMesh("line");
+        _data.line.mesh.bindBuffer(0, _data.line.buffer);
+        _data.line.mesh.mode = .lines;
+        _data.line.mesh.count = 2;
         _data.line.program = try gfx.getProgram("line");
         _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
         _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
@@ -187,19 +187,19 @@ pub fn init(info: struct {
         }
 
         _data.chunk.buffer_pos = try gfx.getBuffer("chunk_pos");
-        _data.chunk.buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_pos.data(.vertices, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 3)]), .static_draw);
         _data.chunk.buffer_pos.data_type = .f32;
         _data.chunk.buffer_pos.vertex_size = 3;
         _data.chunk.buffer_nrm = try gfx.getBuffer("chunk_nrm");
-        _data.chunk.buffer_nrm.data(.array, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
         _data.chunk.buffer_nrm.data_type = .f32;
         _data.chunk.buffer_nrm.vertex_size = 3;
 
-        _data.chunk.vertex_array = try gfx.getVertexArray("chunk");
-        _data.chunk.vertex_array.bindBuffer(0, _data.chunk.buffer_pos);
-        _data.chunk.vertex_array.bindBuffer(1, _data.chunk.buffer_nrm);
-        _data.chunk.vertex_array.count = @intCast(cnt);
-        _data.chunk.vertex_array.mode = .triangles;
+        _data.chunk.mesh = try gfx.getMesh("chunk");
+        _data.chunk.mesh.bindBuffer(0, _data.chunk.buffer_pos);
+        _data.chunk.mesh.bindBuffer(1, _data.chunk.buffer_nrm);
+        _data.chunk.mesh.count = @intCast(cnt);
+        _data.chunk.mesh.mode = .triangles;
 
         _data.chunk.program = try gfx.getProgram("chunk");
         _data.chunk.uniform.model = try gfx.getUniform(_data.chunk.program, "model");
@@ -214,13 +214,13 @@ pub fn init(info: struct {
     }
     { // RECT
         _data.rect.buffer = try gfx.getBuffer("rect");
-        _data.rect.buffer.data(.array, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
+        _data.rect.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
         _data.rect.buffer.data_type = .u8;
         _data.rect.buffer.vertex_size = 2;
-        _data.rect.vertex_array = try gfx.getVertexArray("rect");
-        _data.rect.vertex_array.bindBuffer(0, _data.rect.buffer);
-        _data.rect.vertex_array.mode = .triangle_strip;
-        _data.rect.vertex_array.count = 4;
+        _data.rect.mesh = try gfx.getMesh("rect");
+        _data.rect.mesh.bindBuffer(0, _data.rect.buffer);
+        _data.rect.mesh.mode = .triangle_strip;
+        _data.rect.mesh.count = 4;
 
         _data.rect.program = try gfx.getProgram("rect");
         _data.rect.uniform.vpsize = try gfx.getUniform(_data.rect.program, "vpsize");
@@ -268,7 +268,7 @@ pub fn draw() !void {
         _data.chunk.uniform.light.ambient.set(light.ambient);
         _data.chunk.uniform.light.diffuse.set(light.diffuse);
         _data.chunk.uniform.light.specular.set(light.specular);
-        _data.chunk.vertex_array.draw();
+        _data.chunk.mesh.draw();
     }
 
     gl.disable(gl.DEPTH_TEST);
@@ -287,7 +287,7 @@ pub fn draw() !void {
                 _data.line.uniform.view.set(camera.view);
                 _data.line.uniform.proj.set(camera.proj);
                 _data.line.uniform.color.set(l.color);
-                _data.line.vertex_array.draw();
+                _data.line.mesh.draw();
             }
         }
     }
@@ -309,7 +309,7 @@ pub fn draw() !void {
                 _data.rect.uniform.texrect.set(
                     gui.rect(0, 0, @intCast(_data.panel.texture.size[0]), @intCast(_data.panel.texture.size[1])).vector(),
                 );
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
             }
         }
     }
@@ -323,7 +323,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
                 }
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
             }
         }
     }
@@ -344,7 +344,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
                 }
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
 
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.rect(
@@ -359,7 +359,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 10, 16).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 16, 16).vector()),
                 }
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
             }
         }
     }
@@ -375,7 +375,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
                 }
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
@@ -392,7 +392,7 @@ pub fn draw() !void {
                     .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 12, 16).vector()),
                     .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 18, 16).vector()),
                 }
-                _data.rect.vertex_array.draw();
+                _data.rect.mesh.draw();
             }
         }
     }
@@ -413,7 +413,7 @@ pub fn draw() !void {
                     }
                     _data.text.uniform.pos.set(Pos{ pos[0] + offset, pos[1] });
                     _data.text.uniform.tex.set(Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
-                    _data.rect.vertex_array.draw();
+                    _data.rect.mesh.draw();
                     offset += (gui.font.chars[cid].width + 1) * gui.scale;
                 }
             }

@@ -2,7 +2,7 @@ const std = @import("std");
 const log = std.log.scoped(.data);
 
 pub const Buffer = @import("gfx/Buffer.zig");
-pub const VertexArray = @import("gfx/VertexArray.zig");
+pub const Mesh = @import("gfx/Mesh.zig");
 pub const Texture = @import("gfx/Texture.zig");
 pub const Shader = @import("gfx/Shader.zig");
 pub const Program = @import("gfx/Program.zig");
@@ -13,7 +13,7 @@ const Map = std.StringHashMapUnmanaged;
 
 var _allocator: std.mem.Allocator = undefined;
 var _buffers: Map(Buffer) = undefined;
-var _vertex_arrays: Map(VertexArray) = undefined;
+var _meshes: Map(Mesh) = undefined;
 var _textures: Map(Texture) = undefined;
 var _programs: Map(Program) = undefined;
 
@@ -26,9 +26,9 @@ pub fn deinit() void {
     while (buffers_iterator.next()) |item| item.value_ptr.deinit();
     _buffers.deinit(_allocator);
 
-    var vertex_arrays_iterator = _vertex_arrays.iterator();
-    while (vertex_arrays_iterator.next()) |item| item.value_ptr.deinit();
-    _vertex_arrays.deinit(_allocator);
+    var meshes_iterator = _meshes.iterator();
+    while (meshes_iterator.next()) |item| item.value_ptr.deinit();
+    _meshes.deinit(_allocator);
 
     var programs_iterator = _programs.iterator();
     while (programs_iterator.next()) |item| item.value_ptr.deinit();
@@ -49,13 +49,13 @@ pub fn getBuffer(name: []const u8) !*Buffer {
     }
 }
 
-pub fn getVertexArray(name: []const u8) !*VertexArray {
-    if (_vertex_arrays.getPtr(name)) |vertex_array| {
+pub fn getMesh(name: []const u8) !*Mesh {
+    if (_meshes.getPtr(name)) |vertex_array| {
         return vertex_array;
     } else {
         log.debug("init vertex array {s}", .{name});
-        try _vertex_arrays.put(_allocator, name, VertexArray.init(name));
-        return _vertex_arrays.getPtr(name).?;
+        try _meshes.put(_allocator, name, Mesh.init(name));
+        return _meshes.getPtr(name).?;
     }
 }
 

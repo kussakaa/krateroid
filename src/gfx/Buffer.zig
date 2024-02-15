@@ -3,8 +3,8 @@ const gl = @import("zopengl").bindings;
 const Id = gl.Uint;
 
 pub const Target = enum(gl.Enum) {
-    array = gl.ARRAY_BUFFER,
-    elements_array = gl.ELEMENT_ARRAY_BUFFER,
+    vertices = gl.ARRAY_BUFFER,
+    elements = gl.ELEMENT_ARRAY_BUFFER,
 };
 
 pub const Usage = enum(gl.Enum) {
