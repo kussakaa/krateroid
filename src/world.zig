@@ -59,10 +59,10 @@ pub fn line(info: struct {
 pub fn chunk(info: struct {
     pos: Chunk.Pos,
 }) !*Chunk {
-    //const value_gen = znoise.FnlGeterator{
-    //    .seed = seed,
-    //    .noise_type = .value,
-    //};
+    const value_gen = Noise{
+        .seed = seed,
+        .noise_type = .value,
+    };
     const cellular_gen = Noise{
         .seed = seed,
         .noise_type = .cellular,
@@ -74,18 +74,17 @@ pub fn chunk(info: struct {
 
     for (0..Chunk.width) |y| {
         for (0..Chunk.width) |x| {
-            //const value = c.fnlGetNoise2D(
-            //    &noise_value,
-            //    @as(f32, @floatFromInt(x)),
-            //    @as(f32, @floatFromInt(y)),
-            //);
+            const value: f32 = value_gen.noise2(
+                @as(f32, @floatFromInt(x)) * 7.0,
+                @as(f32, @floatFromInt(y)) * 7.0,
+            );
 
             const cellular: f32 = cellular_gen.noise2(
                 @as(f32, @floatFromInt(x)) * 7.0,
                 @as(f32, @floatFromInt(y)) * 7.0,
             );
 
-            hmap[y][x] = @as(u8, @intFromFloat(@max(0.0, (cellular + 1.0) * 7.0)));
+            hmap[y][x] = @as(u8, @intFromFloat(@max(0.0, (cellular + value + 1.0) * 7.0)));
             mmap[y][x] = 1;
         }
     }

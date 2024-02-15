@@ -84,140 +84,11 @@ pub fn main() !void {
         .pos = .{ 0, 0 },
     });
 
-    try gui.init(.{ .allocator = allocator, .scale = 3 });
+    try gui.init(.{
+        .allocator = allocator,
+        .scale = 3,
+    });
     defer gui.deinit();
-
-    var menu_main = try gui.menu(.{ // MENU MAIN
-        .show = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-
-    _ = try gui.text(W("-<main menu>-"), .{
-        .menu = menu_main,
-        .pos = .{ 0, -38 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-
-    const button_play = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<play>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    const button_settings = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<settings>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, 0 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    const button_exit = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<exit>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, 17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    var menu_settings = try gui.menu(.{ // MENU SETTINGS
-        .show = false,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("-<settings>-"), .{
-        .menu = menu_settings,
-        .pos = .{ 0, -38 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 49 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const button_settings_close = try gui.button(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<close>"), .{
-        .menu = menu_settings,
-        .pos = .{ 0, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    _ = try gui.text(W("background color"), .{
-        .menu = menu_settings,
-        .pos = .{ 0, -4 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-    _ = try gui.text(W("r"), .{
-        .menu = menu_settings,
-        .pos = .{ -32, 0 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const slider_bg_red = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -27, 0 }, .max = .{ 32, 8 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[0],
-    });
-    _ = try gui.text(W("g"), .{
-        .menu = menu_settings,
-        .pos = .{ -32, 8 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const slider_bg_green = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -27, 8 }, .max = .{ 32, 16 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[1],
-    });
-    _ = try gui.text(W("b"), .{
-        .menu = menu_settings,
-        .pos = .{ -32, 16 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const slider_bg_blue = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ -27, 16 }, .max = .{ 32, 24 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[2],
-    });
 
     var is_info_show = false;
     var menu_info = try gui.menu(.{ // MENU INFO
@@ -242,19 +113,100 @@ pub fn main() !void {
         .alignment = .{ .v = .bottom },
     });
 
+    var menu_main = try gui.menu(.{ // MENU MAIN
+        .show = true,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+
+    _ = try gui.text(W("-<main>-"), .{
+        .menu = menu_main,
+        .pos = .{ 0, -38 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+
+    const menu_main_button_play = try gui.button(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("<play>"), .{
+        .menu = menu_main,
+        .pos = .{ 0, -17 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    const menu_main_button_settings = try gui.button(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("<settings>"), .{
+        .menu = menu_main,
+        .pos = .{ 0, 0 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    const menu_main_button_exit = try gui.button(.{
+        .menu = menu_main,
+        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("<exit>"), .{
+        .menu = menu_main,
+        .pos = .{ 0, 17 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    var menu_settings = try gui.menu(.{ // MENU SETTINGS
+        .show = false,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ 38, -46 }, .max = .{ 138, -30 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("-<settings>-"), .{
+        .menu = menu_settings,
+        .pos = .{ 88, -38 },
+        .alignment = .{ .v = .center, .h = .center },
+        .centered = true,
+    });
+
+    _ = try gui.panel(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ 38, -29 }, .max = .{ 138, 29 } },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+
     _ = try gui.text(W("info"), .{
         .menu = menu_settings,
-        .pos = .{ -32, 26 },
+        .pos = .{ 42, -25 },
         .alignment = .{ .v = .center, .h = .center },
     });
     _ = try gui.text(W("[f3]"), .{
         .menu = menu_settings,
-        .pos = .{ 5, 26 },
+        .pos = .{ 107, -25 },
         .alignment = .{ .v = .center, .h = .center },
     });
     var menu_settings_switcher_show_info = try gui.switcher(.{
         .menu = menu_settings,
-        .pos = .{ 20, 26 },
+        .pos = .{ 122, -25 },
         .alignment = .{ .v = .center, .h = .center },
         .status = is_info_show,
     });
@@ -262,19 +214,58 @@ pub fn main() !void {
     var is_show_grid = false;
     _ = try gui.text(W("grid"), .{
         .menu = menu_settings,
-        .pos = .{ -32, 34 },
+        .pos = .{ 42, -17 },
         .alignment = .{ .v = .center, .h = .center },
     });
     _ = try gui.text(W("[f5]"), .{
         .menu = menu_settings,
-        .pos = .{ 5, 34 },
+        .pos = .{ 107, -17 },
         .alignment = .{ .v = .center, .h = .center },
     });
     var menu_settings_switcher_show_grid = try gui.switcher(.{
         .menu = menu_settings,
-        .pos = .{ 20, 34 },
+        .pos = .{ 122, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .status = is_show_grid,
+    });
+
+    _ = try gui.text(W("background color"), .{
+        .menu = menu_settings,
+        .pos = .{ 42, -8 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    _ = try gui.text(W("r"), .{
+        .menu = menu_settings,
+        .pos = .{ 42, 0 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const menu_settings_slider_bg_r = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[0],
+    });
+    _ = try gui.text(W("g"), .{
+        .menu = menu_settings,
+        .pos = .{ 42, 8 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const menu_settings_slider_bg_g = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[1],
+    });
+    _ = try gui.text(W("b"), .{
+        .menu = menu_settings,
+        .pos = .{ 42, 16 },
+        .alignment = .{ .v = .center, .h = .center },
+    });
+    const menu_settings_slider_bg_b = try gui.slider(.{
+        .menu = menu_settings,
+        .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
+        .alignment = .{ .v = .center, .h = .center },
+        .value = bg_color[2],
     });
 
     try gfx.init(.{});
@@ -291,7 +282,7 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .pressed => |id| {
                         if (id == .escape) {
-                            menu_main.show = true;
+                            menu_main.show = !menu_main.show;
                             menu_settings.show = false;
                         }
                         if (id == .f3) {
@@ -405,15 +396,12 @@ pub fn main() !void {
                     .pressed => |_| {},
                     .unpressed => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (id == button_play.id) {
+                        if (id == menu_main_button_play.id) {
                             menu_main.show = false;
-                        } else if (id == button_settings.id) {
-                            menu_settings.show = true;
-                            menu_main.show = false;
-                        } else if (id == button_settings_close.id) {
                             menu_settings.show = false;
-                            menu_main.show = true;
-                        } else if (id == button_exit.id) {
+                        } else if (id == menu_main_button_settings.id) {
+                            menu_settings.show = !menu_settings.show;
+                        } else if (id == menu_main_button_exit.id) {
                             break :loop;
                         }
                     },
@@ -453,11 +441,11 @@ pub fn main() !void {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },
                     .scrolled => |s| {
-                        if (s.id == slider_bg_red.id)
+                        if (s.id == menu_settings_slider_bg_r.id)
                             bg_color[0] = s.data;
-                        if (s.id == slider_bg_green.id)
+                        if (s.id == menu_settings_slider_bg_g.id)
                             bg_color[1] = s.data;
-                        if (s.id == slider_bg_blue.id)
+                        if (s.id == menu_settings_slider_bg_b.id)
                             bg_color[2] = s.data;
                     },
                 },
