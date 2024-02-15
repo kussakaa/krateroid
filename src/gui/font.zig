@@ -1,6 +1,6 @@
 pub var chars: [2048]packed struct {
-    pos: u16 = 0,
-    width: u16 = 3,
+    pos: i32 = 0,
+    width: i32 = 3,
 } = undefined;
 pub fn init() void {
     for (chars, 0..) |_, i| chars[i] = .{ .pos = 0, .width = 3 };

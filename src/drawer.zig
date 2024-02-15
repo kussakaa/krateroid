@@ -90,6 +90,7 @@ const _data = struct {
             var vpsize: gfx.Uniform = undefined;
             var scale: gfx.Uniform = undefined;
             var pos: gfx.Uniform = undefined;
+            var tex: gfx.Uniform = undefined;
             var color: gfx.Uniform = undefined;
         };
         var texture: *gfx.Texture = undefined;
@@ -244,6 +245,7 @@ pub fn init(info: struct {
         _data.text.uniform.vpsize = try gfx.getUniform(_data.text.program, "vpsize");
         _data.text.uniform.scale = try gfx.getUniform(_data.text.program, "scale");
         _data.text.uniform.pos = try gfx.getUniform(_data.text.program, "pos");
+        _data.text.uniform.tex = try gfx.getUniform(_data.text.program, "tex");
         _data.text.uniform.color = try gfx.getUniform(_data.text.program, "color");
         _data.text.texture = try gfx.getTexture("text.png");
     }
@@ -292,13 +294,15 @@ pub fn draw() !void {
 
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
-    { // PANEL
+    { // RECT
         _data.rect.program.use();
+        _data.rect.uniform.vpsize.set(window.size);
+        _data.rect.uniform.scale.set(gui.scale);
+    }
+    { // PANEL
         _data.panel.texture.use();
         for (gui.panels.items) |item| {
             if (item.menu.show) {
-                _data.rect.uniform.vpsize.set(window.size);
-                _data.rect.uniform.scale.set(gui.scale);
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
                 );
@@ -313,8 +317,6 @@ pub fn draw() !void {
         _data.button.texture.use();
         for (gui.buttons.items) |item| {
             if (item.menu.show) {
-                _data.rect.uniform.vpsize.set(window.size);
-                _data.rect.uniform.scale.set(gui.scale);
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
                     .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 8, 8).vector()),
@@ -329,8 +331,6 @@ pub fn draw() !void {
         _data.switcher.texture.use();
         for (gui.switchers.items) |item| {
             if (item.menu.show) {
-                _data.rect.uniform.vpsize.set(window.size);
-                _data.rect.uniform.scale.set(gui.scale);
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.rect(
                         item.pos[0] * gui.scale,
@@ -402,90 +402,21 @@ pub fn draw() !void {
         _data.text.uniform.vpsize.set(window.size);
         _data.text.uniform.scale.set(gui.scale);
         _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
-        //_data.text.uniform.pos.set(pos);
-        //for (gui.texts.items, 0..) |t, i| {
-        //    if (i == _data.text.vertex_arrays.items.len or t.usage == .dynamic) {
-        //        const s = struct {
-        //            var buffer_pos_data: [4096]u16 = [1]u16{0} ** 4096;
-        //            var buffer_tex_data: [2048]u16 = [1]u16{0} ** 2048;
-        //        };
-        //
-        //        var pos: u16 = 0;
-        //        var cnt: usize = 0;
-        //        for (t.data) |cid| {
-        //            if (cid == ' ') {
-        //                pos += 3;
-        //                continue;
-        //            }
-        //
-        //            const width = gui.font.chars[cid].width;
-        //            const uvpos = gui.font.chars[cid].pos;
-        //            const uvwidth = width;
-        //
-        //            // triangle 1
-        //            s.buffer_pos_data[cnt * 12 + 0 * 2 + 0] = pos;
-        //            s.buffer_pos_data[cnt * 12 + 0 * 2 + 1] = 8;
-        //            s.buffer_pos_data[cnt * 12 + 2 * 2 + 0] = pos + width;
-        //            s.buffer_pos_data[cnt * 12 + 1 * 2 + 1] = 8;
-        //            s.buffer_pos_data[cnt * 12 + 1 * 2 + 0] = pos + width;
-        //            s.buffer_pos_data[cnt * 12 + 2 * 2 + 1] = 0;
-        //            s.buffer_tex_data[cnt * 6 + 0] = uvpos;
-        //            s.buffer_tex_data[cnt * 6 + 1] = uvpos + uvwidth;
-        //            s.buffer_tex_data[cnt * 6 + 2] = uvpos + uvwidth;
-        //
-        //            // triangle 2
-        //            s.buffer_pos_data[cnt * 12 + 3 * 2 + 0] = pos + width;
-        //            s.buffer_pos_data[cnt * 12 + 3 * 2 + 1] = 0;
-        //            s.buffer_pos_data[cnt * 12 + 4 * 2 + 0] = pos;
-        //            s.buffer_pos_data[cnt * 12 + 4 * 2 + 1] = 0;
-        //            s.buffer_pos_data[cnt * 12 + 5 * 2 + 0] = pos;
-        //            s.buffer_pos_data[cnt * 12 + 5 * 2 + 1] = 8;
-        //            s.buffer_tex_data[cnt * 6 + 3] = uvpos + uvwidth;
-        //            s.buffer_tex_data[cnt * 6 + 4] = uvpos;
-        //            s.buffer_tex_data[cnt * 6 + 5] = uvpos;
-        //
-        //            pos += width + 1;
-        //            cnt += 1;
-        //        }
-        //
-        //        if (i == _data.text.vertex_arrays.items.len) {
-        //            const usage: gfx.Buffer.Usage = switch (t.usage) {
-        //                .static => .static_draw,
-        //                .dynamic => .dynamic_draw,
-        //            };
-        //
-        //            const buffer_pos_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_buffer_pos" });
-        //            var buffer_pos = try gfx.getBuffer(buffer_pos_name);
-        //            buffer_pos.data(.array, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]), usage);
-        //            buffer_pos.data_type = .u16;
-        //            buffer_pos.vertex_size = 2;
-        //
-        //            const buffer_tex_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_buffer_tex" });
-        //            var buffer_tex = try gfx.getBuffer(buffer_tex_name);
-        //            buffer_tex.data(.array, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]), usage);
-        //            buffer_tex.data_type = .u16;
-        //            buffer_tex.vertex_size = 1;
-        //
-        //            const vertex_array_name = try std.mem.concat(_allocator, u8, &.{ std.mem.sliceAsBytes(t.data), "_vertex_array" }, 0);
-        //            var vertex_array = try gfx.getVertexArray(vertex_array_name);
-        //            vertex_array.bindBuffer(0, buffer_pos);
-        //            vertex_array.bindBuffer(1, buffer_tex);
-        //            vertex_array.count = @intCast(cnt * 6);
-        //            vertex_array.mode = .triangles;
-        //
-        //            try _data.text.buffers_pos.append(_allocator, buffer_pos);
-        //            try _data.text.buffers_tex.append(_allocator, buffer_tex);
-        //            try _data.text.vertex_arrays.append(_allocator, vertex_array);
-        //        } else {
-        //            _data.text.buffers_pos.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 12)]));
-        //            _data.text.buffers_tex.items[i].subdata(.array, 0, std.mem.sliceAsBytes(s.buffer_tex_data[0..(cnt * 6)]));
-        //        }
-        //    }
-        //
-        //    if (t.menu.show) {
-        //        const pos = t.alignment.transform(t.rect.min * @Vector(2, i32){ gui.scale, gui.scale }, window.size);
-        //        _data.text.vertex_arrays.items[i].draw();
-        //    }
-        //}
+        for (gui.texts.items) |item| {
+            if (item.menu.show) {
+                const pos = item.alignment.transform(item.rect.scale(gui.scale), window.size).min;
+                var offset: i32 = 0;
+                for (item.data) |cid| {
+                    if (cid == ' ') {
+                        offset += 3 * gui.scale;
+                        continue;
+                    }
+                    _data.text.uniform.pos.set(Pos{ pos[0] + offset, pos[1] });
+                    _data.text.uniform.tex.set(Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
+                    _data.rect.vertex_array.draw();
+                    offset += (gui.font.chars[cid].width + 1) * gui.scale;
+                }
+            }
+        }
     }
 }
