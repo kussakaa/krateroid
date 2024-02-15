@@ -301,7 +301,6 @@ pub fn text(data: []const u16, info: struct {
     pos: Pos,
     alignment: Alignment = .{},
     centered: bool = false,
-    usage: Text.Usage = .static,
 }) !*Text {
     const itemsize = calcTextSize(data);
     const itempos = if (info.centered)
@@ -314,7 +313,6 @@ pub fn text(data: []const u16, info: struct {
         .data = data,
         .rect = .{ .min = itempos, .max = itempos + itemsize },
         .alignment = info.alignment,
-        .usage = info.usage,
     });
     return &texts.items[texts.items.len - 1];
 }

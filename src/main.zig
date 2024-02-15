@@ -235,7 +235,6 @@ pub fn main() !void {
     _ = try gui.text(&fps_str, .{
         .menu = menu_info,
         .pos = .{ 16, 9 },
-        .usage = .dynamic,
     });
     _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
         .menu = menu_info,
@@ -484,9 +483,7 @@ pub fn main() !void {
             _ = try std.unicode.utf8ToUtf16Le(&fps_str, &fps_str_buf);
         }
 
-        window.clear(.{
-            .color = bg_color,
-        });
+        window.clear(.{ .color = bg_color });
         try drawer.draw();
         window.swap();
     }
