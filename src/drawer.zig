@@ -14,8 +14,6 @@ const mct = @import("drawer/mct.zig");
 const log = std.log.scoped(.drawer);
 const Allocator = std.mem.Allocator;
 const Array = std.ArrayListUnmanaged;
-const Pos = @Vector(2, i32);
-const Size = @Vector(2, i32);
 
 const Mat = zm.Mat;
 const Vec = zm.Vec;
@@ -93,6 +91,9 @@ const _data = struct {
             var tex: gfx.Uniform = undefined;
             var color: gfx.Uniform = undefined;
         };
+        var texture: *gfx.Texture = undefined;
+    };
+    const cursor = struct {
         var texture: *gfx.Texture = undefined;
     };
 };
@@ -249,11 +250,14 @@ pub fn init(info: struct {
         _data.text.uniform.color = try gfx.getUniform(_data.text.program, "color");
         _data.text.texture = try gfx.getTexture("text.png");
     }
+    { // CURSOR
+        _data.cursor.texture = try gfx.getTexture("cursor.png");
+    }
 }
 
 pub fn deinit() void {}
 
-pub fn draw() !void {
+pub fn draw() void {
     gl.enable(gl.DEPTH_TEST);
     gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 
@@ -306,9 +310,12 @@ pub fn draw() !void {
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
                 );
-                _data.rect.uniform.texrect.set(
-                    gui.rect(0, 0, @intCast(_data.panel.texture.size[0]), @intCast(_data.panel.texture.size[1])).vector(),
-                );
+                _data.rect.uniform.texrect.set(@Vector(4, i32){
+                    0,
+                    0,
+                    @intCast(_data.panel.texture.size[0]),
+                    @intCast(_data.panel.texture.size[1]),
+                });
                 _data.rect.mesh.draw();
             }
         }
@@ -319,9 +326,9 @@ pub fn draw() !void {
             if (item.menu.show) {
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 8, 8).vector()),
-                    .focus => _data.rect.uniform.texrect.set(gui.rect(8, 0, 16, 8).vector()),
-                    .press => _data.rect.uniform.texrect.set(gui.rect(16, 0, 24, 8).vector()),
+                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
+                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
+                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
                 }
                 _data.rect.mesh.draw();
             }
@@ -332,32 +339,40 @@ pub fn draw() !void {
         for (gui.switchers.items) |item| {
             if (item.menu.show) {
                 _data.rect.uniform.rect.set(
-                    item.alignment.transform(gui.rect(
-                        item.pos[0] * gui.scale,
-                        item.pos[1] * gui.scale,
-                        (item.pos[0] + 12) * gui.scale,
-                        (item.pos[1] + 8) * gui.scale,
-                    ), window.size).vector(),
+                    item.alignment.transform(gui.Rect{
+                        .min = .{
+                            item.pos[0] * gui.scale,
+                            item.pos[1] * gui.scale,
+                        },
+                        .max = .{
+                            (item.pos[0] + 12) * gui.scale,
+                            (item.pos[1] + 8) * gui.scale,
+                        },
+                    }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 6, 8).vector()),
-                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
-                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
+                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 0, 18, 8 }),
                 }
                 _data.rect.mesh.draw();
 
                 _data.rect.uniform.rect.set(
-                    item.alignment.transform(gui.rect(
-                        (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
-                        (item.pos[1]) * gui.scale,
-                        (item.pos[0] + 6 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
-                        (item.pos[1] + 8) * gui.scale,
-                    ), window.size).vector(),
+                    item.alignment.transform(gui.Rect{
+                        .min = .{
+                            (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
+                            (item.pos[1]) * gui.scale,
+                        },
+                        .max = .{
+                            (item.pos[0] + 6 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
+                            (item.pos[1] + 8) * gui.scale,
+                        },
+                    }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 8, 4, 16).vector()),
-                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 10, 16).vector()),
-                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 16, 16).vector()),
+                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 8, 4, 16 }),
+                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 8, 10, 16 }),
+                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 8, 16, 16 }),
                 }
                 _data.rect.mesh.draw();
             }
@@ -371,26 +386,27 @@ pub fn draw() !void {
             if (item.menu.show) {
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 0, 6, 8).vector()),
-                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 0, 12, 8).vector()),
-                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 0, 18, 8).vector()),
+                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 0, 18, 8 }),
                 }
                 _data.rect.mesh.draw();
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
                 _data.rect.uniform.rect.set(
-                    item.alignment.transform(gui.rect(
-                        item.rect.min[0] * gui.scale + pos,
-                        item.rect.min[1] * gui.scale,
-                        item.rect.min[0] * gui.scale + pos + 6 * gui.scale,
-                        item.rect.max[1] * gui.scale,
-                    ), window.size).vector(),
+                    item.alignment.transform(gui.Rect{
+                        .min = item.rect.min * gui.Size{ gui.scale, gui.scale } + gui.Pos{ pos, 0 },
+                        .max = .{
+                            item.rect.min[0] * gui.scale + pos + 6 * gui.scale,
+                            item.rect.max[1] * gui.scale,
+                        },
+                    }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(gui.rect(0, 8, 6, 16).vector()),
-                    .focus => _data.rect.uniform.texrect.set(gui.rect(6, 8, 12, 16).vector()),
-                    .press => _data.rect.uniform.texrect.set(gui.rect(12, 8, 18, 16).vector()),
+                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 8, 6, 16 }),
+                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 8, 12, 16 }),
+                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 8, 18, 16 }),
                 }
                 _data.rect.mesh.draw();
             }
@@ -401,7 +417,7 @@ pub fn draw() !void {
         _data.text.texture.use();
         _data.text.uniform.vpsize.set(window.size);
         _data.text.uniform.scale.set(gui.scale);
-        _data.text.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+        _data.text.uniform.color.set(gui.Color{ 1.0, 1.0, 1.0, 1.0 });
         for (gui.texts.items) |item| {
             if (item.menu.show) {
                 const pos = item.alignment.transform(item.rect.scale(gui.scale), window.size).min;
@@ -411,12 +427,27 @@ pub fn draw() !void {
                         offset += 3 * gui.scale;
                         continue;
                     }
-                    _data.text.uniform.pos.set(Pos{ pos[0] + offset, pos[1] });
-                    _data.text.uniform.tex.set(Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
+                    _data.text.uniform.pos.set(gui.Pos{ pos[0] + offset, pos[1] });
+                    _data.text.uniform.tex.set(gui.Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
                     _data.rect.mesh.draw();
                     offset += (gui.font.chars[cid].width + 1) * gui.scale;
                 }
             }
         }
+    }
+    { // CURSOR
+        _data.rect.program.use();
+        _data.cursor.texture.use();
+        const p1 = 4 * gui.scale - @divTrunc(gui.scale, 2);
+        const p2 = 3 * gui.scale + @divTrunc(gui.scale, 2);
+        _data.rect.uniform.rect.set((gui.Rect{
+            .min = gui.cursor.pos - gui.Pos{ p1, p1 },
+            .max = gui.cursor.pos + gui.Pos{ p2, p2 },
+        }).vector());
+        switch (gui.cursor.press) {
+            false => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 7, 7 }),
+            true => _data.rect.uniform.texrect.set(@Vector(4, i32){ 7, 0, 14, 7 }),
+        }
+        _data.rect.mesh.draw();
     }
 }

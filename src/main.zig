@@ -472,7 +472,7 @@ pub fn main() !void {
         }
 
         window.clear(.{ .color = bg_color });
-        try drawer.draw();
+        drawer.draw();
         window.swap();
     }
 }

@@ -40,8 +40,8 @@ pub fn deinit() void {
 }
 
 pub fn getBuffer(name: []const u8) !*Buffer {
-    if (_buffers.getPtr(name)) |buffer| {
-        return buffer;
+    if (_buffers.getPtr(name)) |item| {
+        return item;
     } else {
         log.debug("init buffer {s}", .{name});
         try _buffers.put(_allocator, name, Buffer.init(name));
@@ -50,8 +50,8 @@ pub fn getBuffer(name: []const u8) !*Buffer {
 }
 
 pub fn getMesh(name: []const u8) !*Mesh {
-    if (_meshes.getPtr(name)) |vertex_array| {
-        return vertex_array;
+    if (_meshes.getPtr(name)) |item| {
+        return item;
     } else {
         log.debug("init vertex array {s}", .{name});
         try _meshes.put(_allocator, name, Mesh.init(name));
@@ -60,8 +60,8 @@ pub fn getMesh(name: []const u8) !*Mesh {
 }
 
 pub fn getTexture(path: []const u8) !*Texture {
-    if (_textures.getPtr(path)) |program| {
-        return program;
+    if (_textures.getPtr(path)) |item| {
+        return item;
     } else {
         const prefix = "data/texture/";
 
@@ -75,17 +75,17 @@ pub fn getTexture(path: []const u8) !*Texture {
 }
 
 pub fn getProgram(path: []const u8) !Program {
-    if (_programs.get(path)) |program| {
-        return program;
+    if (_programs.get(path)) |item| {
+        return item;
     } else {
         const prefix = "data/shader/";
 
-        const path_vertex = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/vertex.glsl" }, 0);
+        const path_vertex = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/vert.glsl" }, 0);
         defer _allocator.free(path_vertex);
         const vertex = try Shader.initFromFile(_allocator, path_vertex, .vertex);
         defer vertex.deinit();
 
-        const path_fragment = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/fragment.glsl" }, 0);
+        const path_fragment = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/frag.glsl" }, 0);
         defer _allocator.free(path_fragment);
         const fragment = try Shader.initFromFile(_allocator, path_fragment, .fragment);
         defer fragment.deinit();

@@ -4,18 +4,19 @@ const Allocator = std.mem.Allocator;
 const Array = std.ArrayListUnmanaged;
 const window = @import("window.zig");
 
-const Pos = @Vector(2, i32);
-const Size = @Vector(2, i32);
-const Rect = @import("gui/Rect.zig");
-const Alignment = @import("gui/Alignment.zig");
-const Menu = @import("gui/Menu.zig");
-const Panel = @import("gui/Panel.zig");
-const Button = @import("gui/Button.zig");
-const Switcher = @import("gui/Switcher.zig");
-const Slider = @import("gui/Slider.zig");
-const Text = @import("gui/Text.zig");
-
+pub const Pos = @Vector(2, i32);
+pub const Size = @Vector(2, i32);
+pub const Rect = @import("gui/Rect.zig");
+pub const Color = @Vector(4, f32);
+pub const Alignment = @import("gui/Alignment.zig");
+pub const Menu = @import("gui/Menu.zig");
+pub const Panel = @import("gui/Panel.zig");
+pub const Button = @import("gui/Button.zig");
+pub const Switcher = @import("gui/Switcher.zig");
+pub const Slider = @import("gui/Slider.zig");
+pub const Text = @import("gui/Text.zig");
 pub const font = @import("gui/font.zig");
+
 var _allocator: Allocator = undefined;
 pub var scale: i32 = undefined;
 pub var menus: Array(Menu) = undefined;
@@ -216,13 +217,6 @@ const events = struct {
 
 pub fn pollEvent() Event {
     return events.pop();
-}
-
-pub fn rect(x1: i32, y1: i32, x2: i32, y2: i32) Rect {
-    return Rect{
-        .min = .{ x1, y1 },
-        .max = .{ x2, y2 },
-    };
 }
 
 pub fn menu(info: struct {
