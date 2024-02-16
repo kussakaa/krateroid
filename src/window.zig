@@ -47,6 +47,7 @@ pub fn init(info: struct {
             //.allow_highdpi = true,
         },
     );
+    try sdl.showCursor(.disable);
 
     gl_context = try sdl.gl.createContext(handle);
     try sdl.gl.makeCurrent(handle, gl_context);
