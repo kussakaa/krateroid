@@ -80,16 +80,17 @@ pub fn swap() void {
     dt = @floatCast(@as(f64, @floatFromInt(time - ltime)) / @as(f64, @floatFromInt(pf)));
 
     const s = struct {
-        var sec_cntr: u64 = 0;
         var fps_cntr: u64 = 0;
+        var sec_cntr: u64 = 0;
     };
 
-    s.fps_cntr += 1;
+    if (s.sec_cntr == 0) s.sec_cntr = time;
 
-    if (time - s.sec_cntr * pf > pf) {
+    s.fps_cntr += 1;
+    if (time - s.sec_cntr > pf) {
         fps = s.fps_cntr;
         s.fps_cntr = 0;
-        s.sec_cntr += 1;
+        s.sec_cntr += pf;
     }
 
     sdl.gl.swapWindow(handle);
