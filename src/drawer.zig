@@ -21,6 +21,9 @@ const Color = Vec;
 
 var _allocator: Allocator = undefined;
 pub var polygon_mode: gl.Enum = gl.FILL;
+pub const colors = struct {
+    pub var bg: Color = .{ 0.0, 0.0, 0.0, 1.0 };
+};
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
     var direction: Vec = .{ 1.0, 0.5, 1.0, 1.0 };
@@ -29,17 +32,6 @@ const light = struct {
     var specular: f32 = 0.1;
 };
 const _data = struct {
-    const line = struct {
-        var buffer: *gfx.Buffer = undefined;
-        var mesh: *gfx.Mesh = undefined;
-        var program: gfx.Program = undefined;
-        const uniform = struct {
-            var model: gfx.Uniform = undefined;
-            var view: gfx.Uniform = undefined;
-            var proj: gfx.Uniform = undefined;
-            var color: gfx.Uniform = undefined;
-        };
-    };
     const chunk = struct {
         var buffer_pos: *gfx.Buffer = undefined;
         var buffer_nrm: *gfx.Buffer = undefined;
@@ -57,6 +49,17 @@ const _data = struct {
                 var diffuse: gfx.Uniform = undefined;
                 var specular: gfx.Uniform = undefined;
             };
+        };
+    };
+    const line = struct {
+        var buffer: *gfx.Buffer = undefined;
+        var mesh: *gfx.Mesh = undefined;
+        var program: gfx.Program = undefined;
+        const uniform = struct {
+            var model: gfx.Uniform = undefined;
+            var view: gfx.Uniform = undefined;
+            var proj: gfx.Uniform = undefined;
+            var color: gfx.Uniform = undefined;
         };
     };
     const rect = struct {
@@ -113,21 +116,6 @@ pub fn init(info: struct {
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
 
-    { // LINE
-        _data.line.buffer = try gfx.getBuffer("line");
-        _data.line.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
-        _data.line.buffer.data_type = .u8;
-        _data.line.buffer.vertex_size = 3;
-        _data.line.mesh = try gfx.getMesh("line");
-        _data.line.mesh.bindBuffer(0, _data.line.buffer);
-        _data.line.mesh.mode = .lines;
-        _data.line.mesh.count = 2;
-        _data.line.program = try gfx.getProgram("line");
-        _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
-        _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
-        _data.line.uniform.proj = try gfx.getUniform(_data.line.program, "proj");
-        _data.line.uniform.color = try gfx.getUniform(_data.line.program, "color");
-    }
     { // CHUNK
 
         const s = struct {
@@ -213,6 +201,21 @@ pub fn init(info: struct {
         _data.chunk.uniform.light.diffuse = try gfx.getUniform(_data.chunk.program, "light.diffuse");
         _data.chunk.uniform.light.specular = try gfx.getUniform(_data.chunk.program, "light.specular");
     }
+    { // LINE
+        _data.line.buffer = try gfx.getBuffer("line");
+        _data.line.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
+        _data.line.buffer.data_type = .u8;
+        _data.line.buffer.vertex_size = 3;
+        _data.line.mesh = try gfx.getMesh("line");
+        _data.line.mesh.bindBuffer(0, _data.line.buffer);
+        _data.line.mesh.mode = .lines;
+        _data.line.mesh.count = 2;
+        _data.line.program = try gfx.getProgram("line");
+        _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
+        _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
+        _data.line.uniform.proj = try gfx.getUniform(_data.line.program, "proj");
+        _data.line.uniform.color = try gfx.getUniform(_data.line.program, "color");
+    }
     { // RECT
         _data.rect.buffer = try gfx.getBuffer("rect");
         _data.rect.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
@@ -258,6 +261,8 @@ pub fn init(info: struct {
 pub fn deinit() void {}
 
 pub fn draw() void {
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(colors.bg[0], colors.bg[1], colors.bg[2], colors.bg[3]);
     gl.enable(gl.DEPTH_TEST);
     gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 

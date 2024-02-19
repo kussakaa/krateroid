@@ -40,8 +40,6 @@ pub fn main() !void {
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
 
-    var bg_color = Vec{ 0.0, 0.0, 0.0, 1.0 };
-
     const cursor = struct {
         var pos: @Vector(2, i32) = .{ 0, 0 };
         var delta: @Vector(2, i32) = .{ 0, 0 };
@@ -243,7 +241,7 @@ pub fn main() !void {
         .menu = menu_settings,
         .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[0],
+        .value = drawer.colors.bg[0],
     });
     _ = try gui.text(W("g"), .{
         .menu = menu_settings,
@@ -254,7 +252,7 @@ pub fn main() !void {
         .menu = menu_settings,
         .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[1],
+        .value = drawer.colors.bg[1],
     });
     _ = try gui.text(W("b"), .{
         .menu = menu_settings,
@@ -265,7 +263,7 @@ pub fn main() !void {
         .menu = menu_settings,
         .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = bg_color[2],
+        .value = drawer.colors.bg[2],
     });
 
     try gfx.init(.{});
@@ -442,28 +440,17 @@ pub fn main() !void {
                     },
                     .scrolled => |s| {
                         if (s.id == menu_settings_slider_bg_r.id)
-                            bg_color[0] = s.data;
+                            drawer.colors.bg[0] = s.data;
                         if (s.id == menu_settings_slider_bg_g.id)
-                            bg_color[1] = s.data;
+                            drawer.colors.bg[1] = s.data;
                         if (s.id == menu_settings_slider_bg_b.id)
-                            bg_color[2] = s.data;
+                            drawer.colors.bg[2] = s.data;
                     },
                 },
             }
         }
 
-        camera.view = zm.identity();
-        camera.view = zm.mul(camera.view, zm.translationV(-camera.pos));
-        camera.view = zm.mul(camera.view, zm.rotationZ(camera.rot[2]));
-        camera.view = zm.mul(camera.view, zm.rotationX(camera.rot[0]));
-        const h = 1.0 / camera.scale;
-        const v = 1.0 / camera.scale / window.ratio;
-        camera.proj = Mat{
-            .{ v, 0.0, 0.0, 0.0 },
-            .{ 0.0, h, 0.0, 0.0 },
-            .{ 0.0, 0.0, -0.00001, 0.0 },
-            .{ 0.0, 0.0, 0.0, 1.0 },
-        };
+        camera.update();
 
         { // обновление fps счётчика
             var fps_str_buf = [1]u8{'$'} ** 6;
@@ -471,7 +458,6 @@ pub fn main() !void {
             _ = try std.unicode.utf8ToUtf16Le(&fps_str, &fps_str_buf);
         }
 
-        window.clear(.{ .color = bg_color });
         drawer.draw();
         window.swap();
     }

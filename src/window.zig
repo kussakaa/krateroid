@@ -65,13 +65,6 @@ pub fn deinit() void {
     sdl.gl.deleteContext(gl_context);
 }
 
-pub fn clear(info: struct {
-    color: Color = .{ 0.0, 0.0, 0.0, 1.0 },
-}) void {
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clearColor(info.color[0], info.color[1], info.color[2], info.color[3]);
-}
-
 pub fn swap() void {
     const ltime = time;
     time = sdl.getPerformanceCounter();
