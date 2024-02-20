@@ -9,11 +9,12 @@ pub const Program = @import("gfx/Program.zig");
 pub const Uniform = @import("gfx/Uniform.zig");
 
 const Allocator = std.mem.Allocator;
+const Array = std.ArrayListUnmanaged;
 const Map = std.StringHashMapUnmanaged;
 
 var _allocator: std.mem.Allocator = undefined;
-var _buffers: Map(Buffer) = undefined;
-var _meshes: Map(Mesh) = undefined;
+var _buffers: Array(Buffer) = undefined;
+var _meshes: Array(Mesh) = undefined;
 var _textures: Map(Texture) = undefined;
 var _programs: Map(Program) = undefined;
 
@@ -22,12 +23,10 @@ pub fn init(info: struct { allocator: Allocator = std.heap.page_allocator }) !vo
 }
 
 pub fn deinit() void {
-    var buffers_iterator = _buffers.iterator();
-    while (buffers_iterator.next()) |item| item.value_ptr.deinit();
+    for (_buffers.items) |item| item.deinit();
     _buffers.deinit(_allocator);
 
-    var meshes_iterator = _meshes.iterator();
-    while (meshes_iterator.next()) |item| item.value_ptr.deinit();
+    for (_meshes.items) |item| item.deinit();
     _meshes.deinit(_allocator);
 
     var programs_iterator = _programs.iterator();
@@ -39,27 +38,19 @@ pub fn deinit() void {
     _textures.deinit(_allocator);
 }
 
-pub fn getBuffer(name: []const u8) !*Buffer {
-    if (_buffers.getPtr(name)) |item| {
-        return item;
-    } else {
-        log.debug("init buffer {s}", .{name});
-        try _buffers.put(_allocator, name, Buffer.init(name));
-        return _buffers.getPtr(name).?;
-    }
+pub fn initBuffer(name: []const u8) !*Buffer {
+    log.debug("init buffer {s}", .{name});
+    try _buffers.append(_allocator, Buffer.init(name));
+    return &_buffers.items[_buffers.items.len - 1];
 }
 
-pub fn getMesh(name: []const u8) !*Mesh {
-    if (_meshes.getPtr(name)) |item| {
-        return item;
-    } else {
-        log.debug("init vertex array {s}", .{name});
-        try _meshes.put(_allocator, name, Mesh.init(name));
-        return _meshes.getPtr(name).?;
-    }
+pub fn initMesh(name: []const u8) !*Mesh {
+    log.debug("init mesh {s}", .{name});
+    try _meshes.append(_allocator, Mesh.init(name));
+    return &_meshes.items[_meshes.items.len - 1];
 }
 
-pub fn getTexture(path: []const u8) !*Texture {
+pub fn initTexture(path: []const u8) !*Texture {
     if (_textures.getPtr(path)) |item| {
         return item;
     } else {
@@ -74,7 +65,7 @@ pub fn getTexture(path: []const u8) !*Texture {
     }
 }
 
-pub fn getProgram(path: []const u8) !Program {
+pub fn initProgram(path: []const u8) !Program {
     if (_programs.get(path)) |item| {
         return item;
     } else {
@@ -96,7 +87,7 @@ pub fn getProgram(path: []const u8) !Program {
     }
 }
 
-pub fn getUniform(program: Program, name: [:0]const u8) !Uniform {
+pub fn initUniform(program: Program, name: [:0]const u8) !Uniform {
     log.debug("init uniform {s} in program {s}", .{ name, program.name });
     return try Uniform.init(program, name);
 }

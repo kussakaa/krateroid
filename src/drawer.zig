@@ -175,86 +175,86 @@ pub fn init(info: struct {
             }
         }
 
-        _data.chunk.buffer_pos = try gfx.getBuffer("chunk_pos");
+        _data.chunk.buffer_pos = try gfx.initBuffer("chunk_pos");
         _data.chunk.buffer_pos.data(.vertices, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 3)]), .static_draw);
         _data.chunk.buffer_pos.data_type = .f32;
         _data.chunk.buffer_pos.vertex_size = 3;
-        _data.chunk.buffer_nrm = try gfx.getBuffer("chunk_nrm");
+        _data.chunk.buffer_nrm = try gfx.initBuffer("chunk_nrm");
         _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
         _data.chunk.buffer_nrm.data_type = .f32;
         _data.chunk.buffer_nrm.vertex_size = 3;
 
-        _data.chunk.mesh = try gfx.getMesh("chunk");
+        _data.chunk.mesh = try gfx.initMesh("chunk");
         _data.chunk.mesh.bindBuffer(0, _data.chunk.buffer_pos);
         _data.chunk.mesh.bindBuffer(1, _data.chunk.buffer_nrm);
         _data.chunk.mesh.count = @intCast(cnt);
         _data.chunk.mesh.mode = .triangles;
 
-        _data.chunk.program = try gfx.getProgram("chunk");
-        _data.chunk.uniform.model = try gfx.getUniform(_data.chunk.program, "model");
-        _data.chunk.uniform.view = try gfx.getUniform(_data.chunk.program, "view");
-        _data.chunk.uniform.proj = try gfx.getUniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.color = try gfx.getUniform(_data.chunk.program, "color");
-        _data.chunk.uniform.light.color = try gfx.getUniform(_data.chunk.program, "light.color");
-        _data.chunk.uniform.light.direction = try gfx.getUniform(_data.chunk.program, "light.direction");
-        _data.chunk.uniform.light.ambient = try gfx.getUniform(_data.chunk.program, "light.ambient");
-        _data.chunk.uniform.light.diffuse = try gfx.getUniform(_data.chunk.program, "light.diffuse");
-        _data.chunk.uniform.light.specular = try gfx.getUniform(_data.chunk.program, "light.specular");
+        _data.chunk.program = try gfx.initProgram("chunk");
+        _data.chunk.uniform.model = try gfx.initUniform(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try gfx.initUniform(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try gfx.initUniform(_data.chunk.program, "proj");
+        _data.chunk.uniform.color = try gfx.initUniform(_data.chunk.program, "color");
+        _data.chunk.uniform.light.color = try gfx.initUniform(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try gfx.initUniform(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try gfx.initUniform(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try gfx.initUniform(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try gfx.initUniform(_data.chunk.program, "light.specular");
     }
     { // LINE
-        _data.line.buffer = try gfx.getBuffer("line");
+        _data.line.buffer = try gfx.initBuffer("line");
         _data.line.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
         _data.line.buffer.data_type = .u8;
         _data.line.buffer.vertex_size = 3;
-        _data.line.mesh = try gfx.getMesh("line");
+        _data.line.mesh = try gfx.initMesh("line");
         _data.line.mesh.bindBuffer(0, _data.line.buffer);
         _data.line.mesh.mode = .lines;
         _data.line.mesh.count = 2;
-        _data.line.program = try gfx.getProgram("line");
-        _data.line.uniform.model = try gfx.getUniform(_data.line.program, "model");
-        _data.line.uniform.view = try gfx.getUniform(_data.line.program, "view");
-        _data.line.uniform.proj = try gfx.getUniform(_data.line.program, "proj");
-        _data.line.uniform.color = try gfx.getUniform(_data.line.program, "color");
+        _data.line.program = try gfx.initProgram("line");
+        _data.line.uniform.model = try gfx.initUniform(_data.line.program, "model");
+        _data.line.uniform.view = try gfx.initUniform(_data.line.program, "view");
+        _data.line.uniform.proj = try gfx.initUniform(_data.line.program, "proj");
+        _data.line.uniform.color = try gfx.initUniform(_data.line.program, "color");
     }
     { // RECT
-        _data.rect.buffer = try gfx.getBuffer("rect");
+        _data.rect.buffer = try gfx.initBuffer("rect");
         _data.rect.buffer.data(.vertices, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
         _data.rect.buffer.data_type = .u8;
         _data.rect.buffer.vertex_size = 2;
-        _data.rect.mesh = try gfx.getMesh("rect");
+        _data.rect.mesh = try gfx.initMesh("rect");
         _data.rect.mesh.bindBuffer(0, _data.rect.buffer);
         _data.rect.mesh.mode = .triangle_strip;
         _data.rect.mesh.count = 4;
 
-        _data.rect.program = try gfx.getProgram("rect");
-        _data.rect.uniform.vpsize = try gfx.getUniform(_data.rect.program, "vpsize");
-        _data.rect.uniform.scale = try gfx.getUniform(_data.rect.program, "scale");
-        _data.rect.uniform.rect = try gfx.getUniform(_data.rect.program, "rect");
-        _data.rect.uniform.texrect = try gfx.getUniform(_data.rect.program, "texrect");
+        _data.rect.program = try gfx.initProgram("rect");
+        _data.rect.uniform.vpsize = try gfx.initUniform(_data.rect.program, "vpsize");
+        _data.rect.uniform.scale = try gfx.initUniform(_data.rect.program, "scale");
+        _data.rect.uniform.rect = try gfx.initUniform(_data.rect.program, "rect");
+        _data.rect.uniform.texrect = try gfx.initUniform(_data.rect.program, "texrect");
     }
     { // PANEL
-        _data.panel.texture = try gfx.getTexture("panel.png");
+        _data.panel.texture = try gfx.initTexture("panel.png");
     }
     { // BUTTON
-        _data.button.texture = try gfx.getTexture("button.png");
+        _data.button.texture = try gfx.initTexture("button.png");
     }
     { // SWITCHER
-        _data.switcher.texture = try gfx.getTexture("switcher.png");
+        _data.switcher.texture = try gfx.initTexture("switcher.png");
     }
     { // SLIDER
-        _data.slider.texture = try gfx.getTexture("slider.png");
+        _data.slider.texture = try gfx.initTexture("slider.png");
     }
     { // TEXT
-        _data.text.program = try gfx.getProgram("text");
-        _data.text.uniform.vpsize = try gfx.getUniform(_data.text.program, "vpsize");
-        _data.text.uniform.scale = try gfx.getUniform(_data.text.program, "scale");
-        _data.text.uniform.pos = try gfx.getUniform(_data.text.program, "pos");
-        _data.text.uniform.tex = try gfx.getUniform(_data.text.program, "tex");
-        _data.text.uniform.color = try gfx.getUniform(_data.text.program, "color");
-        _data.text.texture = try gfx.getTexture("text.png");
+        _data.text.program = try gfx.initProgram("text");
+        _data.text.uniform.vpsize = try gfx.initUniform(_data.text.program, "vpsize");
+        _data.text.uniform.scale = try gfx.initUniform(_data.text.program, "scale");
+        _data.text.uniform.pos = try gfx.initUniform(_data.text.program, "pos");
+        _data.text.uniform.tex = try gfx.initUniform(_data.text.program, "tex");
+        _data.text.uniform.color = try gfx.initUniform(_data.text.program, "color");
+        _data.text.texture = try gfx.initTexture("text.png");
     }
     { // CURSOR
-        _data.cursor.texture = try gfx.getTexture("cursor.png");
+        _data.cursor.texture = try gfx.initTexture("cursor.png");
     }
 }
 
