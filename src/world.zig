@@ -37,7 +37,7 @@ pub fn deinit() void {
     lines.deinit(_allocator);
     for (0..width) |y| {
         for (0..width) |x| {
-            if (chunks[y][x] != null) _allocator.destroy(chunks[y][x].?);
+            if (chunks[y][x]) |item| _allocator.destroy(item);
         }
     }
 }
@@ -45,6 +45,13 @@ pub fn deinit() void {
 pub fn chunk(info: struct {
     pos: Chunk.Pos,
 }) !*Chunk {
+    if (chunks[@intCast(info.pos[1])][@intCast(info.pos[0])]) |item| {
+        return item;
+    }
+
+    var item = try _allocator.create(Chunk);
+    chunks[@intCast(info.pos[1])][@intCast(info.pos[0])] = item;
+
     const value_gen = Noise{
         .seed = seed,
         .noise_type = .value,
@@ -53,10 +60,6 @@ pub fn chunk(info: struct {
         .seed = seed,
         .noise_type = .cellular,
     };
-
-    chunks[@intCast(info.pos[1])][@intCast(info.pos[0])] = try _allocator.create(Chunk);
-    var hmap = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.hmap;
-    var mmap = &chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?.mmap;
 
     for (0..Chunk.width) |y| {
         for (0..Chunk.width) |x| {
@@ -70,12 +73,12 @@ pub fn chunk(info: struct {
                 @as(f32, @floatFromInt(y)) * 7.0,
             );
 
-            hmap[y][x] = @as(u8, @intFromFloat(@max(0.0, (cellular + value + 1.0) * 7.0)));
-            mmap[y][x] = 1;
+            item.hmap[y][x] = @intFromFloat(@max(0.0, (cellular + value + 1.0) * 7.0));
+            item.mmap[y][x] = 1;
         }
     }
 
-    return chunks[@intCast(info.pos[1])][@intCast(info.pos[0])].?;
+    return item;
 }
 
 pub fn line(info: struct {
