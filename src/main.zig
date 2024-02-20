@@ -91,12 +91,6 @@ pub fn main() !void {
     });
 
     _ = try world.line(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 0.0, 256.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    });
-
-    _ = try world.line(.{
         .p1 = .{ 0.0, 128.0, 0.0, 1.0 },
         .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
         .color = .{ 1.0, 1.0, 1.0, 1.0 },
@@ -105,24 +99,6 @@ pub fn main() !void {
     _ = try world.line(.{
         .p1 = .{ 128.0, 0.0, 0.0, 1.0 },
         .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    });
-
-    _ = try world.line(.{
-        .p1 = .{ 128.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 128.0, 0.0, 256.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    });
-
-    _ = try world.line(.{
-        .p1 = .{ 0.0, 128.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 128.0, 256.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    });
-
-    _ = try world.line(.{
-        .p1 = .{ 128.0, 128.0, 0.0, 1.0 },
-        .p2 = .{ 128.0, 128.0, 256.0, 1.0 },
         .color = .{ 1.0, 1.0, 1.0, 1.0 },
     });
 
@@ -384,7 +360,7 @@ pub fn main() !void {
                         cursor.pos = pos;
 
                         if (is_camera_move and !menu_main.show and !menu_settings.show) {
-                            const speed = 0.004;
+                            const speed = 0.003;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
@@ -404,7 +380,7 @@ pub fn main() !void {
                         }
 
                         if (is_camera_rotate and !menu_main.show and !menu_settings.show) {
-                            const speed = 0.005; // radians
+                            const speed = 0.003; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
                             camera.rot += Vec{

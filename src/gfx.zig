@@ -38,56 +38,50 @@ pub fn deinit() void {
     _textures.deinit(_allocator);
 }
 
-pub fn initBuffer(name: []const u8) !*Buffer {
+pub fn buffer(name: []const u8) !*Buffer {
     log.debug("init buffer {s}", .{name});
     try _buffers.append(_allocator, Buffer.init(name));
     return &_buffers.items[_buffers.items.len - 1];
 }
 
-pub fn initMesh(name: []const u8) !*Mesh {
+pub fn mesh(name: []const u8) !*Mesh {
     log.debug("init mesh {s}", .{name});
     try _meshes.append(_allocator, Mesh.init(name));
     return &_meshes.items[_meshes.items.len - 1];
 }
 
-pub fn initTexture(path: []const u8) !*Texture {
-    if (_textures.getPtr(path)) |item| {
-        return item;
-    } else {
-        const prefix = "data/texture/";
+pub fn texture(path: []const u8) !*Texture {
+    if (_textures.getPtr(path)) |item| return item;
 
-        const fullpath = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path }, 0);
-        defer _allocator.free(fullpath);
-
-        log.debug("init texture {s}", .{path});
-        try _textures.put(_allocator, path, try Texture.init(fullpath));
-        return _textures.getPtr(path).?;
-    }
+    const prefix = "data/texture/";
+    const fullpath = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path }, 0);
+    defer _allocator.free(fullpath);
+    log.debug("init texture {s}", .{path});
+    try _textures.put(_allocator, path, try Texture.init(fullpath));
+    return _textures.getPtr(path).?;
 }
 
-pub fn initProgram(path: []const u8) !Program {
-    if (_programs.get(path)) |item| {
-        return item;
-    } else {
-        const prefix = "data/shader/";
+pub fn program(path: []const u8) !Program {
+    if (_programs.get(path)) |item| return item;
 
-        const path_vertex = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/vert.glsl" }, 0);
-        defer _allocator.free(path_vertex);
-        const vertex = try Shader.initFromFile(_allocator, path_vertex, .vertex);
-        defer vertex.deinit();
+    const prefix = "data/shader/";
 
-        const path_fragment = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/frag.glsl" }, 0);
-        defer _allocator.free(path_fragment);
-        const fragment = try Shader.initFromFile(_allocator, path_fragment, .fragment);
-        defer fragment.deinit();
+    const path_vertex = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/vert.glsl" }, 0);
+    defer _allocator.free(path_vertex);
+    const vertex = try Shader.initFromFile(_allocator, path_vertex, .vertex);
+    defer vertex.deinit();
 
-        log.debug("init program {s}", .{path});
-        try _programs.put(_allocator, path, try Program.init(_allocator, path, .{ .vertex = vertex, .fragment = fragment }));
-        return _programs.get(path).?;
-    }
+    const path_fragment = try std.mem.concatWithSentinel(_allocator, u8, &.{ prefix, path, "/frag.glsl" }, 0);
+    defer _allocator.free(path_fragment);
+    const fragment = try Shader.initFromFile(_allocator, path_fragment, .fragment);
+    defer fragment.deinit();
+
+    log.debug("init program {s}", .{path});
+    try _programs.put(_allocator, path, try Program.init(_allocator, path, .{ .vertex = vertex, .fragment = fragment }));
+    return _programs.get(path).?;
 }
 
-pub fn initUniform(program: Program, name: [:0]const u8) !Uniform {
-    log.debug("init uniform {s} in program {s}", .{ name, program.name });
-    return try Uniform.init(program, name);
+pub fn uniform(p: Program, name: [:0]const u8) !Uniform {
+    log.debug("init uniform {s} in program {s}", .{ name, p.name });
+    return try Uniform.init(p, name);
 }
