@@ -41,12 +41,10 @@ pub fn init(
     if (shaders.fragment) |fragment| gl.detachShader(id, fragment.id);
 
     const self = Self{ .name = name, .id = id };
-    //log.debug("init {}", .{self});
     return self;
 }
 
 pub fn deinit(self: Self) void {
-    //log.debug("deinit {}", .{self});
     gl.deleteProgram(self.id);
 }
 
