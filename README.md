@@ -2,7 +2,7 @@
 
 ## DESCRIPTION
 
-strategic 3d game.
+Strategic 3d game with huge world and destructible landscape
 
 ![Главное меню](screenshot.png)
 
