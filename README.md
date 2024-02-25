@@ -6,7 +6,7 @@ strategic 3d game.
 
 ![Главное меню](screenshot.png)
 
-## PLANED
+## PLANNED
 
 - Huge world  
 - Entities  
