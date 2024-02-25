@@ -25,4 +25,4 @@ zig build run
 ```
 
 ## CREDITS
-- developers of [zig-gamedev](https://github.com/michal-z/zig-gamedev) for their cool library 
+- Developers of [zig-gamedev](https://github.com/michal-z/zig-gamedev) for their cool library 
