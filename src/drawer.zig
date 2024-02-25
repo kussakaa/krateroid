@@ -35,6 +35,7 @@ const _data = struct {
     const chunk = struct {
         var buffer_pos: *gfx.Buffer = undefined;
         var buffer_nrm: *gfx.Buffer = undefined;
+        var buffer_ebo: *gfx.Buffer = undefined;
         var mesh: *gfx.Mesh = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
@@ -117,35 +118,70 @@ pub fn init(info: struct {
     gl.frontFace(gl.CW);
 
     { // CHUNK
-
+        const Chunk = world.Chunk;
+        const buffer_pos_vert_len = 3;
+        const buffer_nrm_vert_len = 3;
         const s = struct {
-            var buffer_pos_data: [262144]f32 = [1]f32{0.0} ** 262144;
-            var buffer_nrm_data: [262144]f32 = [1]f32{0.0} ** 262144;
+            const buffer_pos_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_pos_vert_len * 3;
+            const buffer_nrm_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_nrm_vert_len * 3;
+            var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
+            var buffer_nrm_data: [buffer_nrm_data_len]f32 = [1]f32{0.0} ** buffer_nrm_data_len;
         };
+
+        //for (0..(Chunk.width + 1)) |z| {
+        //    for (0..(Chunk.width + 1)) |y| {
+        //        for (0..(Chunk.width)) |x| {
+        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 0 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+        //        }
+        //    }
+        //}
+        //for (0..(Chunk.width + 1)) |z| {
+        //    for (0..(Chunk.width + 1)) |y| {
+        //        for (0..(Chunk.width)) |x| {
+        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 1 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+        //        }
+        //    }
+        //}
+        //for (0..(Chunk.width + 1)) |z| {
+        //    for (0..(Chunk.width + 1)) |y| {
+        //        for (0..(Chunk.width)) |x| {
+        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 2 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
+        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
+        //        }
+        //    }
+        //}
 
         const chunk = world.chunks[0][0].?;
         var cnt: usize = 0;
-        for (0..world.Chunk.width - 1) |y| {
-            x: for (0..world.Chunk.width - 1) |x| {
+        for (0..Chunk.width - 1) |y| {
+            x: for (0..Chunk.width - 1) |x| {
                 const minh = @min(chunk.hmap[y][x], chunk.hmap[y][x + 1], chunk.hmap[y + 1][x], chunk.hmap[y + 1][x + 1]);
                 for (minh..255) |z| {
                     var index: u8 = 0;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x])) << 7;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
-                    index |= @as(u8, @intFromBool(@as(world.Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x])) << 7;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
+                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
 
                     if (index == 0) continue :x;
 
                     var i: usize = 0;
-                    while (mct.tri[index][i] < 12) : (i += 3) {
-                        const v1 = mct.edge[mct.tri[index][i + 0]];
-                        const v2 = mct.edge[mct.tri[index][i + 1]];
-                        const v3 = mct.edge[mct.tri[index][i + 2]];
+                    while (mct.pos[index][i] < 12) : (i += 3) {
+                        const v1 = mct.edge[mct.pos[index][i + 0]];
+                        const v2 = mct.edge[mct.pos[index][i + 1]];
+                        const v3 = mct.edge[mct.pos[index][i + 2]];
 
                         s.buffer_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
                         s.buffer_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
@@ -157,7 +193,11 @@ pub fn init(info: struct {
                         s.buffer_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
                         s.buffer_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
 
-                        const n = zm.cross3(v2 - v1, v3 - v1);
+                        const n = @Vector(3, f32){
+                            mct.nrm[index][i + 0],
+                            mct.nrm[index][i + 1],
+                            mct.nrm[index][i + 2],
+                        };
 
                         s.buffer_nrm_data[(cnt + 0) * 3 + 0] = n[0];
                         s.buffer_nrm_data[(cnt + 0) * 3 + 1] = n[1];

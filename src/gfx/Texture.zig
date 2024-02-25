@@ -30,7 +30,7 @@ pub fn init(path: [:0]const u8) !Texture {
         else => return error.ChannelsCount,
     };
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, format, @intCast(width), @intCast(height), 0, format, gl.UNSIGNED_BYTE, @as(*const anyopaque, &image.data[0]));
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, @intCast(width), @intCast(height), 0, format, gl.UNSIGNED_BYTE, image.data.ptr);
     gl.bindTexture(gl.TEXTURE_2D, 0);
 
     const texture = Texture{
