@@ -8,11 +8,11 @@ Strategic 3d game with huge world and destructible landscape
 
 ## PLANNED
 
-- Huge world  
-- Entities  
-- Network 
-- Scripting 
-- [x] GUI 
+* [ ] Huge world  
+* [ ] Entities  
+* [ ] Network 
+* [ ] Scripting 
+* [x] GUI 
 
 ## BUILD
 
