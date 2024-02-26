@@ -10,10 +10,10 @@ Strategic 3d game with huge world and destructible landscape
 
 * [ ] Huge world 
 * [ ] Entities 
-* [ ] Network 
-* [ ] Configs 
-* [ ] Scripting 
 * [x] GUI 
+* [ ] Configs 
+* [ ] Network 
+* [ ] Scripting 
 
 ## BUILD
 
