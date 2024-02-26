@@ -11,6 +11,8 @@ const W = std.unicode.utf8ToUtf16LeStringLiteral;
 const Vec = zm.Vec;
 const Mat = zm.Mat;
 
+const Config = @import("Config.zig");
+
 const window = @import("window.zig");
 const input = @import("input.zig");
 const gfx = @import("gfx.zig");
@@ -25,6 +27,12 @@ pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
+
+    var config = Config{};
+
+    const config_file_data = try std.fs.cwd().readFileAlloc(allocator, "data/config.json", 100_000_000);
+    config = try std.json.parseFromSliceLeaky(Config, allocator, config_file_data, .{});
+    allocator.free(config_file_data);
 
     stb.init(allocator);
     defer stb.deinit();
@@ -116,9 +124,8 @@ pub fn main() !void {
     });
     defer gui.deinit();
 
-    var is_info_show = false;
     var menu_info = try gui.menu(.{ // MENU INFO
-        .show = is_info_show,
+        .show = config.show_info,
     });
     _ = try gui.text(W("krateroid 0.0.1"), .{
         .menu = menu_info,
@@ -234,10 +241,9 @@ pub fn main() !void {
         .menu = menu_settings,
         .pos = .{ 122, -25 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = is_info_show,
+        .status = config.show_info,
     });
 
-    var is_show_grid = false;
     _ = try gui.text(W("grid"), .{
         .menu = menu_settings,
         .pos = .{ 42, -17 },
@@ -252,7 +258,7 @@ pub fn main() !void {
         .menu = menu_settings,
         .pos = .{ 122, -17 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = is_show_grid,
+        .status = config.show_grid,
     });
 
     _ = try gui.text(W("background color"), .{
@@ -300,6 +306,8 @@ pub fn main() !void {
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
 
+    drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
+
     loop: while (true) {
         inputproc: while (true) {
             switch (input.pollEvent()) {
@@ -312,21 +320,17 @@ pub fn main() !void {
                             menu_settings.show = false;
                         }
                         if (id == .f3) {
-                            is_info_show = !is_info_show;
-                            menu_info.show = is_info_show;
-                            x_axis.show = is_info_show;
-                            y_axis.show = is_info_show;
-                            z_axis.show = is_info_show;
-                            menu_settings_switcher_show_info.status = is_info_show;
+                            config.show_info = !config.show_info;
+                            menu_info.show = config.show_info;
+                            x_axis.show = config.show_info;
+                            y_axis.show = config.show_info;
+                            z_axis.show = config.show_info;
+                            menu_settings_switcher_show_info.status = config.show_info;
                         }
                         if (id == .f5) {
-                            is_show_grid = !is_show_grid;
-                            menu_settings_switcher_show_grid.status = is_show_grid;
-                            if (is_show_grid) {
-                                drawer.polygon_mode = gl.LINE;
-                            } else {
-                                drawer.polygon_mode = gl.FILL;
-                            }
+                            config.show_grid = !config.show_grid;
+                            menu_settings_switcher_show_grid.status = config.show_grid;
+                            drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
                         }
                         if (id == .f10) break :loop;
                         if (id == .kp_minus) gui.scale = @max(gui.scale - 1, 1);
@@ -442,14 +446,14 @@ pub fn main() !void {
                     .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                         if (switched.id == menu_settings_switcher_show_info.id) {
-                            is_info_show = switched.data;
-                            menu_info.show = is_info_show;
-                            x_axis.show = is_info_show;
-                            y_axis.show = is_info_show;
-                            z_axis.show = is_info_show;
+                            config.show_info = switched.data;
+                            menu_info.show = config.show_info;
+                            x_axis.show = config.show_info;
+                            y_axis.show = config.show_info;
+                            z_axis.show = config.show_info;
                         } else if (switched.id == menu_settings_switcher_show_grid.id) {
-                            is_show_grid = switched.data;
-                            if (is_show_grid) {
+                            config.show_grid = switched.data;
+                            if (config.show_grid) {
                                 drawer.polygon_mode = gl.LINE;
                             } else {
                                 drawer.polygon_mode = gl.FILL;
