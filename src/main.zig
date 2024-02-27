@@ -34,9 +34,6 @@ pub fn main() !void {
     config = try std.json.parseFromSliceLeaky(Config, allocator, config_file_data, .{});
     allocator.free(config_file_data);
 
-    stb.init(allocator);
-    defer stb.deinit();
-
     audio.init(allocator);
     defer audio.deinit();
 
@@ -300,7 +297,7 @@ pub fn main() !void {
         .value = drawer.colors.bg[2],
     });
 
-    try gfx.init(.{});
+    try gfx.init(.{ .allocator = allocator });
     defer gfx.deinit();
 
     try drawer.init(.{ .allocator = allocator });

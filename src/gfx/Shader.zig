@@ -41,14 +41,3 @@ pub fn init(
 pub fn deinit(self: Self) void {
     gl.deleteShader(self.id);
 }
-
-pub fn initFromFile(
-    allocator: Allocator,
-    path: [:0]const u8,
-    @"type": Type,
-) !Self {
-    const cwd = std.fs.cwd();
-    const data = try cwd.readFileAlloc(allocator, path, 100_000_000);
-    defer allocator.free(data);
-    return Self.init(allocator, data[0..], @"type");
-}

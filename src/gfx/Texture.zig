@@ -1,20 +1,14 @@
 const gl = @import("zopengl").bindings;
-const stb = @import("zstbi");
 
 const Texture = @This();
 
+const Size = @Vector(2, u32);
+
 id: u32 = 0,
-size: @Vector(2, u32),
+size: Size,
 channels: u32,
 
-pub fn init(path: [:0]const u8) !Texture {
-    var image = try stb.Image.loadFromFile(path, 4);
-    defer image.deinit();
-
-    const width = image.width;
-    const height = image.height;
-    const channels = image.num_components;
-
+pub fn init(data: []const u8, size: Size, channels: u32) !Texture {
     var id: u32 = 0;
 
     gl.genTextures(1, &id);
@@ -30,12 +24,12 @@ pub fn init(path: [:0]const u8) !Texture {
         else => return error.ChannelsCount,
     };
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, format, @intCast(width), @intCast(height), 0, format, gl.UNSIGNED_BYTE, image.data.ptr);
+    gl.texImage2D(gl.TEXTURE_2D, 0, format, @intCast(size[0]), @intCast(size[1]), 0, format, gl.UNSIGNED_BYTE, data.ptr);
     gl.bindTexture(gl.TEXTURE_2D, 0);
 
     const texture = Texture{
         .id = id,
-        .size = .{ width, height },
+        .size = size,
         .channels = channels,
     };
     return texture;
