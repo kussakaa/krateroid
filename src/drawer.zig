@@ -31,6 +31,7 @@ const light = struct {
     var diffuse: f32 = 0.3;
     var specular: f32 = 0.1;
 };
+
 const _data = struct {
     const chunk = struct {
         var buffer_pos: *gfx.Buffer = undefined;
@@ -125,7 +126,7 @@ pub fn init(info: struct {
             const buffer_pos_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_pos_vert_len * 3;
             const buffer_nrm_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_nrm_vert_len * 3;
             var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
-            var buffer_nrm_data: [buffer_nrm_data_len]f32 = [1]f32{0.0} ** buffer_nrm_data_len;
+            var buffer_nrm_data: [buffer_nrm_data_len]i32 = [1]i32{0} ** buffer_nrm_data_len;
         };
 
         //for (0..(Chunk.width + 1)) |z| {
@@ -160,6 +161,7 @@ pub fn init(info: struct {
         //}
 
         const chunk = world.chunks[0][0].?;
+
         var cnt: usize = 0;
         for (0..Chunk.width - 1) |y| {
             x: for (0..Chunk.width - 1) |x| {
@@ -193,7 +195,7 @@ pub fn init(info: struct {
                         s.buffer_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
                         s.buffer_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
 
-                        const n = @Vector(3, f32){
+                        const n = @Vector(3, i32){
                             mct.nrm[index][i + 0],
                             mct.nrm[index][i + 1],
                             mct.nrm[index][i + 2],
@@ -221,7 +223,7 @@ pub fn init(info: struct {
         _data.chunk.buffer_pos.vertex_size = 3;
         _data.chunk.buffer_nrm = try gfx.buffer("chunk_nrm");
         _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
-        _data.chunk.buffer_nrm.data_type = .f32;
+        _data.chunk.buffer_nrm.data_type = .i32;
         _data.chunk.buffer_nrm.vertex_size = 3;
 
         _data.chunk.mesh = try gfx.mesh("chunk");

@@ -34,6 +34,6 @@ float noise(vec3 p){
 
 void main()
 {
-    float n = clamp(noise(v_pos) + 0.5, 0.9, 1.0);
-    f_color = vec4(color.xyz*v_light*n, color.w);
+    //float n = clamp(noise(v_pos) + 0.5, 0.9, 1.0);
+    f_color = vec4(color.xyz*v_light, color.w);
 }
