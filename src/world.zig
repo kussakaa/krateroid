@@ -43,7 +43,7 @@ pub fn deinit() void {
 }
 
 pub fn chunk(info: struct {
-    pos: Chunk.Pos,
+    pos: @Vector(2, u32),
 }) !*Chunk {
     if (chunks[@intCast(info.pos[1])][@intCast(info.pos[0])]) |item| {
         return item;
@@ -61,20 +61,21 @@ pub fn chunk(info: struct {
         .noise_type = .cellular,
     };
 
-    for (0..Chunk.width) |y| {
-        for (0..Chunk.width) |x| {
-            const value: f32 = value_gen.noise2(
-                @as(f32, @floatFromInt(x)) * 7.0,
-                @as(f32, @floatFromInt(y)) * 7.0,
-            );
+    for (0..Chunk.width) |z| {
+        for (0..Chunk.width) |y| {
+            for (0..Chunk.width) |x| {
+                const value: f32 = value_gen.noise2(
+                    @as(f32, @floatFromInt(x)) * 7.0,
+                    @as(f32, @floatFromInt(y)) * 7.0,
+                );
 
-            const cellular: f32 = cellular_gen.noise2(
-                @as(f32, @floatFromInt(x)) * 7.0,
-                @as(f32, @floatFromInt(y)) * 7.0,
-            );
+                const cellular: f32 = cellular_gen.noise2(
+                    @as(f32, @floatFromInt(x)) * 10.0,
+                    @as(f32, @floatFromInt(y)) * 10.0,
+                ) / 2.0;
 
-            item.hmap[y][x] = @intFromFloat(@max(0.0, (cellular + value + 1.0) * 7.0));
-            item.mmap[y][x] = 1;
+                item.grid[z][y][x] = @as(usize, @intFromFloat(@max(0.0, (value + cellular + 1.0) * 5.0) + 4.0)) > z;
+            }
         }
     }
 

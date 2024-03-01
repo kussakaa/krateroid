@@ -27,8 +27,8 @@ pub const colors = struct {
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
     var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
-    var ambient: f32 = 0.3;
-    var diffuse: f32 = 0.4;
+    var ambient: f32 = 0.4;
+    var diffuse: f32 = 0.3;
     var specular: f32 = 0.1;
 };
 
@@ -190,20 +190,19 @@ pub fn init(info: struct {
 
         const chunk = world.chunks[0][0].?;
         var cnt: usize = 0;
-        for (0..Chunk.width - 1) |y| {
-            x: for (0..Chunk.width - 1) |x| {
-                const minh = @min(chunk.hmap[y][x], chunk.hmap[y][x + 1], chunk.hmap[y + 1][x], chunk.hmap[y + 1][x + 1]);
-                for (minh..255) |z| {
+        for (0..Chunk.width - 1) |z| {
+            for (0..Chunk.width - 1) |y| {
+                for (0..Chunk.width - 1) |x| {
                     var index: u8 = 0;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y][x])) << 3;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y][x + 1])) << 2;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x + 1])) << 1;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z)) <= chunk.hmap[y + 1][x])) << 0;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x])) << 7;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
-                    index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
-                    if (index == 0) continue :x;
+                    index |= @as(u8, @intFromBool(chunk.grid[z][y][x])) << 3;
+                    index |= @as(u8, @intFromBool(chunk.grid[z][y][x + 1])) << 2;
+                    index |= @as(u8, @intFromBool(chunk.grid[z][y + 1][x + 1])) << 1;
+                    index |= @as(u8, @intFromBool(chunk.grid[z][y + 1][x])) << 0;
+                    index |= @as(u8, @intFromBool(chunk.grid[z + 1][y][x])) << 7;
+                    index |= @as(u8, @intFromBool(chunk.grid[z + 1][y][x + 1])) << 6;
+                    index |= @as(u8, @intFromBool(chunk.grid[z + 1][y + 1][x + 1])) << 5;
+                    index |= @as(u8, @intFromBool(chunk.grid[z + 1][y + 1][x])) << 4;
+                    if (index == 0) continue;
                     var i: usize = 0;
                     while (mct.pos[index][i] < 12) : (i += 3) {
                         const v1: u32 = edge[mct.pos[index][i + 0]] + @as(u32, @intCast(x + y * 32 + z * 32 * 33));
