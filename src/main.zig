@@ -90,26 +90,24 @@ pub fn main() !void {
         .show = config.show_info,
     });
 
-    _ = try world.line(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 128.0, 0.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-        .show = config.show_info,
-    });
-
-    _ = try world.line(.{
-        .p1 = .{ 0.0, 128.0, 0.0, 1.0 },
-        .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-        .show = config.show_info,
-    });
-
-    _ = try world.line(.{
-        .p1 = .{ 128.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
-        .color = .{ 1.0, 1.0, 1.0, 1.0 },
-        .show = config.show_info,
-    });
+    //_ = try world.line(.{
+    //    .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
+    //    .p2 = .{ 0.0, 128.0, 0.0, 1.0 },
+    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
+    //    .show = config.show_info,
+    //});
+    //_ = try world.line(.{
+    //    .p1 = .{ 0.0, 128.0, 0.0, 1.0 },
+    //    .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
+    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
+    //    .show = config.show_info,
+    //});
+    //_ = try world.line(.{
+    //    .p1 = .{ 128.0, 0.0, 0.0, 1.0 },
+    //    .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
+    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
+    //    .show = config.show_info,
+    //});
 
     _ = try world.chunk(.{
         .pos = .{ 0, 0 },

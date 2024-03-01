@@ -131,7 +131,7 @@ pub fn init(info: struct {
         const buffer_pos_z_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 2;
         const s = struct {
             var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
-            var buffer_nrm_data: [buffer_nrm_data_len]i32 = [1]i32{0} ** buffer_nrm_data_len;
+            var buffer_nrm_data: [buffer_nrm_data_len]i8 = [1]i8{0} ** buffer_nrm_data_len;
             var buffer_ebo_data: [buffer_ebo_data_len]u32 = [1]u32{0} ** buffer_ebo_data_len;
         };
 
@@ -213,7 +213,7 @@ pub fn init(info: struct {
                         s.buffer_ebo_data[cnt + 1] = v2;
                         s.buffer_ebo_data[cnt + 2] = v3;
 
-                        const n = @Vector(3, i32){
+                        const n = @Vector(3, i8){
                             mct.nrm[index][i + 0],
                             mct.nrm[index][i + 1],
                             mct.nrm[index][i + 2],
@@ -240,7 +240,7 @@ pub fn init(info: struct {
         _data.chunk.buffer_pos.vertex_size = 3;
         _data.chunk.buffer_nrm = try gfx.buffer("chunk_nrm");
         _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..]), .static_draw);
-        _data.chunk.buffer_nrm.data_type = .i32;
+        _data.chunk.buffer_nrm.data_type = .i8;
         _data.chunk.buffer_nrm.vertex_size = 3;
         _data.chunk.buffer_ebo = try gfx.buffer("chunk_ebo");
         _data.chunk.buffer_ebo.data(.elements, std.mem.sliceAsBytes(s.buffer_ebo_data[0..cnt]), .static_draw);
