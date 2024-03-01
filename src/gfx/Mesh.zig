@@ -6,6 +6,7 @@ pub const Mode = enum(gl.Enum) {
     triangles = gl.TRIANGLES,
     triangle_strip = gl.TRIANGLE_STRIP,
     lines = gl.LINES,
+    points = gl.POINTS,
 };
 
 const Self = @This();
@@ -14,7 +15,7 @@ id: gl.Uint,
 name: []const u8,
 count: gl.Sizei = 0,
 mode: Mode = .triangles,
-ebo: Buffer = .{ .id = 0, .name = "default" },
+ebo: ?*Buffer = null,
 
 pub fn init(name: []const u8) Self {
     var id: gl.Uint = 0;
@@ -35,6 +36,10 @@ pub fn bindBuffer(self: Self, i: gl.Uint, buffer: *const Buffer) void {
 
 pub fn draw(self: Self) void {
     gl.bindVertexArray(self.id);
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.ebo.id);
-    gl.drawArrays(@intFromEnum(self.mode), 0, self.count);
+    if (self.ebo) |ebo| {
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ebo.id);
+        gl.drawElements(@intFromEnum(self.mode), self.count, @intFromEnum(ebo.data_type), null);
+    } else {
+        gl.drawArrays(@intFromEnum(self.mode), 0, self.count);
+    }
 }

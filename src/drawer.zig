@@ -26,9 +26,9 @@ pub const colors = struct {
 };
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 1.0, 0.5, 1.0, 1.0 };
-    var ambient: f32 = 0.4;
-    var diffuse: f32 = 0.3;
+    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
+    var ambient: f32 = 0.3;
+    var diffuse: f32 = 0.4;
     var specular: f32 = 0.1;
 };
 
@@ -114,6 +114,7 @@ pub fn init(info: struct {
     gl.enable(gl.CULL_FACE);
 
     gl.lineWidth(2.0);
+    gl.pointSize(3.0);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
@@ -122,46 +123,72 @@ pub fn init(info: struct {
         const Chunk = world.Chunk;
         const buffer_pos_vert_len = 3;
         const buffer_nrm_vert_len = 3;
+        const buffer_pos_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_pos_vert_len * 3;
+        const buffer_nrm_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_nrm_vert_len * 3;
+        const buffer_ebo_data_len = 1024 * 1024; // 1 Mb
+        const buffer_pos_x_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 0;
+        const buffer_pos_y_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 1;
+        const buffer_pos_z_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 2;
         const s = struct {
-            const buffer_pos_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_pos_vert_len * 3;
-            const buffer_nrm_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_nrm_vert_len * 3;
             var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
             var buffer_nrm_data: [buffer_nrm_data_len]i32 = [1]i32{0} ** buffer_nrm_data_len;
+            var buffer_ebo_data: [buffer_ebo_data_len]u32 = [1]u32{0} ** buffer_ebo_data_len;
         };
 
-        //for (0..(Chunk.width + 1)) |z| {
-        //    for (0..(Chunk.width + 1)) |y| {
-        //        for (0..(Chunk.width)) |x| {
-        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 0 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
-        //        }
-        //    }
-        //}
-        //for (0..(Chunk.width + 1)) |z| {
-        //    for (0..(Chunk.width + 1)) |y| {
-        //        for (0..(Chunk.width)) |x| {
-        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 1 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
-        //        }
-        //    }
-        //}
-        //for (0..(Chunk.width + 1)) |z| {
-        //    for (0..(Chunk.width + 1)) |y| {
-        //        for (0..(Chunk.width)) |x| {
-        //            const offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 2 + (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
-        //            s.buffer_pos_data[offset * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
-        //        }
-        //    }
-        //}
+        const edge = [12]u32{
+            buffer_pos_x_space_offset + 32,
+            buffer_pos_y_space_offset + 1,
+            buffer_pos_x_space_offset,
+            buffer_pos_y_space_offset,
+
+            buffer_pos_x_space_offset + 33 * 32 + 32,
+            buffer_pos_y_space_offset + 33 * 32 + 1,
+            buffer_pos_x_space_offset + 33 * 32,
+            buffer_pos_y_space_offset + 33 * 32,
+
+            buffer_pos_z_space_offset + 32,
+            buffer_pos_z_space_offset + 32 + 1,
+            buffer_pos_z_space_offset + 1,
+            buffer_pos_z_space_offset,
+        };
+
+        // x space
+        for (0..(Chunk.width + 1)) |z| {
+            for (0..(Chunk.width + 1)) |y| {
+                for (0..(Chunk.width)) |x| {
+                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+                    s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
+                    s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
+                    s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+                }
+            }
+        }
+
+        // y space
+        for (0..(Chunk.width + 1)) |z| {
+            for (0..(Chunk.width)) |y| {
+                for (0..(Chunk.width + 1)) |x| {
+                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+                    s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
+                    s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
+                    s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+                }
+            }
+        }
+
+        // z space
+        for (0..(Chunk.width)) |z| {
+            for (0..(Chunk.width + 1)) |y| {
+                for (0..(Chunk.width + 1)) |x| {
+                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+                    s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
+                    s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
+                    s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
+                }
+            }
+        }
 
         const chunk = world.chunks[0][0].?;
-
         var cnt: usize = 0;
         for (0..Chunk.width - 1) |y| {
             x: for (0..Chunk.width - 1) |x| {
@@ -176,24 +203,16 @@ pub fn init(info: struct {
                     index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y][x + 1])) << 6;
                     index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x + 1])) << 5;
                     index |= @as(u8, @intFromBool(@as(Chunk.H, @intCast(z + 1)) <= chunk.hmap[y + 1][x])) << 4;
-
                     if (index == 0) continue :x;
-
                     var i: usize = 0;
                     while (mct.pos[index][i] < 12) : (i += 3) {
-                        const v1 = mct.edge[mct.pos[index][i + 0]];
-                        const v2 = mct.edge[mct.pos[index][i + 1]];
-                        const v3 = mct.edge[mct.pos[index][i + 2]];
+                        const v1: u32 = edge[mct.pos[index][i + 0]] + @as(u32, @intCast(x + y * 32 + z * 32 * 33));
+                        const v2: u32 = edge[mct.pos[index][i + 1]] + @as(u32, @intCast(x + y * 32 + z * 32 * 33));
+                        const v3: u32 = edge[mct.pos[index][i + 2]] + @as(u32, @intCast(x + y * 32 + z * 32 * 33));
 
-                        s.buffer_pos_data[(cnt + 0) * 3 + 0] = v1[0] + @as(f32, @floatFromInt(x));
-                        s.buffer_pos_data[(cnt + 0) * 3 + 1] = v1[1] + @as(f32, @floatFromInt(y));
-                        s.buffer_pos_data[(cnt + 0) * 3 + 2] = v1[2] + @as(f32, @floatFromInt(z));
-                        s.buffer_pos_data[(cnt + 1) * 3 + 0] = v2[0] + @as(f32, @floatFromInt(x));
-                        s.buffer_pos_data[(cnt + 1) * 3 + 1] = v2[1] + @as(f32, @floatFromInt(y));
-                        s.buffer_pos_data[(cnt + 1) * 3 + 2] = v2[2] + @as(f32, @floatFromInt(z));
-                        s.buffer_pos_data[(cnt + 2) * 3 + 0] = v3[0] + @as(f32, @floatFromInt(x));
-                        s.buffer_pos_data[(cnt + 2) * 3 + 1] = v3[1] + @as(f32, @floatFromInt(y));
-                        s.buffer_pos_data[(cnt + 2) * 3 + 2] = v3[2] + @as(f32, @floatFromInt(z));
+                        s.buffer_ebo_data[cnt + 0] = v1;
+                        s.buffer_ebo_data[cnt + 1] = v2;
+                        s.buffer_ebo_data[cnt + 2] = v3;
 
                         const n = @Vector(3, i32){
                             mct.nrm[index][i + 0],
@@ -201,16 +220,15 @@ pub fn init(info: struct {
                             mct.nrm[index][i + 2],
                         };
 
-                        s.buffer_nrm_data[(cnt + 0) * 3 + 0] = n[0];
-                        s.buffer_nrm_data[(cnt + 0) * 3 + 1] = n[1];
-                        s.buffer_nrm_data[(cnt + 0) * 3 + 2] = n[2];
-                        s.buffer_nrm_data[(cnt + 1) * 3 + 0] = n[0];
-                        s.buffer_nrm_data[(cnt + 1) * 3 + 1] = n[1];
-                        s.buffer_nrm_data[(cnt + 1) * 3 + 2] = n[2];
-                        s.buffer_nrm_data[(cnt + 2) * 3 + 0] = n[0];
-                        s.buffer_nrm_data[(cnt + 2) * 3 + 1] = n[1];
-                        s.buffer_nrm_data[(cnt + 2) * 3 + 2] = n[2];
-
+                        s.buffer_nrm_data[v1 * buffer_nrm_vert_len + 0] += n[0];
+                        s.buffer_nrm_data[v1 * buffer_nrm_vert_len + 1] += n[1];
+                        s.buffer_nrm_data[v1 * buffer_nrm_vert_len + 2] += n[2];
+                        s.buffer_nrm_data[v2 * buffer_nrm_vert_len + 0] += n[0];
+                        s.buffer_nrm_data[v2 * buffer_nrm_vert_len + 1] += n[1];
+                        s.buffer_nrm_data[v2 * buffer_nrm_vert_len + 2] += n[2];
+                        s.buffer_nrm_data[v3 * buffer_nrm_vert_len + 0] += n[0];
+                        s.buffer_nrm_data[v3 * buffer_nrm_vert_len + 1] += n[1];
+                        s.buffer_nrm_data[v3 * buffer_nrm_vert_len + 2] += n[2];
                         cnt += 3;
                     }
                 }
@@ -218,19 +236,24 @@ pub fn init(info: struct {
         }
 
         _data.chunk.buffer_pos = try gfx.buffer("chunk_pos");
-        _data.chunk.buffer_pos.data(.vertices, std.mem.sliceAsBytes(s.buffer_pos_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_pos.data(.vertices, std.mem.sliceAsBytes(s.buffer_pos_data[0..]), .static_draw);
         _data.chunk.buffer_pos.data_type = .f32;
         _data.chunk.buffer_pos.vertex_size = 3;
         _data.chunk.buffer_nrm = try gfx.buffer("chunk_nrm");
-        _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..(cnt * 3)]), .static_draw);
+        _data.chunk.buffer_nrm.data(.vertices, std.mem.sliceAsBytes(s.buffer_nrm_data[0..]), .static_draw);
         _data.chunk.buffer_nrm.data_type = .i32;
         _data.chunk.buffer_nrm.vertex_size = 3;
+        _data.chunk.buffer_ebo = try gfx.buffer("chunk_ebo");
+        _data.chunk.buffer_ebo.data(.elements, std.mem.sliceAsBytes(s.buffer_ebo_data[0..cnt]), .static_draw);
+        _data.chunk.buffer_ebo.data_type = .u32;
+        _data.chunk.buffer_ebo.vertex_size = 1;
 
         _data.chunk.mesh = try gfx.mesh("chunk");
         _data.chunk.mesh.bindBuffer(0, _data.chunk.buffer_pos);
         _data.chunk.mesh.bindBuffer(1, _data.chunk.buffer_nrm);
         _data.chunk.mesh.count = @intCast(cnt);
         _data.chunk.mesh.mode = .triangles;
+        _data.chunk.mesh.ebo = _data.chunk.buffer_ebo;
 
         _data.chunk.program = try gfx.program("chunk");
         _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
