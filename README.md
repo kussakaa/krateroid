@@ -15,7 +15,7 @@ Strategic 3d game with huge world and destructible landscape
   * [ ] Blur?
   * [ ] SSAO?
 * [ ] World 
-  * [] Chunk
+  * [ ] Chunk
     * [x] Mesh render
 	* [ ] Texturing
 	* [ ] Materials
