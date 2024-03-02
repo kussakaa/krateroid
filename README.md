@@ -8,12 +8,31 @@ Strategic 3d game with huge world and destructible landscape
 
 ## PLANNED
 
-* 10% Huge world 
-* 0% Entities 
-* 50% GUI 
-* 5% Configs 
-* 0% Network 
-* 0% Scripting 
+* [] Drawer
+  * [] UBO?
+  * [x] Basic light
+  * [] Shadows
+  * [] Blur?
+  * [] SSAO?
+* [] World 
+  * [] Chunk
+    * [x] Mesh render
+	* [] Texturing
+	* [] Materials
+  * [] Beautiful Generation
+  * [] Entities
+* [] GUI
+  * [x] Text
+  * [x] Button
+  * [x] Panel
+  * [x] Menu
+  * [x] Switcher
+  * [x] Slider
+  * [] Text field
+  * [] Animations?
+* [] Configs (JSON, TOML, INI, ZIGGY)?
+* [] Network?
+* [] Scripting (Lua, AngelScript)?
 
 ## BUILD
 
