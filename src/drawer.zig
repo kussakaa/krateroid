@@ -120,15 +120,15 @@ pub fn init(info: struct {
     gl.frontFace(gl.CW);
 
     { // CHUNK
-        const Chunk = world.Chunk;
+        const width = world.Chunk.width;
         const buffer_pos_vert_len = 3;
         const buffer_nrm_vert_len = 3;
-        const buffer_pos_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_pos_vert_len * 3;
-        const buffer_nrm_data_len = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * buffer_nrm_vert_len * 3;
+        const buffer_pos_data_len = (width + 1) * (width + 1) * width * buffer_pos_vert_len * 3;
+        const buffer_nrm_data_len = (width + 1) * (width + 1) * width * buffer_nrm_vert_len * 3;
         const buffer_ebo_data_len = 1024 * 1024; // 1 Mb
-        const buffer_pos_x_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 0;
-        const buffer_pos_y_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 1;
-        const buffer_pos_z_space_offset = (Chunk.width + 1) * (Chunk.width + 1) * Chunk.width * 2;
+        const buffer_pos_x_space_offset = (width + 1) * (width + 1) * width * 0;
+        const buffer_pos_y_space_offset = (width + 1) * (width + 1) * width * 1;
+        const buffer_pos_z_space_offset = (width + 1) * (width + 1) * width * 2;
         const s = struct {
             var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
             var buffer_nrm_data: [buffer_nrm_data_len]i8 = [1]i8{0} ** buffer_nrm_data_len;
@@ -136,27 +136,27 @@ pub fn init(info: struct {
         };
 
         const edge = [12]u32{
-            buffer_pos_x_space_offset + 32,
+            buffer_pos_x_space_offset + width,
             buffer_pos_y_space_offset + 1,
             buffer_pos_x_space_offset,
             buffer_pos_y_space_offset,
 
-            buffer_pos_x_space_offset + 33 * 32 + 32,
-            buffer_pos_y_space_offset + 33 * 32 + 1,
-            buffer_pos_x_space_offset + 33 * 32,
-            buffer_pos_y_space_offset + 33 * 32,
+            buffer_pos_x_space_offset + (width + 1) * width + width,
+            buffer_pos_y_space_offset + (width + 1) * width + 1,
+            buffer_pos_x_space_offset + (width + 1) * width,
+            buffer_pos_y_space_offset + (width + 1) * width,
 
-            buffer_pos_z_space_offset + 32,
-            buffer_pos_z_space_offset + 32 + 1,
+            buffer_pos_z_space_offset + width,
+            buffer_pos_z_space_offset + width + 1,
             buffer_pos_z_space_offset + 1,
             buffer_pos_z_space_offset,
         };
 
         // x space
-        for (0..(Chunk.width + 1)) |z| {
-            for (0..(Chunk.width + 1)) |y| {
-                for (0..(Chunk.width)) |x| {
-                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        for (0..(width + 1)) |z| {
+            for (0..(width + 1)) |y| {
+                for (0..(width)) |x| {
+                    const offset = (x + y * (width) + z * (width * (width + 1)));
                     s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
                     s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
                     s.buffer_pos_data[(buffer_pos_x_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
@@ -165,10 +165,10 @@ pub fn init(info: struct {
         }
 
         // y space
-        for (0..(Chunk.width + 1)) |z| {
-            for (0..(Chunk.width)) |y| {
-                for (0..(Chunk.width + 1)) |x| {
-                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        for (0..(width + 1)) |z| {
+            for (0..(width)) |y| {
+                for (0..(width + 1)) |x| {
+                    const offset = (x + y * (width) + z * (width * (width + 1)));
                     s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
                     s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
                     s.buffer_pos_data[(buffer_pos_y_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
@@ -177,10 +177,10 @@ pub fn init(info: struct {
         }
 
         // z space
-        for (0..(Chunk.width)) |z| {
-            for (0..(Chunk.width + 1)) |y| {
-                for (0..(Chunk.width + 1)) |x| {
-                    const offset = (x + y * (Chunk.width) + z * (Chunk.width * (Chunk.width + 1)));
+        for (0..(width)) |z| {
+            for (0..(width + 1)) |y| {
+                for (0..(width + 1)) |x| {
+                    const offset = (x + y * (width) + z * (width * (width + 1)));
                     s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
                     s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
                     s.buffer_pos_data[(buffer_pos_z_space_offset + offset) * buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
@@ -190,9 +190,9 @@ pub fn init(info: struct {
 
         const chunk = world.chunks[0][0].?;
         var cnt: usize = 0;
-        for (0..Chunk.width - 1) |z| {
-            for (0..Chunk.width - 1) |y| {
-                for (0..Chunk.width - 1) |x| {
+        for (0..width - 1) |z| {
+            for (0..width - 1) |y| {
+                for (0..width - 1) |x| {
                     var index: u8 = 0;
                     index |= @as(u8, @intFromBool(chunk.grid[z][y][x])) << 3;
                     index |= @as(u8, @intFromBool(chunk.grid[z][y][x + 1])) << 2;
@@ -335,7 +335,7 @@ pub fn draw() void {
         _data.chunk.uniform.model.set(zm.identity());
         _data.chunk.uniform.view.set(camera.view);
         _data.chunk.uniform.proj.set(camera.proj);
-        _data.chunk.uniform.color.set(Color{ 1.0, 1.0, 1.0, 1.0 });
+        _data.chunk.uniform.color.set(Color{ 0.6, 0.8, 0.6, 1.0 });
         _data.chunk.uniform.light.color.set(light.color);
         _data.chunk.uniform.light.direction.set(light.direction);
         _data.chunk.uniform.light.ambient.set(light.ambient);
