@@ -488,7 +488,7 @@ pub fn main() !void {
             _ = try std.unicode.utf8ToUtf16Le(&fps_str, &fps_str_buf);
         }
 
-        drawer.draw();
+        try drawer.draw();
         window.swap();
     }
 }
