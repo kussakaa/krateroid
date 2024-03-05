@@ -35,38 +35,43 @@ const light = struct {
 const _data = struct {
     const chunk = struct {
         const width = world.Chunk.width;
-        const buffer_pos_vert_len = 3;
-        const buffer_nrm_vert_len = 3;
-        const buffer_pos_data_len = (width + 1) * (width + 1) * width * buffer_pos_vert_len * 3;
-        const buffer_nrm_data_len = (width + 1) * (width + 1) * width * buffer_nrm_vert_len * 3;
-        const buffer_ebo_data_len = 1024 * 1024; // 1 Mb
-        const buffer_pos_x_space_offset = (width + 1) * (width + 1) * width * 0;
-        const buffer_pos_y_space_offset = (width + 1) * (width + 1) * width * 1;
-        const buffer_pos_z_space_offset = (width + 1) * (width + 1) * width * 2;
-        var buffer_pos_data: [buffer_pos_data_len]f32 = [1]f32{0.0} ** buffer_pos_data_len;
-        var buffer_nrm_data: [buffer_nrm_data_len]i8 = [1]i8{0} ** buffer_nrm_data_len;
-        var buffer_ebo_data: [buffer_ebo_data_len]u32 = [1]u32{0} ** buffer_ebo_data_len;
-
-        const edge = [12]u32{
-            buffer_pos_x_space_offset + width,
-            buffer_pos_y_space_offset + 1,
-            buffer_pos_x_space_offset,
-            buffer_pos_y_space_offset,
-
-            buffer_pos_x_space_offset + (width + 1) * width + width,
-            buffer_pos_y_space_offset + (width + 1) * width + 1,
-            buffer_pos_x_space_offset + (width + 1) * width,
-            buffer_pos_y_space_offset + (width + 1) * width,
-
-            buffer_pos_z_space_offset + width,
-            buffer_pos_z_space_offset + width + 1,
-            buffer_pos_z_space_offset + 1,
-            buffer_pos_z_space_offset,
+        const buffer = struct {
+            const pos = struct {
+                const vert_len = 3;
+                var data = [1]f32{0.0} ** ((width + 1) * (width + 1) * width * vert_len * 3);
+                var ptr: *gfx.Buffer = undefined;
+            };
+            const nrm = struct {
+                const vert_len = 3;
+                var data = [1]i8{0} ** ((width + 1) * (width + 1) * width * vert_len * 3);
+                var ptr: ?*gfx.Buffer = undefined;
+            };
+            const ebo = struct {
+                const x_space_offset = (width + 1) * (width + 1) * width * 0;
+                const y_space_offset = (width + 1) * (width + 1) * width * 1;
+                const z_space_offset = (width + 1) * (width + 1) * width * 2;
+                var data = [1]u32{0} ** (1024 * 1024); // 1 Mb
+                var ptr: ?*gfx.Buffer = undefined;
+            };
         };
 
-        var buffer_pos: *gfx.Buffer = undefined;
-        var buffer_nrm: ?*gfx.Buffer = undefined;
-        var buffer_ebo: ?*gfx.Buffer = undefined;
+        const edge = [12]u32{
+            buffer.ebo.x_space_offset + width,
+            buffer.ebo.y_space_offset + 1,
+            buffer.ebo.x_space_offset,
+            buffer.ebo.y_space_offset,
+
+            buffer.ebo.x_space_offset + (width + 1) * width + width,
+            buffer.ebo.y_space_offset + (width + 1) * width + 1,
+            buffer.ebo.x_space_offset + (width + 1) * width,
+            buffer.ebo.y_space_offset + (width + 1) * width,
+
+            buffer.ebo.z_space_offset + width,
+            buffer.ebo.z_space_offset + width + 1,
+            buffer.ebo.z_space_offset + 1,
+            buffer.ebo.z_space_offset,
+        };
+
         var mesh: ?*gfx.Mesh = undefined;
         var program: gfx.Program = undefined;
         const uniform = struct {
@@ -157,9 +162,9 @@ pub fn init(info: struct {
             for (0..(width + 1)) |y| {
                 for (0..(width)) |x| {
                     const offset = (x + y * (width) + z * (width * (width + 1)));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_x_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_x_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_x_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.x_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 0] = @as(f32, @floatFromInt(x)) + 0.5;
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.x_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 1] = @as(f32, @floatFromInt(y));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.x_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 2] = @as(f32, @floatFromInt(z));
                 }
             }
         }
@@ -169,9 +174,9 @@ pub fn init(info: struct {
             for (0..(width)) |y| {
                 for (0..(width + 1)) |x| {
                     const offset = (x + y * (width) + z * (width * (width + 1)));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_y_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_y_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_y_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.y_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 0] = @as(f32, @floatFromInt(x));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.y_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 1] = @as(f32, @floatFromInt(y)) + 0.5;
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.y_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 2] = @as(f32, @floatFromInt(z));
                 }
             }
         }
@@ -181,17 +186,17 @@ pub fn init(info: struct {
             for (0..(width + 1)) |y| {
                 for (0..(width + 1)) |x| {
                     const offset = (x + y * (width) + z * (width * (width + 1)));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_z_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 0] = @as(f32, @floatFromInt(x));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_z_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 1] = @as(f32, @floatFromInt(y));
-                    _data.chunk.buffer_pos_data[(_data.chunk.buffer_pos_z_space_offset + offset) * _data.chunk.buffer_pos_vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.z_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 0] = @as(f32, @floatFromInt(x));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.z_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 1] = @as(f32, @floatFromInt(y));
+                    _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.z_space_offset + offset) * _data.chunk.buffer.pos.vert_len + 2] = @as(f32, @floatFromInt(z)) + 0.5;
                 }
             }
         }
 
-        _data.chunk.buffer_pos = try gfx.buffer("chunk_pos");
-        _data.chunk.buffer_pos.data(.vertices, std.mem.sliceAsBytes(_data.chunk.buffer_pos_data[0..]), .static_draw);
-        _data.chunk.buffer_pos.data_type = .f32;
-        _data.chunk.buffer_pos.vertex_size = 3;
+        _data.chunk.buffer.pos.ptr = try gfx.buffer("chunk_pos");
+        _data.chunk.buffer.pos.ptr.data(.vertices, std.mem.sliceAsBytes(_data.chunk.buffer.pos.data[0..]), .static_draw);
+        _data.chunk.buffer.pos.ptr.data_type = .f32;
+        _data.chunk.buffer.pos.ptr.vertex_size = _data.chunk.buffer.pos.vert_len;
 
         _data.chunk.program = try gfx.program("chunk");
         _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
@@ -286,6 +291,7 @@ pub fn draw() !void {
         } else {
             const width = world.Chunk.width;
             const chunk = world.chunks[0][0].?;
+            @memset(_data.chunk.buffer.nrm.data[0..], 0);
             var cnt: usize = 0;
             for (0..width - 1) |z| {
                 for (0..width - 1) |y| {
@@ -306,9 +312,9 @@ pub fn draw() !void {
                             const v2: u32 = _data.chunk.edge[mct.pos[index][i + 1]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
                             const v3: u32 = _data.chunk.edge[mct.pos[index][i + 2]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
 
-                            _data.chunk.buffer_ebo_data[cnt + 0] = v1;
-                            _data.chunk.buffer_ebo_data[cnt + 1] = v2;
-                            _data.chunk.buffer_ebo_data[cnt + 2] = v3;
+                            _data.chunk.buffer.ebo.data[cnt + 0] = v1;
+                            _data.chunk.buffer.ebo.data[cnt + 1] = v2;
+                            _data.chunk.buffer.ebo.data[cnt + 2] = v3;
 
                             const n = @Vector(3, i8){
                                 mct.nrm[index][i + 0],
@@ -316,36 +322,36 @@ pub fn draw() !void {
                                 mct.nrm[index][i + 2],
                             };
 
-                            _data.chunk.buffer_nrm_data[v1 * _data.chunk.buffer_nrm_vert_len + 0] += n[0];
-                            _data.chunk.buffer_nrm_data[v1 * _data.chunk.buffer_nrm_vert_len + 1] += n[1];
-                            _data.chunk.buffer_nrm_data[v1 * _data.chunk.buffer_nrm_vert_len + 2] += n[2];
-                            _data.chunk.buffer_nrm_data[v2 * _data.chunk.buffer_nrm_vert_len + 0] += n[0];
-                            _data.chunk.buffer_nrm_data[v2 * _data.chunk.buffer_nrm_vert_len + 1] += n[1];
-                            _data.chunk.buffer_nrm_data[v2 * _data.chunk.buffer_nrm_vert_len + 2] += n[2];
-                            _data.chunk.buffer_nrm_data[v3 * _data.chunk.buffer_nrm_vert_len + 0] += n[0];
-                            _data.chunk.buffer_nrm_data[v3 * _data.chunk.buffer_nrm_vert_len + 1] += n[1];
-                            _data.chunk.buffer_nrm_data[v3 * _data.chunk.buffer_nrm_vert_len + 2] += n[2];
+                            _data.chunk.buffer.nrm.data[v1 * _data.chunk.buffer.nrm.vert_len + 0] += n[0];
+                            _data.chunk.buffer.nrm.data[v1 * _data.chunk.buffer.nrm.vert_len + 1] += n[1];
+                            _data.chunk.buffer.nrm.data[v1 * _data.chunk.buffer.nrm.vert_len + 2] += n[2];
+                            _data.chunk.buffer.nrm.data[v2 * _data.chunk.buffer.nrm.vert_len + 0] += n[0];
+                            _data.chunk.buffer.nrm.data[v2 * _data.chunk.buffer.nrm.vert_len + 1] += n[1];
+                            _data.chunk.buffer.nrm.data[v2 * _data.chunk.buffer.nrm.vert_len + 2] += n[2];
+                            _data.chunk.buffer.nrm.data[v3 * _data.chunk.buffer.nrm.vert_len + 0] += n[0];
+                            _data.chunk.buffer.nrm.data[v3 * _data.chunk.buffer.nrm.vert_len + 1] += n[1];
+                            _data.chunk.buffer.nrm.data[v3 * _data.chunk.buffer.nrm.vert_len + 2] += n[2];
                             cnt += 3;
                         }
                     }
                 }
             }
 
-            _data.chunk.buffer_nrm = try gfx.buffer("chunk_nrm");
-            _data.chunk.buffer_nrm.?.data(.vertices, std.mem.sliceAsBytes(_data.chunk.buffer_nrm_data[0..]), .static_draw);
-            _data.chunk.buffer_nrm.?.data_type = .i8;
-            _data.chunk.buffer_nrm.?.vertex_size = 3;
-            _data.chunk.buffer_ebo = try gfx.buffer("chunk_ebo");
-            _data.chunk.buffer_ebo.?.data(.elements, std.mem.sliceAsBytes(_data.chunk.buffer_ebo_data[0..cnt]), .static_draw);
-            _data.chunk.buffer_ebo.?.data_type = .u32;
-            _data.chunk.buffer_ebo.?.vertex_size = 1;
+            _data.chunk.buffer.nrm.ptr = try gfx.buffer("chunk_nrm");
+            _data.chunk.buffer.nrm.ptr.?.data(.vertices, std.mem.sliceAsBytes(_data.chunk.buffer.nrm.data[0..]), .static_draw);
+            _data.chunk.buffer.nrm.ptr.?.data_type = .i8;
+            _data.chunk.buffer.nrm.ptr.?.vertex_size = _data.chunk.buffer.nrm.vert_len;
+            _data.chunk.buffer.ebo.ptr = try gfx.buffer("chunk_ebo");
+            _data.chunk.buffer.ebo.ptr.?.data(.elements, std.mem.sliceAsBytes(_data.chunk.buffer.ebo.data[0..cnt]), .static_draw);
+            _data.chunk.buffer.ebo.ptr.?.data_type = .u32;
+            _data.chunk.buffer.ebo.ptr.?.vertex_size = 1;
 
             _data.chunk.mesh = try gfx.mesh("chunk");
-            _data.chunk.mesh.?.bindBuffer(0, _data.chunk.buffer_pos);
-            _data.chunk.mesh.?.bindBuffer(1, _data.chunk.buffer_nrm.?);
+            _data.chunk.mesh.?.bindBuffer(0, _data.chunk.buffer.pos.ptr);
+            _data.chunk.mesh.?.bindBuffer(1, _data.chunk.buffer.nrm.ptr.?);
             _data.chunk.mesh.?.count = @intCast(cnt);
             _data.chunk.mesh.?.mode = .triangles;
-            _data.chunk.mesh.?.ebo = _data.chunk.buffer_ebo.?;
+            _data.chunk.mesh.?.ebo = _data.chunk.buffer.ebo.ptr.?;
             _data.chunk.mesh.?.draw();
         }
     }
