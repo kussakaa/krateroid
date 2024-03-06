@@ -78,18 +78,18 @@ pub fn program(name: []const u8) !Program {
     defer _allocator.free(vert_path);
     const vert_data = try full_path.readFileAlloc(_allocator, vert_path, 100_000_000);
     defer _allocator.free(vert_data);
-    const vert = try Shader.init(_allocator, vert_data, .vertex);
+    const vert = try Shader.init(_allocator, vert_data, .vert);
     defer vert.deinit();
 
     const frag_path = try std.mem.concatWithSentinel(_allocator, u8, &.{ name, "/frag.glsl" }, 0);
     defer _allocator.free(frag_path);
     const frag_data = try full_path.readFileAlloc(_allocator, frag_path, 100_000_000);
     defer _allocator.free(frag_data);
-    const frag = try Shader.init(_allocator, frag_data, .fragment);
+    const frag = try Shader.init(_allocator, frag_data, .frag);
     defer frag.deinit();
 
     log.debug("init program {s}", .{name});
-    try _programs.put(_allocator, name, try Program.init(_allocator, name, .{ .vertex = vert, .fragment = frag }));
+    try _programs.put(_allocator, name, try Program.init(_allocator, name, .{ .vert = vert, .frag = frag }));
     return _programs.get(name).?;
 }
 

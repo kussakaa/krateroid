@@ -5,8 +5,8 @@ const log = std.log.scoped(.gfx);
 const Allocator = std.mem.Allocator;
 
 const Type = enum(u32) {
-    vertex = gl.VERTEX_SHADER,
-    fragment = gl.FRAGMENT_SHADER,
+    vert = gl.VERTEX_SHADER,
+    frag = gl.FRAGMENT_SHADER,
 };
 
 const Self = @This();

@@ -26,7 +26,7 @@ pub const colors = struct {
 };
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
+    var direction: Vec = .{ 0.0, 0.0, 1.0, 1.0 };
     var ambient: f32 = 0.4;
     var diffuse: f32 = 0.3;
     var specular: f32 = 0.1;
@@ -50,26 +50,25 @@ const _data = struct {
                 const xoffset = (width + 1) * (width + 1) * width * 0;
                 const yoffset = (width + 1) * (width + 1) * width * 1;
                 const zoffset = (width + 1) * (width + 1) * width * 2;
+                const edge = [12]u32{
+                    buffer.ebo.xoffset + width,
+                    buffer.ebo.yoffset + 1,
+                    buffer.ebo.xoffset,
+                    buffer.ebo.yoffset,
+
+                    buffer.ebo.xoffset + (width + 1) * width + width,
+                    buffer.ebo.yoffset + (width + 1) * width + 1,
+                    buffer.ebo.xoffset + (width + 1) * width,
+                    buffer.ebo.yoffset + (width + 1) * width,
+
+                    buffer.ebo.zoffset + width,
+                    buffer.ebo.zoffset + width + 1,
+                    buffer.ebo.zoffset + 1,
+                    buffer.ebo.zoffset,
+                };
                 var data = [1]u32{0} ** (1024 * 1024); // 1 Mb
                 var ptr: ?*gfx.Buffer = null;
             };
-        };
-
-        const edge = [12]u32{
-            buffer.ebo.xoffset + width,
-            buffer.ebo.yoffset + 1,
-            buffer.ebo.xoffset,
-            buffer.ebo.yoffset,
-
-            buffer.ebo.xoffset + (width + 1) * width + width,
-            buffer.ebo.yoffset + (width + 1) * width + 1,
-            buffer.ebo.xoffset + (width + 1) * width,
-            buffer.ebo.yoffset + (width + 1) * width,
-
-            buffer.ebo.zoffset + width,
-            buffer.ebo.zoffset + width + 1,
-            buffer.ebo.zoffset + 1,
-            buffer.ebo.zoffset,
         };
 
         var mesh: ?*gfx.Mesh = undefined;
@@ -85,6 +84,10 @@ const _data = struct {
                 var ambient: gfx.Uniform = undefined;
                 var diffuse: gfx.Uniform = undefined;
                 var specular: gfx.Uniform = undefined;
+            };
+            const chunk = struct {
+                var width: gfx.Uniform = undefined;
+                var pos: gfx.Uniform = undefined;
             };
         };
     };
@@ -208,6 +211,8 @@ pub fn init(info: struct {
         _data.chunk.uniform.light.ambient = try gfx.uniform(_data.chunk.program, "light.ambient");
         _data.chunk.uniform.light.diffuse = try gfx.uniform(_data.chunk.program, "light.diffuse");
         _data.chunk.uniform.light.specular = try gfx.uniform(_data.chunk.program, "light.specular");
+        _data.chunk.uniform.chunk.width = try gfx.uniform(_data.chunk.program, "chunk.width");
+        _data.chunk.uniform.chunk.pos = try gfx.uniform(_data.chunk.program, "chunk.pos");
     }
     { // LINE
         _data.line.buffer = try gfx.buffer("line");
@@ -285,6 +290,8 @@ pub fn draw() !void {
         _data.chunk.uniform.light.ambient.set(light.ambient);
         _data.chunk.uniform.light.diffuse.set(light.diffuse);
         _data.chunk.uniform.light.specular.set(light.specular);
+        _data.chunk.uniform.chunk.width.set(@as(f32, @floatFromInt(world.Chunk.width)));
+        _data.chunk.uniform.chunk.pos.set(@Vector(3, f32){ 0.0, 0.0, 0.0 });
 
         if (_data.chunk.mesh) |mesh| {
             mesh.draw();
@@ -308,9 +315,9 @@ pub fn draw() !void {
                         if (index == 0) continue;
                         var i: usize = 0;
                         while (mct.pos[index][i] < 12) : (i += 3) {
-                            const v1: u32 = _data.chunk.edge[mct.pos[index][i + 0]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
-                            const v2: u32 = _data.chunk.edge[mct.pos[index][i + 1]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
-                            const v3: u32 = _data.chunk.edge[mct.pos[index][i + 2]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
+                            const v1: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 0]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
+                            const v2: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 1]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
+                            const v3: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 2]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
 
                             _data.chunk.buffer.ebo.data[len + 0] = v1;
                             _data.chunk.buffer.ebo.data[len + 1] = v2;

@@ -56,25 +56,27 @@ pub fn chunk(info: struct {
         .seed = seed,
         .noise_type = .value,
     };
-    const cellular_gen = Noise{
-        .seed = seed,
-        .noise_type = .cellular,
-    };
+    //const cellular_gen = Noise{
+    //    .seed = seed,
+    //    .noise_type = .cellular,
+    //};
 
     for (0..Chunk.width) |z| {
         for (0..Chunk.width) |y| {
             for (0..Chunk.width) |x| {
-                const value: f32 = value_gen.noise2(
-                    @as(f32, @floatFromInt(x)) * 7.0,
-                    @as(f32, @floatFromInt(y)) * 7.0,
-                );
-
-                const cellular: f32 = cellular_gen.noise2(
+                const value: f32 = value_gen.noise3(
                     @as(f32, @floatFromInt(x)) * 10.0,
                     @as(f32, @floatFromInt(y)) * 10.0,
-                ) / 2.0;
+                    @as(f32, @floatFromInt(z)) * 10.0,
+                );
 
-                item.grid[z][y][x] = @as(usize, @intFromFloat(@max(0.0, (value + cellular + 1.0) * 5.0) + 4.0)) > z;
+                //const cellular: f32 = cellular_gen.noise3(
+                //    @as(f32, @floatFromInt(x)) * 10.0,
+                //    @as(f32, @floatFromInt(y)) * 10.0,
+                //    @as(f32, @floatFromInt(z)) * 10.0,
+                //);
+
+                item.grid[z][y][x] = value > 0.0;
             }
         }
     }

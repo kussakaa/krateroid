@@ -14,14 +14,14 @@ pub fn init(
     allocator: Allocator,
     name: []const u8,
     shaders: struct {
-        vertex: ?Shader = null,
-        fragment: ?Shader = null,
+        vert: ?Shader = null,
+        frag: ?Shader = null,
     },
 ) !Self {
     const id = gl.createProgram();
 
-    if (shaders.vertex) |vertex| gl.attachShader(id, vertex.id);
-    if (shaders.fragment) |fragment| gl.attachShader(id, fragment.id);
+    if (shaders.vert) |vert| gl.attachShader(id, vert.id);
+    if (shaders.frag) |frag| gl.attachShader(id, frag.id);
     gl.linkProgram(id);
 
     // error catching
@@ -37,8 +37,8 @@ pub fn init(
         return error.ShaderProgramLinkage;
     }
 
-    if (shaders.vertex) |vertex| gl.detachShader(id, vertex.id);
-    if (shaders.fragment) |fragment| gl.detachShader(id, fragment.id);
+    if (shaders.vert) |vert| gl.detachShader(id, vert.id);
+    if (shaders.frag) |frag| gl.detachShader(id, frag.id);
 
     const self = Self{ .name = name, .id = id };
     return self;

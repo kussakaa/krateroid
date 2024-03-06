@@ -52,7 +52,7 @@ pub fn main() !void {
 
     var is_camera_move: bool = false;
     var is_camera_rotate: bool = false;
-    camera.pos = .{ 15.0, 15.0, 0.0, 1.0 };
+    camera.pos = .{ 32.0, 32.0, 0.0, 1.0 };
     camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
     camera.scale = 50.0;
 
