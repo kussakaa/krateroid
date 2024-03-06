@@ -3,8 +3,8 @@ const gl = @import("zopengl").bindings;
 const Id = gl.Uint;
 
 pub const Target = enum(gl.Enum) {
-    vertices = gl.ARRAY_BUFFER,
-    elements = gl.ELEMENT_ARRAY_BUFFER,
+    vbo = gl.ARRAY_BUFFER,
+    ebo = gl.ELEMENT_ARRAY_BUFFER,
 };
 
 pub const Usage = enum(gl.Enum) {
@@ -26,8 +26,8 @@ const Self = @This();
 
 id: Id,
 name: []const u8,
-data_type: DataType = .f32,
-vertex_size: gl.Sizei = 3,
+datatype: DataType = .f32,
+vertsize: gl.Sizei = 3,
 
 pub fn init(name: []const u8) Self {
     var id: gl.Uint = 0;
