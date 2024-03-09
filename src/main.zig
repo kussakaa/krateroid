@@ -116,6 +116,10 @@ pub fn main() !void {
         .pos = .{ 1, 0 },
     });
 
+    _ = try world.chunk(.{
+        .pos = .{ 2, 0 },
+    });
+
     try gui.init(.{
         .allocator = allocator,
         .scale = 3,

@@ -1,6 +1,6 @@
 const std = @import("std");
 const stb = @import("zstbi");
-const log = std.log.scoped(.data);
+const log = std.log.scoped(.gfx);
 
 pub const Buffer = @import("gfx/Buffer.zig");
 pub const Mesh = @import("gfx/Mesh.zig");
@@ -42,15 +42,15 @@ pub fn deinit() void {
     stb.deinit();
 }
 
-pub fn buffer(name: []const u8) !*Buffer {
-    log.debug("init buffer {s}", .{name});
-    try _buffers.append(_allocator, Buffer.init(name));
+pub fn buffer(info: Buffer.InitInfo) !*Buffer {
+    try _buffers.append(_allocator, Buffer.init(info));
+    log.debug("init buffer {any}", .{_buffers.items[_buffers.items.len - 1]});
     return &_buffers.items[_buffers.items.len - 1];
 }
 
-pub fn mesh(name: []const u8) !*Mesh {
-    log.debug("init mesh {s}", .{name});
-    try _meshes.append(_allocator, Mesh.init(name));
+pub fn mesh(info: Mesh.InitInfo) !*Mesh {
+    try _meshes.append(_allocator, Mesh.init(info));
+    log.debug("init mesh {any}", .{&_meshes.items[_meshes.items.len - 1]});
     return &_meshes.items[_meshes.items.len - 1];
 }
 

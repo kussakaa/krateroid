@@ -26,13 +26,24 @@ const Self = @This();
 
 id: Id,
 name: []const u8,
-datatype: DataType = .f32,
-vertsize: gl.Sizei = 3,
+datatype: DataType,
+vertsize: gl.Sizei,
 
-pub fn init(name: []const u8) Self {
+pub const InitInfo = struct {
+    name: []const u8,
+    datatype: DataType = .f32,
+    vertsize: gl.Sizei = 3,
+};
+
+pub fn init(info: InitInfo) Self {
     var id: gl.Uint = 0;
     gl.genBuffers(1, &id);
-    return .{ .id = id, .name = name };
+    return .{
+        .id = id,
+        .name = info.name,
+        .datatype = info.datatype,
+        .vertsize = info.vertsize,
+    };
 }
 
 pub fn deinit(self: Self) void {

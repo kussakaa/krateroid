@@ -13,25 +13,38 @@ const Self = @This();
 
 id: gl.Uint,
 name: []const u8,
-len: gl.Sizei = 0,
-mode: Mode = .triangles,
-ebo: ?*Buffer = null,
+len: gl.Sizei,
+mode: Mode,
+ebo: ?*Buffer,
 
-pub fn init(name: []const u8) Self {
+pub const InitInfo = struct {
+    name: []const u8,
+    buffers: []const *Buffer,
+    len: gl.Sizei = 0,
+    mode: Mode = .triangles,
+    ebo: ?*Buffer = null,
+};
+
+pub fn init(info: InitInfo) Self {
     var id: gl.Uint = 0;
     gl.genVertexArrays(1, &id);
-    return .{ .id = id, .name = name };
+    for (info.buffers, 0..) |buffer, i| {
+        gl.bindVertexArray(id);
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer.id);
+        gl.enableVertexAttribArray(@intCast(i));
+        gl.vertexAttribPointer(@intCast(i), buffer.vertsize, @intFromEnum(buffer.datatype), gl.FALSE, 0, null);
+    }
+    return .{
+        .id = id,
+        .name = info.name,
+        .len = info.len,
+        .mode = info.mode,
+        .ebo = info.ebo,
+    };
 }
 
 pub fn deinit(self: Self) void {
     gl.deleteVertexArrays(1, &self.id);
-}
-
-pub fn bindBuffer(self: Self, i: gl.Uint, buffer: *const Buffer) void {
-    gl.bindVertexArray(self.id);
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer.id);
-    gl.enableVertexAttribArray(i);
-    gl.vertexAttribPointer(i, buffer.vertsize, @intFromEnum(buffer.datatype), gl.FALSE, 0, null);
 }
 
 pub fn draw(self: Self) void {
