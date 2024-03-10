@@ -1,5 +1,8 @@
 const gl = @import("zopengl").bindings;
 
+const std = @import("std");
+const log = std.log.scoped(.gfxMesh);
+
 const Buffer = @import("Buffer.zig");
 
 pub const Mode = enum(gl.Enum) {

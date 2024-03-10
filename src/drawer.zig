@@ -316,7 +316,6 @@ pub fn draw() !void {
                 if (_data.chunk.mesh[ychunk][xchunk]) |mesh| {
                     mesh.draw();
                 } else if (world.chunks[ychunk][xchunk]) |chunk| {
-                    log.debug("init chunk {} {}", .{ xchunk, ychunk });
                     const width = world.Chunk.width;
                     @memset(_data.chunk.buffer.nrm.data[0..], 0);
                     var len: usize = 0;
@@ -387,7 +386,6 @@ pub fn draw() !void {
                         .mode = .triangles,
                         .ebo = _data.chunk.buffer.ebo.ptr[ychunk][xchunk].?,
                     });
-                    _data.chunk.mesh[ychunk][xchunk].?.draw();
                 }
             }
         }
@@ -424,7 +422,7 @@ pub fn draw() !void {
     { // PANEL
         _data.panel.texture.use();
         for (gui.panels.items) |item| {
-            if (item.menu.show) {
+            if (gui.menus.items[item.menu].show) {
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
                 );
@@ -441,7 +439,7 @@ pub fn draw() !void {
     { // BUTTON
         _data.button.texture.use();
         for (gui.buttons.items) |item| {
-            if (item.menu.show) {
+            if (gui.menus.items[item.menu].show) {
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
                     .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
@@ -455,7 +453,7 @@ pub fn draw() !void {
     { // SWITCHER
         _data.switcher.texture.use();
         for (gui.switchers.items) |item| {
-            if (item.menu.show) {
+            if (gui.menus.items[item.menu].show) {
                 _data.rect.uniform.rect.set(
                     item.alignment.transform(gui.Rect{
                         .min = .{
@@ -501,7 +499,7 @@ pub fn draw() !void {
         _data.rect.uniform.vpsize.set(window.size);
         _data.rect.uniform.scale.set(gui.scale);
         for (gui.sliders.items) |item| {
-            if (item.menu.show) {
+            if (gui.menus.items[item.menu].show) {
                 _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
                     .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 6, 8 }),
@@ -537,7 +535,7 @@ pub fn draw() !void {
         _data.text.uniform.scale.set(gui.scale);
         _data.text.uniform.color.set(gui.Color{ 1.0, 1.0, 1.0, 1.0 });
         for (gui.texts.items) |item| {
-            if (item.menu.show) {
+            if (gui.menus.items[item.menu].show) {
                 const pos = item.alignment.transform(item.rect.scale(gui.scale), window.size).min;
                 var offset: i32 = 0;
                 for (item.data) |cid| {

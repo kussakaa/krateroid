@@ -1,2 +1,4 @@
-id: u32,
+pub const Id = usize;
+const Self = @This();
+id: Self.Id,
 show: bool,

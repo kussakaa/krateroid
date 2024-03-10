@@ -43,14 +43,14 @@ pub fn deinit() void {
 }
 
 pub fn buffer(info: Buffer.InitInfo) !*Buffer {
+    log.debug("init buffer {s}", .{info.name});
     try _buffers.append(_allocator, Buffer.init(info));
-    log.debug("init buffer {any}", .{_buffers.items[_buffers.items.len - 1]});
     return &_buffers.items[_buffers.items.len - 1];
 }
 
 pub fn mesh(info: Mesh.InitInfo) !*Mesh {
+    log.debug("init mesh {s}", .{info.name});
     try _meshes.append(_allocator, Mesh.init(info));
-    log.debug("init mesh {any}", .{&_meshes.items[_meshes.items.len - 1]});
     return &_meshes.items[_meshes.items.len - 1];
 }
 

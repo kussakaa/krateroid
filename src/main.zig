@@ -21,12 +21,16 @@ const world = @import("world.zig");
 const gui = @import("gui.zig");
 const drawer = @import("drawer.zig");
 
+//const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{});
+//var gpa: GeneralPurposeAllocator = undefined;
+var allocator: std.mem.Allocator = undefined;
+
 pub fn main() !void {
     std.debug.print("\n", .{});
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator = gpa.allocator();
-    defer _ = gpa.deinit();
+    //    gpa = GeneralPurposeAllocator{};
+    allocator = std.heap.page_allocator;
+    //    defer _ = gpa.deinit();
 
     var config = Config{};
 
@@ -108,17 +112,13 @@ pub fn main() !void {
     //    .show = config.show_info,
     //});
 
-    _ = try world.chunk(.{
-        .pos = .{ 0, 0 },
-    });
-
-    _ = try world.chunk(.{
-        .pos = .{ 1, 0 },
-    });
-
-    _ = try world.chunk(.{
-        .pos = .{ 2, 0 },
-    });
+    for (0..world.width) |y| {
+        for (0..world.width) |x| {
+            _ = try world.chunk(.{
+                .pos = .{ @intCast(x), @intCast(y) },
+            });
+        }
+    }
 
     try gui.init(.{
         .allocator = allocator,
@@ -126,7 +126,7 @@ pub fn main() !void {
     });
     defer gui.deinit();
 
-    var menu_info = try gui.menu(.{ // MENU INFO
+    const menu_info = try gui.menu(.{ // MENU INFO
         .show = config.show_info,
     });
     _ = try gui.text(W("krateroid 0.0.1"), .{
@@ -148,7 +148,7 @@ pub fn main() !void {
         .alignment = .{ .v = .bottom },
     });
 
-    var menu_main = try gui.menu(.{ // MENU MAIN
+    const menu_main = try gui.menu(.{ // MENU MAIN
         .show = true,
     });
 
@@ -207,7 +207,7 @@ pub fn main() !void {
         .centered = true,
     });
 
-    var menu_settings = try gui.menu(.{ // MENU SETTINGS
+    const menu_settings = try gui.menu(.{ // MENU SETTINGS
         .show = false,
     });
 
@@ -239,7 +239,7 @@ pub fn main() !void {
         .pos = .{ 107, -25 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    var menu_settings_switcher_show_info = try gui.switcher(.{
+    const menu_settings_switcher_show_info = try gui.switcher(.{
         .menu = menu_settings,
         .pos = .{ 122, -25 },
         .alignment = .{ .v = .center, .h = .center },
@@ -256,7 +256,7 @@ pub fn main() !void {
         .pos = .{ 107, -17 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    var menu_settings_switcher_show_grid = try gui.switcher(.{
+    const menu_settings_switcher_show_grid = try gui.switcher(.{
         .menu = menu_settings,
         .pos = .{ 122, -17 },
         .alignment = .{ .v = .center, .h = .center },
@@ -318,20 +318,20 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .pressed => |id| {
                         if (id == .escape) {
-                            menu_main.show = !menu_main.show;
-                            menu_settings.show = false;
+                            gui.menus.items[menu_main].show = !gui.menus.items[menu_main].show;
+                            gui.menus.items[menu_settings].show = false;
                         }
                         if (id == .f3) {
                             config.show_info = !config.show_info;
-                            menu_info.show = config.show_info;
+                            gui.menus.items[menu_info].show = config.show_info;
                             x_axis.show = config.show_info;
                             y_axis.show = config.show_info;
                             z_axis.show = config.show_info;
-                            menu_settings_switcher_show_info.status = config.show_info;
+                            gui.switchers.items[menu_settings_switcher_show_info].status = config.show_info;
                         }
                         if (id == .f5) {
                             config.show_grid = !config.show_grid;
-                            menu_settings_switcher_show_grid.status = config.show_grid;
+                            gui.switchers.items[menu_settings_switcher_show_grid].status = config.show_grid;
                             drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
                         }
                         if (id == .f10) break :loop;
@@ -365,7 +365,7 @@ pub fn main() !void {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
-                        if (is_camera_move and !menu_main.show and !menu_settings.show) {
+                        if (is_camera_move and !gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
                             const speed = 0.003;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
@@ -385,7 +385,7 @@ pub fn main() !void {
                             z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
-                        if (is_camera_rotate and !menu_main.show and !menu_settings.show) {
+                        if (is_camera_rotate and !gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
                             const speed = 0.003; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
@@ -401,7 +401,7 @@ pub fn main() !void {
                         gui.update();
                     },
                     .scrolled => |scroll| {
-                        if (!menu_main.show and !menu_settings.show) {
+                        if (!gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
                             camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
                         }
                     },
@@ -428,12 +428,12 @@ pub fn main() !void {
                     .pressed => |_| {},
                     .unpressed => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (id == menu_main_button_play.id) {
-                            menu_main.show = false;
-                            menu_settings.show = false;
-                        } else if (id == menu_main_button_settings.id) {
-                            menu_settings.show = !menu_settings.show;
-                        } else if (id == menu_main_button_exit.id) {
+                        if (id == menu_main_button_play) {
+                            gui.menus.items[menu_main].show = false;
+                            gui.menus.items[menu_settings].show = false;
+                        } else if (id == menu_main_button_settings) {
+                            gui.menus.items[menu_settings].show = !gui.menus.items[menu_settings].show;
+                        } else if (id == menu_main_button_exit) {
                             break :loop;
                         }
                     },
@@ -447,13 +447,13 @@ pub fn main() !void {
                     .unpressed => |_| {},
                     .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (switched.id == menu_settings_switcher_show_info.id) {
+                        if (switched.id == menu_settings_switcher_show_info) {
                             config.show_info = switched.data;
-                            menu_info.show = config.show_info;
+                            gui.menus.items[menu_info].show = config.show_info;
                             x_axis.show = config.show_info;
                             y_axis.show = config.show_info;
                             z_axis.show = config.show_info;
-                        } else if (switched.id == menu_settings_switcher_show_grid.id) {
+                        } else if (switched.id == menu_settings_switcher_show_grid) {
                             config.show_grid = switched.data;
                             if (config.show_grid) {
                                 drawer.polygon_mode = gl.LINE;
@@ -473,11 +473,11 @@ pub fn main() !void {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },
                     .scrolled => |s| {
-                        if (s.id == menu_settings_slider_bg_r.id)
+                        if (s.id == menu_settings_slider_bg_r)
                             drawer.colors.bg[0] = s.data;
-                        if (s.id == menu_settings_slider_bg_g.id)
+                        if (s.id == menu_settings_slider_bg_g)
                             drawer.colors.bg[1] = s.data;
-                        if (s.id == menu_settings_slider_bg_b.id)
+                        if (s.id == menu_settings_slider_bg_b)
                             drawer.colors.bg[2] = s.data;
                     },
                 },

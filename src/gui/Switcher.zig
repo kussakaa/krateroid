@@ -2,8 +2,11 @@ const Menu = @import("Menu.zig");
 const Pos = @Vector(2, i32);
 const Alignment = @import("Alignment.zig");
 
-menu: *const Menu,
-id: u32,
+pub const Id = usize;
+const Self = @This();
+
+menu: Menu.Id,
+id: Self.Id,
 pos: Pos,
 alignment: Alignment,
 status: bool,

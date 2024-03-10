@@ -63,7 +63,7 @@ pub fn update() void {
     { // BUTTONS
         for (buttons.items) |*item| {
             const vprect = item.alignment.transform(item.rect.scale(scale), window.size);
-            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
+            if (menus.items[item.menu].show and vprect.isAroundPoint(cursor.pos)) {
                 if (cursor.press) {
                     if (item.state != .press) {
                         if (item.state == .empty) events.push(.{ .button = .{ .focused = item.id } });
@@ -94,7 +94,7 @@ pub fn update() void {
                 },
             };
             const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
-            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
+            if (menus.items[item.menu].show and vprect.isAroundPoint(cursor.pos)) {
                 if (cursor.press) {
                     if (item.state != .press) {
                         if (item.state == .empty) events.push(.{ .switcher = .{ .focused = item.id } });
@@ -130,7 +130,7 @@ pub fn update() void {
             };
             const vprect = item.alignment.transform(itemrect.scale(scale), window.size);
             const vprectwidth: f32 = @floatFromInt(vprect.size()[0]);
-            if (item.menu.show and vprect.isAroundPoint(cursor.pos)) {
+            if (menus.items[item.menu].show and vprect.isAroundPoint(cursor.pos)) {
                 if (cursor.press) {
                     if (item.state != .press) {
                         if (item.state == .empty) events.push(.{ .slider = .{ .focused = item.id } });
@@ -159,28 +159,28 @@ pub fn update() void {
 const Event = union(enum) {
     none,
     button: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
+        focused: Button.Id,
+        unfocused: Button.Id,
+        pressed: Button.Id,
+        unpressed: Button.Id,
     },
     switcher: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
+        focused: Switcher.Id,
+        unfocused: Switcher.Id,
+        pressed: Switcher.Id,
+        unpressed: Switcher.Id,
         switched: struct {
-            id: u32,
+            id: Switcher.Id,
             data: bool,
         },
     },
     slider: union(enum) {
-        focused: u32,
-        unfocused: u32,
-        pressed: u32,
-        unpressed: u32,
+        focused: Slider.Id,
+        unfocused: Slider.Id,
+        pressed: Slider.Id,
+        unpressed: Slider.Id,
         scrolled: struct {
-            id: u32,
+            id: Slider.Id,
             data: f32,
         },
     },
@@ -221,81 +221,82 @@ pub fn pollEvent() Event {
 
 pub fn menu(info: struct {
     show: bool = true,
-}) !*Menu {
+}) !Menu.Id {
     try menus.append(_allocator, Menu{
-        .id = @intCast(menus.items.len),
+        .id = menus.items.len,
         .show = info.show,
     });
-    return &menus.items[menus.items.len - 1];
+    return menus.items.len - 1;
 }
 
 pub fn panel(info: struct {
-    menu: *const Menu,
+    menu: Menu.Id,
     rect: Rect,
     alignment: Alignment = .{},
-}) !*Panel {
+}) !Panel.Id {
     try panels.append(_allocator, Panel{
         .menu = info.menu,
+        .id = panels.items.len,
         .rect = info.rect,
         .alignment = info.alignment,
     });
-    return &panels.items[panels.items.len - 1];
+    return panels.items.len - 1;
 }
 
 pub fn button(info: struct {
-    menu: *const Menu,
+    menu: Menu.Id,
     rect: Rect,
     alignment: Alignment = .{},
-}) !*Button {
+}) !Button.Id {
     try buttons.append(_allocator, Button{
         .menu = info.menu,
-        .id = @intCast(buttons.items.len),
+        .id = buttons.items.len,
         .rect = info.rect,
         .alignment = info.alignment,
     });
-    return &buttons.items[buttons.items.len - 1];
+    return buttons.items.len - 1;
 }
 
 pub fn switcher(info: struct {
-    menu: *const Menu,
+    menu: Menu.Id,
     pos: Pos,
     alignment: Alignment = .{},
     status: bool = false,
-}) !*Switcher {
+}) !Switcher.Id {
     try switchers.append(_allocator, Switcher{
         .menu = info.menu,
-        .id = @intCast(switchers.items.len),
+        .id = switchers.items.len,
         .pos = info.pos,
         .alignment = info.alignment,
         .status = info.status,
     });
-    return &switchers.items[switchers.items.len - 1];
+    return switchers.items.len - 1;
 }
 
 pub fn slider(info: struct {
-    menu: *const Menu,
+    menu: Menu.Id,
     rect: Rect,
     alignment: Alignment = .{},
     steps: i32 = 0,
     value: f32 = 0.0,
-}) !*Slider {
+}) !Slider.Id {
     try sliders.append(_allocator, Slider{
         .menu = info.menu,
-        .id = @intCast(sliders.items.len),
+        .id = sliders.items.len,
         .rect = info.rect,
         .alignment = info.alignment,
         .steps = info.steps,
         .value = info.value,
     });
-    return &sliders.items[sliders.items.len - 1];
+    return sliders.items.len - 1;
 }
 
 pub fn text(data: []const u16, info: struct {
-    menu: *const Menu,
+    menu: Menu.Id,
     pos: Pos,
     alignment: Alignment = .{},
     centered: bool = false,
-}) !*Text {
+}) !Text.Id {
     const itemsize = calcTextSize(data);
     const itempos = if (info.centered)
         info.pos - Pos{ @divTrunc(itemsize[0], 2), @divTrunc(itemsize[1], 2) }
@@ -304,11 +305,12 @@ pub fn text(data: []const u16, info: struct {
 
     try texts.append(_allocator, Text{
         .menu = info.menu,
+        .id = texts.items.len,
         .data = data,
         .rect = .{ .min = itempos, .max = itempos + itemsize },
         .alignment = info.alignment,
     });
-    return &texts.items[texts.items.len - 1];
+    return texts.items.len - 1;
 }
 
 fn calcTextSize(data: []const u16) Size {
