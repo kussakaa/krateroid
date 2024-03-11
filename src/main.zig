@@ -21,16 +21,16 @@ const world = @import("world.zig");
 const gui = @import("gui.zig");
 const drawer = @import("drawer.zig");
 
-//const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{});
-//var gpa: GeneralPurposeAllocator = undefined;
+const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{});
+var gpa: GeneralPurposeAllocator = undefined;
 var allocator: std.mem.Allocator = undefined;
 
 pub fn main() !void {
     std.debug.print("\n", .{});
 
-    //    gpa = GeneralPurposeAllocator{};
+    gpa = GeneralPurposeAllocator{};
     allocator = std.heap.page_allocator;
-    //    defer _ = gpa.deinit();
+    defer _ = gpa.deinit();
 
     var config = Config{};
 

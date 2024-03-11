@@ -26,9 +26,9 @@ pub const colors = struct {
 };
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 0.0, 0.0, 1.0, 1.0 };
+    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
     var ambient: f32 = 0.4;
-    var diffuse: f32 = 0.3;
+    var diffuse: f32 = 0.4;
     var specular: f32 = 0.1;
 };
 
@@ -39,12 +39,12 @@ const _data = struct {
             const pos = struct {
                 const vertsize = 3;
                 var data = [1]f32{0.0} ** ((width + 1) * (width + 1) * width * vertsize * 3);
-                var ptr: *gfx.Buffer = undefined;
+                var id: gfx.Buffer.Id = undefined;
             };
             const nrm = struct {
                 const vertsize = 3;
                 var data = [1]i8{0} ** ((width + 1) * (width + 1) * width * vertsize * 3);
-                var ptr: [world.width][world.width]?*gfx.Buffer = undefined;
+                var id: [world.width][world.width]?gfx.Buffer.Id = undefined;
             };
             const ebo = struct {
                 const xoffset = (width + 1) * (width + 1) * width * 0;
@@ -67,77 +67,77 @@ const _data = struct {
                     zoffset,
                 };
                 var data = [1]u32{0} ** (1024 * 1024); // 1 Mb
-                var ptr: [world.width][world.width]?*gfx.Buffer = undefined;
+                var id: [world.width][world.width]?gfx.Buffer.Id = undefined;
             };
         };
 
-        var mesh: [world.width][world.width]?*gfx.Mesh = undefined;
-        var program: gfx.Program = undefined;
+        var mesh: [world.width][world.width]?gfx.Mesh.Id = undefined;
+        var program: gfx.Program.Id = undefined;
         const uniform = struct {
-            var model: gfx.Uniform = undefined;
-            var view: gfx.Uniform = undefined;
-            var proj: gfx.Uniform = undefined;
-            var color: gfx.Uniform = undefined;
+            var model: gfx.Uniform.Id = undefined;
+            var view: gfx.Uniform.Id = undefined;
+            var proj: gfx.Uniform.Id = undefined;
+            var color: gfx.Uniform.Id = undefined;
             const light = struct {
-                var color: gfx.Uniform = undefined;
-                var direction: gfx.Uniform = undefined;
-                var ambient: gfx.Uniform = undefined;
-                var diffuse: gfx.Uniform = undefined;
-                var specular: gfx.Uniform = undefined;
+                var color: gfx.Uniform.Id = undefined;
+                var direction: gfx.Uniform.Id = undefined;
+                var ambient: gfx.Uniform.Id = undefined;
+                var diffuse: gfx.Uniform.Id = undefined;
+                var specular: gfx.Uniform.Id = undefined;
             };
             const chunk = struct {
-                var width: gfx.Uniform = undefined;
-                var pos: gfx.Uniform = undefined;
+                var width: gfx.Uniform.Id = undefined;
+                var pos: gfx.Uniform.Id = undefined;
             };
         };
     };
     const line = struct {
-        var buffer: *gfx.Buffer = undefined;
-        var mesh: *gfx.Mesh = undefined;
-        var program: gfx.Program = undefined;
+        var buffer: gfx.Buffer.Id = undefined;
+        var mesh: gfx.Mesh.Id = undefined;
+        var program: gfx.Program.Id = undefined;
         const uniform = struct {
-            var model: gfx.Uniform = undefined;
-            var view: gfx.Uniform = undefined;
-            var proj: gfx.Uniform = undefined;
-            var color: gfx.Uniform = undefined;
+            var model: gfx.Uniform.Id = undefined;
+            var view: gfx.Uniform.Id = undefined;
+            var proj: gfx.Uniform.Id = undefined;
+            var color: gfx.Uniform.Id = undefined;
         };
     };
     const rect = struct {
-        var buffer: *gfx.Buffer = undefined;
-        var mesh: *gfx.Mesh = undefined;
-        var program: gfx.Program = undefined;
+        var buffer: gfx.Buffer.Id = undefined;
+        var mesh: gfx.Mesh.Id = undefined;
+        var program: gfx.Program.Id = undefined;
         const uniform = struct {
-            var vpsize: gfx.Uniform = undefined;
-            var scale: gfx.Uniform = undefined;
-            var rect: gfx.Uniform = undefined;
-            var texrect: gfx.Uniform = undefined;
+            var vpsize: gfx.Uniform.Id = undefined;
+            var scale: gfx.Uniform.Id = undefined;
+            var rect: gfx.Uniform.Id = undefined;
+            var texrect: gfx.Uniform.Id = undefined;
         };
     };
     const panel = struct {
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
     const button = struct {
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
     const switcher = struct {
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
     const slider = struct {
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
     const text = struct {
-        var program: gfx.Program = undefined;
+        var program: gfx.Program.Id = undefined;
         const uniform = struct {
-            var vpsize: gfx.Uniform = undefined;
-            var scale: gfx.Uniform = undefined;
-            var pos: gfx.Uniform = undefined;
-            var tex: gfx.Uniform = undefined;
-            var color: gfx.Uniform = undefined;
+            var vpsize: gfx.Uniform.Id = undefined;
+            var scale: gfx.Uniform.Id = undefined;
+            var pos: gfx.Uniform.Id = undefined;
+            var tex: gfx.Uniform.Id = undefined;
+            var color: gfx.Uniform.Id = undefined;
         };
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
     const cursor = struct {
-        var texture: *gfx.Texture = undefined;
+        var texture: gfx.Texture.Id = undefined;
     };
 };
 
@@ -197,17 +197,19 @@ pub fn init(info: struct {
             }
         }
 
-        _data.chunk.buffer.pos.ptr = try gfx.buffer(.{
+        _data.chunk.buffer.pos.id = try gfx.buffer(.{
             .name = "chunk_pos",
+            .target = .vbo,
             .datatype = .f32,
             .vertsize = _data.chunk.buffer.pos.vertsize,
+            .usage = .static_draw,
         });
-        _data.chunk.buffer.pos.ptr.data(.vbo, std.mem.sliceAsBytes(_data.chunk.buffer.pos.data[0..]), .static_draw);
+        gfx.bufferData(_data.chunk.buffer.pos.id, std.mem.sliceAsBytes(_data.chunk.buffer.pos.data[0..]));
 
         for (0..world.width) |y| {
             for (0..world.width) |x| {
-                _data.chunk.buffer.nrm.ptr[y][x] = null;
-                _data.chunk.buffer.ebo.ptr[y][x] = null;
+                _data.chunk.buffer.nrm.id[y][x] = null;
+                _data.chunk.buffer.ebo.id[y][x] = null;
                 _data.chunk.mesh[y][x] = null;
             }
         }
@@ -228,15 +230,17 @@ pub fn init(info: struct {
     { // LINE
         _data.line.buffer = try gfx.buffer(.{
             .name = "line",
+            .target = .vbo,
             .datatype = .u8,
             .vertsize = 3,
+            .usage = .static_draw,
         });
-        _data.line.buffer.data(.vbo, &.{ 0, 0, 0, 1, 1, 1 }, .static_draw);
+        gfx.bufferData(_data.line.buffer, &.{ 0, 0, 0, 1, 1, 1 });
         _data.line.mesh = try gfx.mesh(.{
             .name = "line",
             .buffers = &.{_data.line.buffer},
-            .mode = .lines,
-            .len = 2,
+            .vertcnt = 2,
+            .drawmode = .lines,
         });
         _data.line.program = try gfx.program("line");
         _data.line.uniform.model = try gfx.uniform(_data.line.program, "model");
@@ -247,15 +251,17 @@ pub fn init(info: struct {
     { // RECT
         _data.rect.buffer = try gfx.buffer(.{
             .name = "rect",
+            .target = .vbo,
             .datatype = .u8,
             .vertsize = 2,
+            .usage = .static_draw,
         });
-        _data.rect.buffer.data(.vbo, &.{ 0, 0, 0, 1, 1, 0, 1, 1 }, .static_draw);
+        gfx.bufferData(_data.rect.buffer, &.{ 0, 0, 0, 1, 1, 0, 1, 1 });
         _data.rect.mesh = try gfx.mesh(.{
             .name = "rect",
             .buffers = &.{_data.rect.buffer},
-            .mode = .triangle_strip,
-            .len = 4,
+            .vertcnt = 4,
+            .drawmode = .triangle_strip,
         });
         _data.rect.program = try gfx.program("rect");
         _data.rect.uniform.vpsize = try gfx.uniform(_data.rect.program, "vpsize");
@@ -298,23 +304,23 @@ pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 
     { // CHUNK
-        _data.chunk.program.use();
-        _data.chunk.uniform.model.set(zm.identity());
-        _data.chunk.uniform.view.set(camera.view);
-        _data.chunk.uniform.proj.set(camera.proj);
-        _data.chunk.uniform.color.set(Color{ 0.6, 0.8, 0.6, 1.0 });
-        _data.chunk.uniform.light.color.set(light.color);
-        _data.chunk.uniform.light.direction.set(light.direction);
-        _data.chunk.uniform.light.ambient.set(light.ambient);
-        _data.chunk.uniform.light.diffuse.set(light.diffuse);
-        _data.chunk.uniform.light.specular.set(light.specular);
-        _data.chunk.uniform.chunk.width.set(@as(f32, @floatFromInt(world.Chunk.width)));
+        gfx.programUse(_data.chunk.program);
+        gfx.uniformSet(_data.chunk.uniform.model, zm.identity());
+        gfx.uniformSet(_data.chunk.uniform.view, camera.view);
+        gfx.uniformSet(_data.chunk.uniform.proj, camera.proj);
+        gfx.uniformSet(_data.chunk.uniform.color, Color{ 0.6, 0.8, 0.6, 1.0 });
+        gfx.uniformSet(_data.chunk.uniform.light.color, light.color);
+        gfx.uniformSet(_data.chunk.uniform.light.direction, light.direction);
+        gfx.uniformSet(_data.chunk.uniform.light.ambient, light.ambient);
+        gfx.uniformSet(_data.chunk.uniform.light.diffuse, light.diffuse);
+        gfx.uniformSet(_data.chunk.uniform.light.specular, light.specular);
+        gfx.uniformSet(_data.chunk.uniform.chunk.width, @as(f32, @floatFromInt(world.Chunk.width)));
 
         for (0..world.width) |ychunk| {
             for (0..world.width) |xchunk| {
-                _data.chunk.uniform.chunk.pos.set(@Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
+                gfx.uniformSet(_data.chunk.uniform.chunk.pos, @Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
                 if (_data.chunk.mesh[ychunk][xchunk]) |mesh| {
-                    mesh.draw();
+                    gfx.meshDraw(mesh);
                 } else if (world.chunks[ychunk][xchunk]) |chunk| {
                     const width = world.Chunk.width;
                     @memset(_data.chunk.buffer.nrm.data[0..], 0);
@@ -363,29 +369,34 @@ pub fn draw() !void {
                         }
                     }
 
-                    _data.chunk.buffer.nrm.ptr[ychunk][xchunk] = try gfx.buffer(.{
+                    _data.chunk.buffer.nrm.id[ychunk][xchunk] = try gfx.buffer(.{
                         .name = "chunk_nrm",
+                        .target = .vbo,
                         .datatype = .i8,
                         .vertsize = _data.chunk.buffer.nrm.vertsize,
+                        .usage = .static_draw,
                     });
-                    _data.chunk.buffer.nrm.ptr[ychunk][xchunk].?.data(.vbo, std.mem.sliceAsBytes(_data.chunk.buffer.nrm.data[0..]), .static_draw);
-                    _data.chunk.buffer.ebo.ptr[ychunk][xchunk] = try gfx.buffer(.{
+                    gfx.bufferData(_data.chunk.buffer.nrm.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.nrm.data[0..]));
+                    _data.chunk.buffer.ebo.id[ychunk][xchunk] = try gfx.buffer(.{
                         .name = "chunk_ebo",
+                        .target = .ebo,
                         .datatype = .u32,
                         .vertsize = 1,
+                        .usage = .static_draw,
                     });
-                    _data.chunk.buffer.ebo.ptr[ychunk][xchunk].?.data(.ebo, std.mem.sliceAsBytes(_data.chunk.buffer.ebo.data[0..len]), .static_draw);
+                    gfx.bufferData(_data.chunk.buffer.ebo.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.ebo.data[0..len]));
 
                     _data.chunk.mesh[ychunk][xchunk] = try gfx.mesh(.{
                         .name = "chunk",
                         .buffers = &.{
-                            _data.chunk.buffer.pos.ptr,
-                            _data.chunk.buffer.nrm.ptr[ychunk][xchunk].?,
+                            _data.chunk.buffer.pos.id,
+                            _data.chunk.buffer.nrm.id[ychunk][xchunk].?,
                         },
-                        .len = @intCast(len),
-                        .mode = .triangles,
-                        .ebo = _data.chunk.buffer.ebo.ptr[ychunk][xchunk].?,
+                        .vertcnt = @intCast(len),
+                        .drawmode = .triangles,
+                        .ebo = _data.chunk.buffer.ebo.id[ychunk][xchunk].?,
                     });
+                    gfx.meshDraw(_data.chunk.mesh[ychunk][xchunk].?);
                 }
             }
         }
@@ -394,7 +405,7 @@ pub fn draw() !void {
     gl.disable(gl.DEPTH_TEST);
 
     { // LINE
-        _data.line.program.use();
+        gfx.programUse(_data.line.program);
         for (world.lines.items) |l| {
             if (l.show) {
                 const model = Mat{
@@ -403,11 +414,11 @@ pub fn draw() !void {
                     .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
                     .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
                 };
-                _data.line.uniform.model.set(model);
-                _data.line.uniform.view.set(camera.view);
-                _data.line.uniform.proj.set(camera.proj);
-                _data.line.uniform.color.set(l.color);
-                _data.line.mesh.draw();
+                gfx.uniformSet(_data.line.uniform.model, model);
+                gfx.uniformSet(_data.line.uniform.view, camera.view);
+                gfx.uniformSet(_data.line.uniform.proj, camera.proj);
+                gfx.uniformSet(_data.line.uniform.color, l.color);
+                gfx.meshDraw(_data.line.mesh);
             }
         }
     }
@@ -415,46 +426,48 @@ pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // RECT
-        _data.rect.program.use();
-        _data.rect.uniform.vpsize.set(window.size);
-        _data.rect.uniform.scale.set(gui.scale);
+        gfx.programUse(_data.rect.program);
+        gfx.uniformSet(_data.rect.uniform.vpsize, window.size);
+        gfx.uniformSet(_data.rect.uniform.scale, gui.scale);
     }
     { // PANEL
-        _data.panel.texture.use();
+        gfx.textureUse(_data.panel.texture);
         for (gui.panels.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                _data.rect.uniform.rect.set(
+                gfx.uniformSet(
+                    _data.rect.uniform.rect,
                     item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
                 );
-                _data.rect.uniform.texrect.set(@Vector(4, i32){
+                gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){
                     0,
                     0,
-                    @intCast(_data.panel.texture.size[0]),
-                    @intCast(_data.panel.texture.size[1]),
+                    @intCast(gfx.textures.items[_data.panel.texture].size[0]),
+                    @intCast(gfx.textures.items[_data.panel.texture].size[1]),
                 });
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
             }
         }
     }
     { // BUTTON
-        _data.button.texture.use();
+        gfx.textureUse(_data.button.texture);
         for (gui.buttons.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                gfx.uniformSet(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 8, 8 }),
-                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 8, 0, 16, 8 }),
-                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 16, 0, 24, 8 }),
+                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 8, 8 }),
+                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 8, 0, 16, 8 }),
+                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 16, 0, 24, 8 }),
                 }
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
             }
         }
     }
     { // SWITCHER
-        _data.switcher.texture.use();
+        gfx.textureUse(_data.switcher.texture);
         for (gui.switchers.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                _data.rect.uniform.rect.set(
+                gfx.uniformSet(
+                    _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = .{
                             item.pos[0] * gui.scale,
@@ -467,13 +480,14 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 6, 8 }),
-                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 0, 12, 8 }),
-                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 0, 18, 8 }),
+                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
                 }
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
 
-                _data.rect.uniform.rect.set(
+                gfx.uniformSet(
+                    _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = .{
                             (item.pos[0] + 2 + @as(i32, @intFromBool(item.status)) * 4) * gui.scale,
@@ -486,31 +500,32 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 8, 4, 16 }),
-                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 8, 10, 16 }),
-                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 8, 16, 16 }),
+                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 4, 16 }),
+                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 10, 16 }),
+                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 16, 16 }),
                 }
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
             }
         }
     }
     { // SLIDER
-        _data.slider.texture.use();
-        _data.rect.uniform.vpsize.set(window.size);
-        _data.rect.uniform.scale.set(gui.scale);
+        gfx.textureUse(_data.slider.texture);
+        gfx.uniformSet(_data.rect.uniform.vpsize, window.size);
+        gfx.uniformSet(_data.rect.uniform.scale, gui.scale);
         for (gui.sliders.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                _data.rect.uniform.rect.set(item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                gfx.uniformSet(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 6, 8 }),
-                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 0, 12, 8 }),
-                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 0, 18, 8 }),
+                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
                 }
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
-                _data.rect.uniform.rect.set(
+                gfx.uniformSet(
+                    _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = item.rect.min * gui.Size{ gui.scale, gui.scale } + gui.Pos{ pos, 0 },
                         .max = .{
@@ -520,20 +535,20 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 8, 6, 16 }),
-                    .focus => _data.rect.uniform.texrect.set(@Vector(4, i32){ 6, 8, 12, 16 }),
-                    .press => _data.rect.uniform.texrect.set(@Vector(4, i32){ 12, 8, 18, 16 }),
+                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 6, 16 }),
+                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 12, 16 }),
+                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 18, 16 }),
                 }
-                _data.rect.mesh.draw();
+                gfx.meshDraw(_data.rect.mesh);
             }
         }
     }
     { // TEXT
-        _data.text.program.use();
-        _data.text.texture.use();
-        _data.text.uniform.vpsize.set(window.size);
-        _data.text.uniform.scale.set(gui.scale);
-        _data.text.uniform.color.set(gui.Color{ 1.0, 1.0, 1.0, 1.0 });
+        gfx.programUse(_data.text.program);
+        gfx.textureUse(_data.text.texture);
+        gfx.uniformSet(_data.text.uniform.vpsize, window.size);
+        gfx.uniformSet(_data.text.uniform.scale, gui.scale);
+        gfx.uniformSet(_data.text.uniform.color, gui.Color{ 1.0, 1.0, 1.0, 1.0 });
         for (gui.texts.items) |item| {
             if (gui.menus.items[item.menu].show) {
                 const pos = item.alignment.transform(item.rect.scale(gui.scale), window.size).min;
@@ -543,27 +558,27 @@ pub fn draw() !void {
                         offset += 3 * gui.scale;
                         continue;
                     }
-                    _data.text.uniform.pos.set(gui.Pos{ pos[0] + offset, pos[1] });
-                    _data.text.uniform.tex.set(gui.Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
-                    _data.rect.mesh.draw();
+                    gfx.uniformSet(_data.text.uniform.pos, gui.Pos{ pos[0] + offset, pos[1] });
+                    gfx.uniformSet(_data.text.uniform.tex, gui.Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
+                    gfx.meshDraw(_data.rect.mesh);
                     offset += (gui.font.chars[cid].width + 1) * gui.scale;
                 }
             }
         }
     }
     { // CURSOR
-        _data.rect.program.use();
-        _data.cursor.texture.use();
+        gfx.programUse(_data.rect.program);
+        gfx.textureUse(_data.cursor.texture);
         const p1 = 4 * gui.scale - @divTrunc(gui.scale, 2);
         const p2 = 3 * gui.scale + @divTrunc(gui.scale, 2);
-        _data.rect.uniform.rect.set((gui.Rect{
+        gfx.uniformSet(_data.rect.uniform.rect, (gui.Rect{
             .min = gui.cursor.pos - gui.Pos{ p1, p1 },
             .max = gui.cursor.pos + gui.Pos{ p2, p2 },
         }).vector());
         switch (gui.cursor.press) {
-            false => _data.rect.uniform.texrect.set(@Vector(4, i32){ 0, 0, 7, 7 }),
-            true => _data.rect.uniform.texrect.set(@Vector(4, i32){ 7, 0, 14, 7 }),
+            false => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 7, 7 }),
+            true => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 7, 0, 14, 7 }),
         }
-        _data.rect.mesh.draw();
+        gfx.meshDraw(_data.rect.mesh);
     }
 }
