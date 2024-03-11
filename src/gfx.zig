@@ -51,6 +51,9 @@ pub fn deinit() void {
     _programs_glid.deinit(_allocator);
     programs.deinit(_allocator);
 
+    _uniforms_glid.deinit(_allocator);
+    uniforms.deinit(_allocator);
+
     stb.deinit();
 }
 

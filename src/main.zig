@@ -29,7 +29,7 @@ pub fn main() !void {
     std.debug.print("\n", .{});
 
     gpa = GeneralPurposeAllocator{};
-    allocator = std.heap.page_allocator;
+    allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
     var config = Config{};
