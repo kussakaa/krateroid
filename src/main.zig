@@ -6,19 +6,18 @@ const audio = @import("zaudio");
 
 const log = std.log.scoped(.main);
 const pi = std.math.pi;
-const W = std.unicode.utf8ToUtf16LeStringLiteral;
 
 const Vec = zm.Vec;
 const Mat = zm.Mat;
 
-const Config = @import("Config.zig");
-
+const config = @import("config.zig");
 const window = @import("window.zig");
 const input = @import("input.zig");
 const gfx = @import("gfx.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
 const gui = @import("gui.zig");
+const menus = @import("menus.zig");
 const drawer = @import("drawer.zig");
 
 const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{});
@@ -31,12 +30,6 @@ pub fn main() !void {
     gpa = GeneralPurposeAllocator{};
     allocator = gpa.allocator();
     defer _ = gpa.deinit();
-
-    var config = Config{};
-
-    const config_file_data = try std.fs.cwd().readFileAlloc(allocator, "data/config.json", 100_000_000);
-    config = try std.json.parseFromSliceLeaky(Config, allocator, config_file_data, .{});
-    allocator.free(config_file_data);
 
     audio.init(allocator);
     defer audio.deinit();
@@ -84,33 +77,8 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
-        .show = config.show_info,
+        .show = true,
     });
-
-    //_ = try world.line(.{
-    //    .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-    //    .p2 = .{ 128.0, 0.0, 0.0, 1.0 },
-    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    //    .show = config.show_info,
-    //});
-    //_ = try world.line(.{
-    //    .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-    //    .p2 = .{ 0.0, 128.0, 0.0, 1.0 },
-    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    //    .show = config.show_info,
-    //});
-    //_ = try world.line(.{
-    //    .p1 = .{ 0.0, 128.0, 0.0, 1.0 },
-    //    .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
-    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    //    .show = config.show_info,
-    //});
-    //_ = try world.line(.{
-    //    .p1 = .{ 128.0, 0.0, 0.0, 1.0 },
-    //    .p2 = .{ 128.0, 128.0, 0.0, 1.0 },
-    //    .color = .{ 1.0, 1.0, 1.0, 1.0 },
-    //    .show = config.show_info,
-    //});
 
     for (0..world.width) |y| {
         for (0..world.width) |x| {
@@ -126,181 +94,7 @@ pub fn main() !void {
     });
     defer gui.deinit();
 
-    const menu_info = try gui.menu(.{ // MENU INFO
-        .show = config.show_info,
-    });
-    _ = try gui.text(W("krateroid 0.0.1"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 1 },
-    });
-    _ = try gui.text(W("fps:"), .{
-        .menu = menu_info,
-        .pos = .{ 2, 9 },
-    });
-    var fps_str = [1]u16{'0'} ** 6;
-    _ = try gui.text(&fps_str, .{
-        .menu = menu_info,
-        .pos = .{ 16, 9 },
-    });
-    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
-        .menu = menu_info,
-        .pos = .{ 2, -8 },
-        .alignment = .{ .v = .bottom },
-    });
-
-    const menu_main = try gui.menu(.{ // MENU MAIN
-        .show = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-
-    _ = try gui.text(W("-<main>-"), .{
-        .menu = menu_main,
-        .pos = .{ 0, -38 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-
-    const menu_main_button_play = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<play>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    const menu_main_button_settings = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<settings>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, 0 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    const menu_main_button_exit = try gui.button(.{
-        .menu = menu_main,
-        .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("<exit>"), .{
-        .menu = menu_main,
-        .pos = .{ 0, 17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    const menu_settings = try gui.menu(.{ // MENU SETTINGS
-        .show = false,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ 38, -46 }, .max = .{ 138, -30 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("-<settings>-"), .{
-        .menu = menu_settings,
-        .pos = .{ 88, -38 },
-        .alignment = .{ .v = .center, .h = .center },
-        .centered = true,
-    });
-
-    _ = try gui.panel(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ 38, -29 }, .max = .{ 138, 29 } },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-
-    _ = try gui.text(W("info"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, -25 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("[f3]"), .{
-        .menu = menu_settings,
-        .pos = .{ 107, -25 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const menu_settings_switcher_show_info = try gui.switcher(.{
-        .menu = menu_settings,
-        .pos = .{ 122, -25 },
-        .alignment = .{ .v = .center, .h = .center },
-        .status = config.show_info,
-    });
-
-    _ = try gui.text(W("grid"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("[f5]"), .{
-        .menu = menu_settings,
-        .pos = .{ 107, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const menu_settings_switcher_show_grid = try gui.switcher(.{
-        .menu = menu_settings,
-        .pos = .{ 122, -17 },
-        .alignment = .{ .v = .center, .h = .center },
-        .status = config.show_grid,
-    });
-
-    _ = try gui.text(W("background color"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, -8 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    _ = try gui.text(W("r"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, 0 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const menu_settings_slider_bg_r = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[0],
-    });
-    _ = try gui.text(W("g"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, 8 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const menu_settings_slider_bg_g = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[1],
-    });
-    _ = try gui.text(W("b"), .{
-        .menu = menu_settings,
-        .pos = .{ 42, 16 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    const menu_settings_slider_bg_b = try gui.slider(.{
-        .menu = menu_settings,
-        .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[2],
-    });
+    try menus.init();
 
     try gfx.init(.{ .allocator = allocator });
     defer gfx.deinit();
@@ -318,20 +112,17 @@ pub fn main() !void {
                 .key => |k| switch (k) {
                     .pressed => |id| {
                         if (id == .escape) {
-                            gui.menus.items[menu_main].show = !gui.menus.items[menu_main].show;
-                            gui.menus.items[menu_settings].show = false;
+                            gui.menus.items[menus.main.id].show = !gui.menus.items[menus.main.id].show;
+                            gui.menus.items[menus.settings.id].show = false;
                         }
                         if (id == .f3) {
                             config.show_info = !config.show_info;
-                            gui.menus.items[menu_info].show = config.show_info;
                             x_axis.show = config.show_info;
                             y_axis.show = config.show_info;
                             z_axis.show = config.show_info;
-                            gui.switchers.items[menu_settings_switcher_show_info].status = config.show_info;
                         }
                         if (id == .f5) {
                             config.show_grid = !config.show_grid;
-                            gui.switchers.items[menu_settings_switcher_show_grid].status = config.show_grid;
                             drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
                         }
                         if (id == .f10) break :loop;
@@ -365,7 +156,7 @@ pub fn main() !void {
                         cursor.delta = pos - cursor.pos;
                         cursor.pos = pos;
 
-                        if (is_camera_move and !gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
+                        if (is_camera_move and !gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {
                             const speed = 0.003;
                             const zsin = @sin(camera.rot[2]);
                             const zcos = @cos(camera.rot[2]);
@@ -385,7 +176,7 @@ pub fn main() !void {
                             z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
-                        if (is_camera_rotate and !gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
+                        if (is_camera_rotate and !gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {
                             const speed = 0.003; // radians
                             const dtx = @as(f32, @floatFromInt(cursor.delta[0]));
                             const dty = @as(f32, @floatFromInt(cursor.delta[1]));
@@ -401,7 +192,7 @@ pub fn main() !void {
                         gui.update();
                     },
                     .scrolled => |scroll| {
-                        if (!gui.menus.items[menu_main].show and !gui.menus.items[menu_settings].show) {
+                        if (!gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {
                             camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
                         }
                     },
@@ -428,12 +219,12 @@ pub fn main() !void {
                     .pressed => |_| {},
                     .unpressed => |id| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (id == menu_main_button_play) {
-                            gui.menus.items[menu_main].show = false;
-                            gui.menus.items[menu_settings].show = false;
-                        } else if (id == menu_main_button_settings) {
-                            gui.menus.items[menu_settings].show = !gui.menus.items[menu_settings].show;
-                        } else if (id == menu_main_button_exit) {
+                        if (id == menus.main.button.play) {
+                            gui.menus.items[menus.main.id].show = false;
+                            gui.menus.items[menus.settings.id].show = false;
+                        } else if (id == menus.main.button.settings) {
+                            gui.menus.items[menus.settings.id].show = !gui.menus.items[menus.settings.id].show;
+                        } else if (id == menus.main.button.exit) {
                             break :loop;
                         }
                     },
@@ -447,13 +238,13 @@ pub fn main() !void {
                     .unpressed => |_| {},
                     .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
-                        if (switched.id == menu_settings_switcher_show_info) {
+                        if (switched.id == menus.settings.switcher.show_info) {
                             config.show_info = switched.data;
-                            gui.menus.items[menu_info].show = config.show_info;
+                            gui.menus.items[menus.info.id].show = config.show_info;
                             x_axis.show = config.show_info;
                             y_axis.show = config.show_info;
                             z_axis.show = config.show_info;
-                        } else if (switched.id == menu_settings_switcher_show_grid) {
+                        } else if (switched.id == menus.settings.switcher.show_grid) {
                             config.show_grid = switched.data;
                             if (config.show_grid) {
                                 drawer.polygon_mode = gl.LINE;
@@ -473,23 +264,24 @@ pub fn main() !void {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },
                     .scrolled => |s| {
-                        if (s.id == menu_settings_slider_bg_r)
+                        if (s.id == menus.settings.slider.bg_r)
                             drawer.colors.bg[0] = s.data;
-                        if (s.id == menu_settings_slider_bg_g)
+                        if (s.id == menus.settings.slider.bg_g)
                             drawer.colors.bg[1] = s.data;
-                        if (s.id == menu_settings_slider_bg_b)
+                        if (s.id == menus.settings.slider.bg_b)
                             drawer.colors.bg[2] = s.data;
                     },
                 },
             }
         }
 
+        menus.update();
         camera.update();
 
         { // обновление fps счётчика
-            var fps_str_buf = [1]u8{'$'} ** 6;
-            _ = try std.fmt.bufPrint(&fps_str_buf, "{}", .{window.fps});
-            _ = try std.unicode.utf8ToUtf16Le(&fps_str, &fps_str_buf);
+            var fps_str_buffer = [1]u8{'$'} ** 6;
+            _ = try std.fmt.bufPrint(&fps_str_buffer, "{}", .{window.fps});
+            _ = try std.unicode.utf8ToUtf16Le(&menus.info.fps_str_buffer, &fps_str_buffer);
         }
 
         try drawer.draw();
