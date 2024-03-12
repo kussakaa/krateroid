@@ -57,7 +57,7 @@ pub fn main() !void {
     defer world.deinit();
 
     // X
-    var x_axis = try world.line(.{
+    const x_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
         .color = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -65,7 +65,7 @@ pub fn main() !void {
     });
 
     // Y
-    var y_axis = try world.line(.{
+    const y_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
         .color = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -73,7 +73,7 @@ pub fn main() !void {
     });
 
     // Z
-    var z_axis = try world.line(.{
+    const z_axis = try world.line(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -117,9 +117,9 @@ pub fn main() !void {
                         }
                         if (id == .f3) {
                             config.show_info = !config.show_info;
-                            x_axis.show = config.show_info;
-                            y_axis.show = config.show_info;
-                            z_axis.show = config.show_info;
+                            world.lines.items[x_axis].show = config.show_info;
+                            world.lines.items[y_axis].show = config.show_info;
+                            world.lines.items[z_axis].show = config.show_info;
                         }
                         if (id == .f5) {
                             config.show_grid = !config.show_grid;
@@ -168,12 +168,12 @@ pub fn main() !void {
                                 0.0,
                                 0.0,
                             };
-                            x_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            x_axis.p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 };
-                            y_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            y_axis.p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 };
-                            z_axis.p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            z_axis.p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
+                            world.lines.items[x_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            world.lines.items[x_axis].p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 };
+                            world.lines.items[y_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            world.lines.items[y_axis].p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 };
+                            world.lines.items[z_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
+                            world.lines.items[z_axis].p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
                         if (is_camera_rotate and !gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {
@@ -241,9 +241,9 @@ pub fn main() !void {
                         if (switched.id == menus.settings.switcher.show_info) {
                             config.show_info = switched.data;
                             gui.menus.items[menus.info.id].show = config.show_info;
-                            x_axis.show = config.show_info;
-                            y_axis.show = config.show_info;
-                            z_axis.show = config.show_info;
+                            world.lines.items[x_axis].show = config.show_info;
+                            world.lines.items[y_axis].show = config.show_info;
+                            world.lines.items[z_axis].show = config.show_info;
                         } else if (switched.id == menus.settings.switcher.show_grid) {
                             config.show_grid = switched.data;
                             if (config.show_grid) {

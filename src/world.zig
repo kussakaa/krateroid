@@ -78,12 +78,13 @@ pub fn line(info: struct {
     p2: Vec,
     color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
     show: bool = true,
-}) !*Line {
+}) !Line.Id {
     try lines.append(_allocator, .{
+        .id = lines.items.len,
         .p1 = info.p1,
         .p2 = info.p2,
         .color = info.color,
         .show = info.show,
     });
-    return &lines.items[lines.items.len - 1];
+    return lines.items.len - 1;
 }
