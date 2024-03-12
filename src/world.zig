@@ -65,7 +65,7 @@ pub fn chunk(info: struct {
                     @as(f32, @floatFromInt(y + info.pos[1] * Chunk.width)) * 10.0,
                 );
 
-                item.grid[z][y][x] = @as(f32, @floatFromInt(z)) < (value + 1.0) * 5.0;
+                item.grid[z][y][x] = @as(f32, @floatFromInt(z)) < (value + 1.0) * 5.0 + 5.0;
             }
         }
     }

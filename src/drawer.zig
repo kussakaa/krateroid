@@ -61,8 +61,8 @@ const _data = struct {
                     xoffset + (width + 1) * width,
                     yoffset + (width + 1) * width,
 
-                    zoffset + width,
                     zoffset + width + 1,
+                    zoffset + width + 1 + 1,
                     zoffset + 1,
                     zoffset,
                 };
@@ -177,7 +177,7 @@ pub fn init(info: struct {
         for (0..(width + 1)) |z| {
             for (0..(width)) |y| {
                 for (0..(width + 1)) |x| {
-                    const offset = (x + y * (width) + z * (width * (width + 1)));
+                    const offset = (x + y * (width + 1) + z * (width * (width + 1)));
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.yoffset + offset) * _data.chunk.buffer.pos.vertsize + 0] = @as(f32, @floatFromInt(x));
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.yoffset + offset) * _data.chunk.buffer.pos.vertsize + 1] = @as(f32, @floatFromInt(y)) + 0.5;
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.yoffset + offset) * _data.chunk.buffer.pos.vertsize + 2] = @as(f32, @floatFromInt(z));
@@ -189,7 +189,7 @@ pub fn init(info: struct {
         for (0..(width)) |z| {
             for (0..(width + 1)) |y| {
                 for (0..(width + 1)) |x| {
-                    const offset = (x + y * (width) + z * (width * (width + 1)));
+                    const offset = (x + y * (width + 1) + z * ((width + 1) * (width + 1)));
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.zoffset + offset) * _data.chunk.buffer.pos.vertsize + 0] = @as(f32, @floatFromInt(x));
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.zoffset + offset) * _data.chunk.buffer.pos.vertsize + 1] = @as(f32, @floatFromInt(y));
                     _data.chunk.buffer.pos.data[(_data.chunk.buffer.ebo.zoffset + offset) * _data.chunk.buffer.pos.vertsize + 2] = @as(f32, @floatFromInt(z)) + 0.5;
@@ -321,31 +321,87 @@ pub fn draw() !void {
                 gfx.uniformSet(_data.chunk.uniform.chunk.pos, @Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
                 if (_data.chunk.mesh[ychunk][xchunk]) |mesh| {
                     gfx.meshDraw(mesh);
-                } else if (world.chunks[ychunk][xchunk]) |chunk| {
+                } else if (world.chunks[ychunk][xchunk]) |chunk00| {
+                    const chunk10 = if (xchunk < (world.width - 1)) world.chunks[ychunk][xchunk + 1] else null;
+                    const chunk01 = if (ychunk < (world.width - 1)) world.chunks[ychunk + 1][xchunk] else null;
+                    const chunk11 = if (xchunk < (world.width - 1) and ychunk < (world.width - 1)) world.chunks[ychunk + 1][xchunk + 1] else null;
+
                     const width = world.Chunk.width;
                     @memset(_data.chunk.buffer.nrm.data[0..], 0);
                     var len: usize = 0;
-                    for (0..width - 1) |z| {
-                        for (0..width - 1) |y| {
-                            for (0..width - 1) |x| {
+                    for (0..(width - 1)) |z| {
+                        for (0..width) |y| {
+                            for (0..width) |x| {
                                 var index: u8 = 0;
-                                index |= @as(u8, @intFromBool(chunk.grid[z][y][x])) << 3;
-                                index |= @as(u8, @intFromBool(chunk.grid[z][y][x + 1])) << 2;
-                                index |= @as(u8, @intFromBool(chunk.grid[z][y + 1][x + 1])) << 1;
-                                index |= @as(u8, @intFromBool(chunk.grid[z][y + 1][x])) << 0;
-                                index |= @as(u8, @intFromBool(chunk.grid[z + 1][y][x])) << 7;
-                                index |= @as(u8, @intFromBool(chunk.grid[z + 1][y][x + 1])) << 6;
-                                index |= @as(u8, @intFromBool(chunk.grid[z + 1][y + 1][x + 1])) << 5;
-                                index |= @as(u8, @intFromBool(chunk.grid[z + 1][y + 1][x])) << 4;
+                                if (x < (width - 1) and y < (width - 1)) {
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x + 1])) << 2;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x + 1])) << 1;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x + 1])) << 6;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x + 1])) << 5;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x])) << 4;
+                                } else if (x == (width - 1) and y < (width - 1) and chunk10 != null) {
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y][0])) << 2;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y + 1][0])) << 1;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y][0])) << 6;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y + 1][0])) << 5;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x])) << 4;
+                                } else if (y == (width - 1) and x < (width - 1) and chunk01 != null) {
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x + 1])) << 2;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x + 1])) << 1;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x + 1])) << 6;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x + 1])) << 5;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x])) << 4;
+                                } else if (x == (width - 1) and y == (width - 1) and chunk10 != null and chunk01 != null and chunk11 != null) {
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y][0])) << 2;
+                                    index |= @as(u8, @intFromBool(chunk11.?.grid[z][0][0])) << 1;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y][0])) << 6;
+                                    index |= @as(u8, @intFromBool(chunk11.?.grid[z + 1][0][0])) << 5;
+                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x])) << 4;
+                                }
+
                                 if (index == 0) continue;
                                 var i: usize = 0;
                                 while (mct.pos[index][i] < 12) : (i += 3) {
-                                    const v1: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 0]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
-                                    const v2: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 1]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
-                                    const v3: u32 = _data.chunk.buffer.ebo.edge[mct.pos[index][i + 2]] + @as(u32, @intCast(x + y * width + z * width * (width + 1)));
-
+                                    const v1_edge = mct.pos[index][i + 0];
+                                    const v1_offset = switch (v1_edge) {
+                                        0, 2, 4, 6 => x + y * (width) + z * width * (width + 1),
+                                        1, 3, 5, 7 => x + y * (width + 1) + z * width * (width + 1),
+                                        8, 9, 10, 11 => x + y * (width + 1) + z * (width + 1) * (width + 1),
+                                        else => 0,
+                                    };
+                                    const v1: u32 = _data.chunk.buffer.ebo.edge[v1_edge] + @as(u32, @intCast(v1_offset));
                                     _data.chunk.buffer.ebo.data[len + 0] = v1;
+
+                                    const v2_edge = mct.pos[index][i + 1];
+                                    const v2_offset = switch (v2_edge) {
+                                        0, 2, 4, 6 => x + y * (width) + z * width * (width + 1),
+                                        1, 3, 5, 7 => x + y * (width + 1) + z * width * (width + 1),
+                                        8, 9, 10, 11 => x + y * (width + 1) + z * (width + 1) * (width + 1),
+                                        else => 0,
+                                    };
+                                    const v2: u32 = _data.chunk.buffer.ebo.edge[v2_edge] + @as(u32, @intCast(v2_offset));
                                     _data.chunk.buffer.ebo.data[len + 1] = v2;
+
+                                    const v3_edge = mct.pos[index][i + 2];
+                                    const v3_offset = switch (v3_edge) {
+                                        0, 2, 4, 6 => x + y * (width) + z * width * (width + 1),
+                                        1, 3, 5, 7 => x + y * (width + 1) + z * width * (width + 1),
+                                        8, 9, 10, 11 => x + y * (width + 1) + z * (width + 1) * (width + 1),
+                                        else => 0,
+                                    };
+                                    const v3: u32 = _data.chunk.buffer.ebo.edge[v3_edge] + @as(u32, @intCast(v3_offset));
                                     _data.chunk.buffer.ebo.data[len + 2] = v3;
 
                                     const n = @Vector(3, i8){

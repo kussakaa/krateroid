@@ -2,6 +2,7 @@ const std = @import("std");
 const W = std.unicode.utf8ToUtf16LeStringLiteral;
 const gui = @import("gui.zig");
 const config = @import("config.zig");
+const window = @import("window.zig");
 const drawer = @import("drawer.zig");
 
 pub const main = struct {
@@ -207,8 +208,12 @@ pub fn init() !void {
     });
 }
 
-pub fn update() void {
+pub fn update() !void {
     gui.switchers.items[settings.switcher.show_info].status = config.show_info;
     gui.switchers.items[settings.switcher.show_grid].status = config.show_grid;
     gui.menus.items[info.id].show = config.show_info;
+
+    var fps_str_buffer = [1]u8{'$'} ** 6;
+    _ = try std.fmt.bufPrint(&fps_str_buffer, "{}", .{window.fps});
+    _ = try std.unicode.utf8ToUtf16Le(&info.fps_str_buffer, &fps_str_buffer);
 }

@@ -77,7 +77,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
-        .show = true,
+        .show = config.show_info,
     });
 
     for (0..world.width) |y| {
@@ -275,14 +275,8 @@ pub fn main() !void {
             }
         }
 
-        menus.update();
+        try menus.update();
         camera.update();
-
-        { // обновление fps счётчика
-            var fps_str_buffer = [1]u8{'$'} ** 6;
-            _ = try std.fmt.bufPrint(&fps_str_buffer, "{}", .{window.fps});
-            _ = try std.unicode.utf8ToUtf16Le(&menus.info.fps_str_buffer, &fps_str_buffer);
-        }
 
         try drawer.draw();
         window.swap();
