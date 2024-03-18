@@ -26,7 +26,7 @@ pub const colors = struct {
 };
 const light = struct {
     var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
+    var direction: Vec = .{ 1.0, 1.0, 1.0, 1.0 };
     var ambient: f32 = 0.4;
     var diffuse: f32 = 0.4;
     var specular: f32 = 0.1;
@@ -77,7 +77,6 @@ const _data = struct {
             var model: gfx.Uniform.Id = undefined;
             var view: gfx.Uniform.Id = undefined;
             var proj: gfx.Uniform.Id = undefined;
-            var color: gfx.Uniform.Id = undefined;
             const light = struct {
                 var color: gfx.Uniform.Id = undefined;
                 var direction: gfx.Uniform.Id = undefined;
@@ -90,6 +89,7 @@ const _data = struct {
                 var pos: gfx.Uniform.Id = undefined;
             };
         };
+        var texture: gfx.Texture.Id = undefined;
     };
     const line = struct {
         var buffer: gfx.Buffer.Id = undefined;
@@ -218,7 +218,6 @@ pub fn init(info: struct {
         _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
         _data.chunk.uniform.view = try gfx.uniform(_data.chunk.program, "view");
         _data.chunk.uniform.proj = try gfx.uniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.color = try gfx.uniform(_data.chunk.program, "color");
         _data.chunk.uniform.light.color = try gfx.uniform(_data.chunk.program, "light.color");
         _data.chunk.uniform.light.direction = try gfx.uniform(_data.chunk.program, "light.direction");
         _data.chunk.uniform.light.ambient = try gfx.uniform(_data.chunk.program, "light.ambient");
@@ -226,6 +225,7 @@ pub fn init(info: struct {
         _data.chunk.uniform.light.specular = try gfx.uniform(_data.chunk.program, "light.specular");
         _data.chunk.uniform.chunk.width = try gfx.uniform(_data.chunk.program, "chunk.width");
         _data.chunk.uniform.chunk.pos = try gfx.uniform(_data.chunk.program, "chunk.pos");
+        _data.chunk.texture = try gfx.texture("stone.png");
     }
     { // LINE
         _data.line.buffer = try gfx.buffer(.{
@@ -305,10 +305,10 @@ pub fn draw() !void {
 
     { // CHUNK
         gfx.programUse(_data.chunk.program);
+        gfx.textureUse(_data.chunk.texture);
         gfx.uniformSet(_data.chunk.uniform.model, zm.identity());
         gfx.uniformSet(_data.chunk.uniform.view, camera.view);
         gfx.uniformSet(_data.chunk.uniform.proj, camera.proj);
-        gfx.uniformSet(_data.chunk.uniform.color, Color{ 0.6, 0.8, 0.6, 1.0 });
         gfx.uniformSet(_data.chunk.uniform.light.color, light.color);
         gfx.uniformSet(_data.chunk.uniform.light.direction, light.direction);
         gfx.uniformSet(_data.chunk.uniform.light.ambient, light.ambient);
@@ -321,54 +321,53 @@ pub fn draw() !void {
                 gfx.uniformSet(_data.chunk.uniform.chunk.pos, @Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
                 if (_data.chunk.mesh[ychunk][xchunk]) |mesh| {
                     gfx.meshDraw(mesh);
-                } else if (world.chunks[ychunk][xchunk]) |chunk00| {
-                    const chunk10 = if (xchunk < (world.width - 1)) world.chunks[ychunk][xchunk + 1] else null;
-                    const chunk01 = if (ychunk < (world.width - 1)) world.chunks[ychunk + 1][xchunk] else null;
-                    const chunk11 = if (xchunk < (world.width - 1) and ychunk < (world.width - 1)) world.chunks[ychunk + 1][xchunk + 1] else null;
-
+                } else if (world.chunk.isInit(.{ xchunk, ychunk })) {
+                    const chunks = world.chunk.getSlicePtrs(.{ xchunk, ychunk });
                     const width = world.Chunk.width;
+
                     @memset(_data.chunk.buffer.nrm.data[0..], 0);
+
                     var len: usize = 0;
                     for (0..(width - 1)) |z| {
                         for (0..width) |y| {
                             for (0..width) |x| {
                                 var index: u8 = 0;
                                 if (x < (width - 1) and y < (width - 1)) {
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x + 1])) << 2;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x + 1])) << 1;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x])) << 0;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x + 1])) << 6;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x + 1])) << 5;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x])) << 4;
-                                } else if (x == (width - 1) and y < (width - 1) and chunk10 != null) {
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y][0])) << 2;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y + 1][0])) << 1;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y + 1][x])) << 0;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y][0])) << 6;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y + 1][0])) << 5;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y + 1][x])) << 4;
-                                } else if (y == (width - 1) and x < (width - 1) and chunk01 != null) {
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x + 1])) << 2;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x + 1])) << 1;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x])) << 0;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x + 1])) << 6;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x + 1])) << 5;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x])) << 4;
-                                } else if (x == (width - 1) and y == (width - 1) and chunk10 != null and chunk01 != null and chunk11 != null) {
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z][y][x])) << 3;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z][y][0])) << 2;
-                                    index |= @as(u8, @intFromBool(chunk11.?.grid[z][0][0])) << 1;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z][0][x])) << 0;
-                                    index |= @as(u8, @intFromBool(chunk00.grid[z + 1][y][x])) << 7;
-                                    index |= @as(u8, @intFromBool(chunk10.?.grid[z + 1][y][0])) << 6;
-                                    index |= @as(u8, @intFromBool(chunk11.?.grid[z + 1][0][0])) << 5;
-                                    index |= @as(u8, @intFromBool(chunk01.?.grid[z + 1][0][x])) << 4;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x + 1])) << 2;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y + 1][x + 1])) << 1;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y + 1][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x + 1])) << 6;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y + 1][x + 1])) << 5;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y + 1][x])) << 4;
+                                } else if (x == (width - 1) and y < (width - 1) and chunks[1][2] != null) {
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z][y][0])) << 2;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z][y + 1][0])) << 1;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y + 1][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z + 1][y][0])) << 6;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z + 1][y + 1][0])) << 5;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y + 1][x])) << 4;
+                                } else if (y == (width - 1) and x < (width - 1) and chunks[2][1] != null) {
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x + 1])) << 2;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z][0][x + 1])) << 1;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z][0][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x + 1])) << 6;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z + 1][0][x + 1])) << 5;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z + 1][0][x])) << 4;
+                                } else if (x == (width - 1) and y == (width - 1) and chunks[1][2] != null and chunks[2][1] != null and chunks[2][2] != null) {
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z][y][x])) << 3;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z][y][0])) << 2;
+                                    index |= @as(u8, @intFromBool(chunks[2][2].?.blocks[z][0][0])) << 1;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z][0][x])) << 0;
+                                    index |= @as(u8, @intFromBool(chunks[1][1].?.blocks[z + 1][y][x])) << 7;
+                                    index |= @as(u8, @intFromBool(chunks[1][2].?.blocks[z + 1][y][0])) << 6;
+                                    index |= @as(u8, @intFromBool(chunks[2][2].?.blocks[z + 1][0][0])) << 5;
+                                    index |= @as(u8, @intFromBool(chunks[2][1].?.blocks[z + 1][0][x])) << 4;
                                 }
 
                                 if (index == 0) continue;

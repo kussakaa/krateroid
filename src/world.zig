@@ -24,8 +24,8 @@ pub fn init(info: struct {
     seed: i32 = 0,
 }) !void {
     _allocator = info.allocator;
-    lines = try Array(Line).initCapacity(_allocator, 32);
     seed = info.seed;
+
     for (0..width) |y| {
         for (0..width) |x| {
             chunks[y][x] = null;
@@ -37,64 +37,104 @@ pub fn deinit() void {
     lines.deinit(_allocator);
     for (0..width) |y| {
         for (0..width) |x| {
-            if (chunks[y][x]) |item| _allocator.destroy(item);
+            if (chunk.isInit(.{ x, y })) chunk.deinit(.{ x, y });
         }
     }
 }
 
-pub fn chunk(info: struct {
-    pos: @Vector(2, u32),
-}) !*Chunk {
-    if (chunks[@intCast(info.pos[1])][@intCast(info.pos[0])]) |item| {
-        return item;
-    }
+pub const chunk = struct {
+    pub fn init(pos: Chunk.Pos) !void {
+        if (isInit(pos)) {
+            return;
+        }
 
-    var item = try _allocator.create(Chunk);
-    chunks[@intCast(info.pos[1])][@intCast(info.pos[0])] = item;
+        var item = try _allocator.create(Chunk);
 
-    const value_gen = Noise{
-        .seed = seed,
-        .noise_type = .value,
-    };
+        chunks[pos[1]][pos[0]] = item;
 
-    const cellular_gen = Noise{
-        .seed = seed,
-        .noise_type = .cellular,
-    };
+        const value_gen = Noise{
+            .seed = seed,
+            .noise_type = .value,
+        };
 
-    for (0..Chunk.width) |z| {
-        for (0..Chunk.width) |y| {
-            for (0..Chunk.width) |x| {
-                const value: f32 = value_gen.noise2(
-                    @as(f32, @floatFromInt(x + info.pos[0] * Chunk.width)) * 5.0,
-                    @as(f32, @floatFromInt(y + info.pos[1] * Chunk.width)) * 5.0,
-                );
+        const cellular_gen = Noise{
+            .seed = seed,
+            .noise_type = .cellular,
+        };
 
-                const cellular: f32 = cellular_gen.noise2(
-                    @as(f32, @floatFromInt(x + info.pos[0] * Chunk.width)) * 10.0,
-                    @as(f32, @floatFromInt(y + info.pos[1] * Chunk.width)) * 10.0,
-                );
+        for (0..Chunk.width) |z| {
+            for (0..Chunk.width) |y| {
+                for (0..Chunk.width) |x| {
+                    const value: f32 = value_gen.noise2(
+                        @as(f32, @floatFromInt(x + pos[0] * Chunk.width)) * 10.0,
+                        @as(f32, @floatFromInt(y + pos[1] * Chunk.width)) * 10.0,
+                    );
 
-                item.grid[z][y][x] = @as(f32, @floatFromInt(z)) < (value + cellular + 1.0) * 5.0 + 5.0;
+                    const cellular: f32 = cellular_gen.noise2(
+                        @as(f32, @floatFromInt(x + pos[0] * Chunk.width)) * 10.0,
+                        @as(f32, @floatFromInt(y + pos[1] * Chunk.width)) * 10.0,
+                    );
+
+                    item.blocks[z][y][x] = @as(f32, @floatFromInt(z)) < (value + cellular + 1.0) * 5.0 + 5.0;
+                }
             }
         }
     }
 
-    return item;
-}
+    pub fn deinit(pos: Chunk.Pos) void {
+        _allocator.destroy(chunks[pos[1]][pos[0]].?);
+        chunks[pos[1]][pos[0]] = null;
+    }
 
-pub fn line(info: struct {
-    p1: Vec,
-    p2: Vec,
-    color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
-    show: bool = true,
-}) !Line.Id {
-    try lines.append(_allocator, .{
-        .id = lines.items.len,
-        .p1 = info.p1,
-        .p2 = info.p2,
-        .color = info.color,
-        .show = info.show,
-    });
-    return lines.items.len - 1;
-}
+    pub fn isInit(pos: Chunk.Pos) bool {
+        return if (chunks[pos[1]][pos[0]] != null) true else false;
+    }
+
+    pub fn getPtr(pos: Chunk.Pos) ?*Chunk {
+        return chunks[pos[1]][pos[0]];
+    }
+
+    pub fn getSlicePtrs(pos: Chunk.Pos) [3][3]?*Chunk {
+        var result: [3][3]?*Chunk = undefined;
+
+        result[0][0] = if (pos[0] > 0 and pos[1] > 0) chunks[pos[1] - 1][pos[0] - 1] else null;
+        result[0][1] = if (pos[1] > 0) chunks[pos[1] - 1][pos[0]] else null;
+        result[0][2] = if (pos[0] < width - 1 and pos[1] > 0) chunks[pos[1] - 1][pos[0] + 1] else null;
+        result[1][0] = if (pos[0] > 0) chunks[pos[1]][pos[0] - 1] else null;
+        result[1][1] = chunks[pos[1]][pos[0]];
+        result[1][2] = if (pos[0] < width - 1) chunks[pos[1]][pos[0] + 1] else null;
+        result[2][0] = if (pos[0] > 0 and pos[1] < width - 1) chunks[pos[1] + 1][pos[0] - 1] else null;
+        result[2][1] = if (pos[1] < width - 1) chunks[pos[1] + 1][pos[0]] else null;
+        result[2][2] = if (pos[0] < width - 1 and pos[1] < width - 1) chunks[pos[1] + 1][pos[0] + 1] else null;
+
+        //        const xbegin = if (pos[0] > 0) pos[0] - 1 else 0;
+        //        const xend = if (pos[0] < width - 1) pos[0] + 1 else width - 1;
+        //        const ybegin = if (pos[1] > 0) pos[1] - 1 else 0;
+        //        const yend = if (pos[1] < width - 1) pos[1] + 1 else width - 1;
+        //        for (ybegin..yend) |y| {
+        //            for (xbegin..xend) |x| {
+        //                result[y + 1 - pos[1]][x + 1 - pos[0]] = chunks[y][x];
+        //            }
+        //        }
+
+        return result;
+    }
+};
+
+pub const line = struct {
+    pub fn init(info: struct {
+        p1: Vec,
+        p2: Vec,
+        color: Color = .{ 1.0, 1.0, 1.0, 1.0 },
+        show: bool = true,
+    }) !Line.Id {
+        try lines.append(_allocator, .{
+            .id = lines.items.len,
+            .p1 = info.p1,
+            .p2 = info.p2,
+            .color = info.color,
+            .show = info.show,
+        });
+        return lines.items.len - 1;
+    }
+};

@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 
 uniform sampler2D texture0;
 uniform ivec2 vpsize;

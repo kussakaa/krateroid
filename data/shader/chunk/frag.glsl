@@ -1,7 +1,7 @@
-#version 330 core
-uniform vec4 color;
+#version 460 core
 
 in vec3 v_pos;
+in vec3 v_nrm;
 in vec3 v_light;
 
 layout(location = 0) out vec4 f_color;
@@ -9,6 +9,8 @@ layout(location = 0) out vec4 f_color;
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+
+uniform sampler2D texture0;
 
 float noise(vec3 p){
     vec3 a = floor(p);
@@ -34,6 +36,12 @@ float noise(vec3 p){
 
 void main()
 {
-    float n = clamp(noise(v_pos) + 0.5, 0.9, 1.0);
-    f_color = vec4(color.xyz*v_light*n, color.w);
+    // float n = clamp(noise(v_pos) + 0.5, 0.9, 1.0);
+    vec3 p = v_pos;
+    vec3 n = normalize(max(abs(v_nrm), 0.00001));
+    n /= vec3(n.x + n.y + n.z);
+    vec3 t = vec3(texture(texture0, p.xy * 0.25) * n.z +
+		  texture(texture0, p.xz * 0.25) * n.y +
+		  texture(texture0, p.yz * 0.25) * n.x);
+    f_color = vec4(v_light*t, 1.0);
 }

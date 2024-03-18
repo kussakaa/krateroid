@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 
 uniform ivec2 vpsize;
 uniform ivec4 rect;

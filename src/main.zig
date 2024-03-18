@@ -57,7 +57,7 @@ pub fn main() !void {
     defer world.deinit();
 
     // X
-    const x_axis = try world.line(.{
+    const x_axis = try world.line.init(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
         .color = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -65,7 +65,7 @@ pub fn main() !void {
     });
 
     // Y
-    const y_axis = try world.line(.{
+    const y_axis = try world.line.init(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
         .color = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -73,7 +73,7 @@ pub fn main() !void {
     });
 
     // Z
-    const z_axis = try world.line(.{
+    const z_axis = try world.line.init(.{
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -82,9 +82,7 @@ pub fn main() !void {
 
     for (0..world.width) |y| {
         for (0..world.width) |x| {
-            _ = try world.chunk(.{
-                .pos = .{ @intCast(x), @intCast(y) },
-            });
+            try world.chunk.init(.{ x, y });
         }
     }
 

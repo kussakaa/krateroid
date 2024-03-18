@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 uniform vec4 color;
 layout(location = 0) out vec4 f_color;
 void main()

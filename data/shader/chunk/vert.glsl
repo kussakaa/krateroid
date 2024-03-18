@@ -1,4 +1,4 @@
-#version 330 core
+#version 460 core
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 proj;
@@ -19,16 +19,20 @@ uniform LightInfo light;
 struct ChunkInfo {
   float width;
   vec3 pos;
+  vec4 color;
 };
 
 uniform ChunkInfo chunk;
 
 out vec3 v_pos;
+out vec3 v_nrm;
 out vec3 v_light;
 
 void main()
 {
   v_pos = a_pos;
+  v_nrm = normalize(a_nrm);
+
   vec3 n = normalize((mat4(transpose(inverse(model))) * vec4(normalize(a_nrm), 1.0)).xyz);
   vec3 l = normalize(light.direction.xyz);
   float a = light.ambient;
