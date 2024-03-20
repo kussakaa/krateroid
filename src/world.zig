@@ -66,8 +66,8 @@ pub const chunk = struct {
             for (0..Chunk.width) |y| {
                 for (0..Chunk.width) |x| {
                     const value: f32 = value_gen.noise2(
-                        @as(f32, @floatFromInt(x + pos[0] * Chunk.width)) * 10.0,
-                        @as(f32, @floatFromInt(y + pos[1] * Chunk.width)) * 10.0,
+                        @as(f32, @floatFromInt(x + pos[0] * Chunk.width)) * 3.0,
+                        @as(f32, @floatFromInt(y + pos[1] * Chunk.width)) * 3.0,
                     );
 
                     const cellular: f32 = cellular_gen.noise2(
@@ -75,7 +75,7 @@ pub const chunk = struct {
                         @as(f32, @floatFromInt(y + pos[1] * Chunk.width)) * 10.0,
                     );
 
-                    item.blocks[z][y][x] = @as(f32, @floatFromInt(z)) < (value + cellular + 1.0) * 5.0 + 5.0;
+                    item.blocks[z][y][x] = @as(f32, @floatFromInt(z)) < (value + 1.0) * 7.0 + (cellular + 1.0) * 3.0 + 5.0;
                 }
             }
         }

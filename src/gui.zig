@@ -186,7 +186,7 @@ const Event = union(enum) {
     },
 };
 
-const events = struct {
+pub const events = struct {
     var items: [16]Event = undefined;
     var current: usize = 0;
     var current_event: usize = 0;
@@ -219,105 +219,116 @@ pub fn pollEvent() Event {
     return events.pop();
 }
 
-pub fn menu(info: struct {
-    show: bool = true,
-}) !Menu.Id {
-    try menus.append(_allocator, Menu{
-        .id = menus.items.len,
-        .show = info.show,
-    });
-    return menus.items.len - 1;
-}
-
-pub fn panel(info: struct {
-    menu: Menu.Id,
-    rect: Rect,
-    alignment: Alignment = .{},
-}) !Panel.Id {
-    try panels.append(_allocator, Panel{
-        .menu = info.menu,
-        .id = panels.items.len,
-        .rect = info.rect,
-        .alignment = info.alignment,
-    });
-    return panels.items.len - 1;
-}
-
-pub fn button(info: struct {
-    menu: Menu.Id,
-    rect: Rect,
-    alignment: Alignment = .{},
-}) !Button.Id {
-    try buttons.append(_allocator, Button{
-        .menu = info.menu,
-        .id = buttons.items.len,
-        .rect = info.rect,
-        .alignment = info.alignment,
-    });
-    return buttons.items.len - 1;
-}
-
-pub fn switcher(info: struct {
-    menu: Menu.Id,
-    pos: Pos,
-    alignment: Alignment = .{},
-    status: bool = false,
-}) !Switcher.Id {
-    try switchers.append(_allocator, Switcher{
-        .menu = info.menu,
-        .id = switchers.items.len,
-        .pos = info.pos,
-        .alignment = info.alignment,
-        .status = info.status,
-    });
-    return switchers.items.len - 1;
-}
-
-pub fn slider(info: struct {
-    menu: Menu.Id,
-    rect: Rect,
-    alignment: Alignment = .{},
-    steps: i32 = 0,
-    value: f32 = 0.0,
-}) !Slider.Id {
-    try sliders.append(_allocator, Slider{
-        .menu = info.menu,
-        .id = sliders.items.len,
-        .rect = info.rect,
-        .alignment = info.alignment,
-        .steps = info.steps,
-        .value = info.value,
-    });
-    return sliders.items.len - 1;
-}
-
-pub fn text(data: []const u16, info: struct {
-    menu: Menu.Id,
-    pos: Pos,
-    alignment: Alignment = .{},
-    centered: bool = false,
-}) !Text.Id {
-    const itemsize = calcTextSize(data);
-    const itempos = if (info.centered)
-        info.pos - Pos{ @divTrunc(itemsize[0], 2), @divTrunc(itemsize[1], 2) }
-    else
-        info.pos;
-
-    try texts.append(_allocator, Text{
-        .menu = info.menu,
-        .id = texts.items.len,
-        .data = data,
-        .rect = .{ .min = itempos, .max = itempos + itemsize },
-        .alignment = info.alignment,
-    });
-    return texts.items.len - 1;
-}
-
-fn calcTextSize(data: []const u16) Size {
-    var width: i32 = 0;
-    for (data) |c| {
-        width += font.chars[c].width + 1;
+pub const menu = struct {
+    pub fn init(info: struct {
+        show: bool = true,
+    }) !Menu.Id {
+        try menus.append(_allocator, Menu{
+            .id = menus.items.len,
+            .show = info.show,
+        });
+        return menus.items.len - 1;
     }
-    width -= 1;
-    return .{ width, 8 };
-}
+};
+
+pub const panel = struct {
+    pub fn init(info: struct {
+        menu: Menu.Id,
+        rect: Rect,
+        alignment: Alignment = .{},
+    }) !Panel.Id {
+        try panels.append(_allocator, Panel{
+            .menu = info.menu,
+            .id = panels.items.len,
+            .rect = info.rect,
+            .alignment = info.alignment,
+        });
+        return panels.items.len - 1;
+    }
+};
+
+pub const button = struct {
+    pub fn init(info: struct {
+        menu: Menu.Id,
+        rect: Rect,
+        alignment: Alignment = .{},
+    }) !Button.Id {
+        try buttons.append(_allocator, Button{
+            .menu = info.menu,
+            .id = buttons.items.len,
+            .rect = info.rect,
+            .alignment = info.alignment,
+        });
+        return buttons.items.len - 1;
+    }
+};
+
+pub const switcher = struct {
+    pub fn init(info: struct {
+        menu: Menu.Id,
+        pos: Pos,
+        alignment: Alignment = .{},
+        status: bool = false,
+    }) !Switcher.Id {
+        try switchers.append(_allocator, Switcher{
+            .menu = info.menu,
+            .id = switchers.items.len,
+            .pos = info.pos,
+            .alignment = info.alignment,
+            .status = info.status,
+        });
+        return switchers.items.len - 1;
+    }
+};
+
+pub const slider = struct {
+    pub fn init(info: struct {
+        menu: Menu.Id,
+        rect: Rect,
+        alignment: Alignment = .{},
+        steps: i32 = 0,
+        value: f32 = 0.0,
+    }) !Slider.Id {
+        try sliders.append(_allocator, Slider{
+            .menu = info.menu,
+            .id = sliders.items.len,
+            .rect = info.rect,
+            .alignment = info.alignment,
+            .steps = info.steps,
+            .value = info.value,
+        });
+        return sliders.items.len - 1;
+    }
+};
+
+pub const text = struct {
+    pub var list: Array(Text) = undefined;
+    pub fn init(data: []const u16, info: struct {
+        menu: Menu.Id,
+        pos: Pos,
+        alignment: Alignment = .{},
+        centered: bool = false,
+    }) !Text.Id {
+        const itemsize = size(data);
+        const itempos = if (info.centered)
+            info.pos - Pos{ @divTrunc(itemsize[0], 2), @divTrunc(itemsize[1], 2) }
+        else
+            info.pos;
+
+        try texts.append(_allocator, Text{
+            .menu = info.menu,
+            .id = texts.items.len,
+            .data = data,
+            .rect = .{ .min = itempos, .max = itempos + itemsize },
+            .alignment = info.alignment,
+        });
+        return texts.items.len - 1;
+    }
+
+    fn size(data: []const u16) Size {
+        var width: i32 = 0;
+        for (data) |c| width += font.chars[c].width + 1;
+        width -= 1;
+        return .{ width, 8 };
+    }
+};

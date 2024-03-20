@@ -33,175 +33,175 @@ pub const info = struct {
 };
 
 pub fn init() !void {
-    main.id = try gui.menu(.{
+    main.id = try gui.menu.init(.{
         .show = true,
     });
 
-    _ = try gui.panel(.{
+    _ = try gui.panel.init(.{
         .menu = main.id,
         .rect = .{ .min = .{ -36, -46 }, .max = .{ 36, -30 } },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("-<main>-"), .{
+    _ = try gui.text.init(W("-<main>-"), .{
         .menu = main.id,
         .pos = .{ 0, -38 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
 
-    _ = try gui.panel(.{
+    _ = try gui.panel.init(.{
         .menu = main.id,
         .rect = .{ .min = .{ -36, -29 }, .max = .{ 36, 29 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
-    main.button.play = try gui.button(.{
+    main.button.play = try gui.button.init(.{
         .menu = main.id,
         .rect = .{ .min = .{ -32, -25 }, .max = .{ 32, -9 } },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("<play>"), .{
+    _ = try gui.text.init(W("<play>"), .{
         .menu = main.id,
         .pos = .{ 0, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
 
-    main.button.settings = try gui.button(.{
+    main.button.settings = try gui.button.init(.{
         .menu = main.id,
         .rect = .{ .min = .{ -32, -8 }, .max = .{ 32, 8 } },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("<settings>"), .{
+    _ = try gui.text.init(W("<settings>"), .{
         .menu = main.id,
         .pos = .{ 0, 0 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
 
-    main.button.exit = try gui.button(.{
+    main.button.exit = try gui.button.init(.{
         .menu = main.id,
         .rect = .{ .min = .{ -32, 9 }, .max = .{ 32, 25 } },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("<exit>"), .{
+    _ = try gui.text.init(W("<exit>"), .{
         .menu = main.id,
         .pos = .{ 0, 17 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
 
-    settings.id = try gui.menu(.{
+    settings.id = try gui.menu.init(.{
         .show = false,
     });
 
-    _ = try gui.panel(.{
+    _ = try gui.panel.init(.{
         .menu = settings.id,
         .rect = .{ .min = .{ 38, -46 }, .max = .{ 138, -30 } },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("-<settings>-"), .{
+    _ = try gui.text.init(W("-<settings>-"), .{
         .menu = settings.id,
         .pos = .{ 88, -38 },
         .alignment = .{ .v = .center, .h = .center },
         .centered = true,
     });
 
-    _ = try gui.panel(.{
+    _ = try gui.panel.init(.{
         .menu = settings.id,
         .rect = .{ .min = .{ 38, -29 }, .max = .{ 138, 29 } },
         .alignment = .{ .v = .center, .h = .center },
     });
 
-    _ = try gui.text(W("info"), .{
+    _ = try gui.text.init(W("info"), .{
         .menu = settings.id,
         .pos = .{ 42, -25 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("[f3]"), .{
+    _ = try gui.text.init(W("[f3]"), .{
         .menu = settings.id,
         .pos = .{ 107, -25 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.switcher.show_info = try gui.switcher(.{
+    settings.switcher.show_info = try gui.switcher.init(.{
         .menu = settings.id,
         .pos = .{ 122, -25 },
         .alignment = .{ .v = .center, .h = .center },
         .status = config.show_info,
     });
 
-    _ = try gui.text(W("grid"), .{
+    _ = try gui.text.init(W("grid"), .{
         .menu = settings.id,
         .pos = .{ 42, -17 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("[f5]"), .{
+    _ = try gui.text.init(W("[f5]"), .{
         .menu = settings.id,
         .pos = .{ 107, -17 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.switcher.show_grid = try gui.switcher(.{
+    settings.switcher.show_grid = try gui.switcher.init(.{
         .menu = settings.id,
         .pos = .{ 122, -17 },
         .alignment = .{ .v = .center, .h = .center },
         .status = config.show_grid,
     });
 
-    _ = try gui.text(W("background color"), .{
+    _ = try gui.text.init(W("background color"), .{
         .menu = settings.id,
         .pos = .{ 42, -8 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text(W("r"), .{
+    _ = try gui.text.init(W("r"), .{
         .menu = settings.id,
         .pos = .{ 42, 0 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.slider.bg_r = try gui.slider(.{
+    settings.slider.bg_r = try gui.slider.init(.{
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = drawer.colors.bg[0],
     });
-    _ = try gui.text(W("g"), .{
+    _ = try gui.text.init(W("g"), .{
         .menu = settings.id,
         .pos = .{ 42, 8 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.slider.bg_g = try gui.slider(.{
+    settings.slider.bg_g = try gui.slider.init(.{
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = drawer.colors.bg[1],
     });
-    _ = try gui.text(W("b"), .{
+    _ = try gui.text.init(W("b"), .{
         .menu = settings.id,
         .pos = .{ 42, 16 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.slider.bg_b = try gui.slider(.{
+    settings.slider.bg_b = try gui.slider.init(.{
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
         .alignment = .{ .v = .center, .h = .center },
         .value = drawer.colors.bg[2],
     });
 
-    info.id = try gui.menu(.{
+    info.id = try gui.menu.init(.{
         .show = config.show_info,
     });
-    _ = try gui.text(W("krateroid 0.0.1"), .{
+    _ = try gui.text.init(W("krateroid 0.0.1"), .{
         .menu = info.id,
         .pos = .{ 2, 1 },
     });
-    _ = try gui.text(W("fps:"), .{
+    _ = try gui.text.init(W("fps:"), .{
         .menu = info.id,
         .pos = .{ 2, 9 },
     });
-    _ = try gui.text(&info.fps_str_buffer, .{
+    _ = try gui.text.init(&info.fps_str_buffer, .{
         .menu = info.id,
         .pos = .{ 16, 9 },
     });
-    _ = try gui.text(W("https://github.com/kussakaa/krateroid"), .{
+    _ = try gui.text.init(W("https://github.com/kussakaa/krateroid"), .{
         .menu = info.id,
         .pos = .{ 2, -8 },
         .alignment = .{ .v = .bottom },

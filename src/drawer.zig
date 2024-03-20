@@ -197,14 +197,14 @@ pub fn init(info: struct {
             }
         }
 
-        _data.chunk.buffer.pos.id = try gfx.buffer(.{
+        _data.chunk.buffer.pos.id = try gfx.buffer.init(.{
             .name = "chunk_pos",
             .target = .vbo,
             .datatype = .f32,
             .vertsize = _data.chunk.buffer.pos.vertsize,
             .usage = .static_draw,
         });
-        gfx.bufferData(_data.chunk.buffer.pos.id, std.mem.sliceAsBytes(_data.chunk.buffer.pos.data[0..]));
+        gfx.buffer.data(_data.chunk.buffer.pos.id, std.mem.sliceAsBytes(_data.chunk.buffer.pos.data[0..]));
 
         for (0..world.width) |y| {
             for (0..world.width) |x| {
@@ -214,84 +214,92 @@ pub fn init(info: struct {
             }
         }
 
-        _data.chunk.program = try gfx.program("chunk");
-        _data.chunk.uniform.model = try gfx.uniform(_data.chunk.program, "model");
-        _data.chunk.uniform.view = try gfx.uniform(_data.chunk.program, "view");
-        _data.chunk.uniform.proj = try gfx.uniform(_data.chunk.program, "proj");
-        _data.chunk.uniform.light.color = try gfx.uniform(_data.chunk.program, "light.color");
-        _data.chunk.uniform.light.direction = try gfx.uniform(_data.chunk.program, "light.direction");
-        _data.chunk.uniform.light.ambient = try gfx.uniform(_data.chunk.program, "light.ambient");
-        _data.chunk.uniform.light.diffuse = try gfx.uniform(_data.chunk.program, "light.diffuse");
-        _data.chunk.uniform.light.specular = try gfx.uniform(_data.chunk.program, "light.specular");
-        _data.chunk.uniform.chunk.width = try gfx.uniform(_data.chunk.program, "chunk.width");
-        _data.chunk.uniform.chunk.pos = try gfx.uniform(_data.chunk.program, "chunk.pos");
-        _data.chunk.texture = try gfx.texture("stone.png");
+        _data.chunk.program = try gfx.program.init("chunk");
+        _data.chunk.uniform.model = try gfx.uniform.init(_data.chunk.program, "model");
+        _data.chunk.uniform.view = try gfx.uniform.init(_data.chunk.program, "view");
+        _data.chunk.uniform.proj = try gfx.uniform.init(_data.chunk.program, "proj");
+        _data.chunk.uniform.light.color = try gfx.uniform.init(_data.chunk.program, "light.color");
+        _data.chunk.uniform.light.direction = try gfx.uniform.init(_data.chunk.program, "light.direction");
+        _data.chunk.uniform.light.ambient = try gfx.uniform.init(_data.chunk.program, "light.ambient");
+        _data.chunk.uniform.light.diffuse = try gfx.uniform.init(_data.chunk.program, "light.diffuse");
+        _data.chunk.uniform.light.specular = try gfx.uniform.init(_data.chunk.program, "light.specular");
+        _data.chunk.uniform.chunk.width = try gfx.uniform.init(_data.chunk.program, "chunk.width");
+        _data.chunk.uniform.chunk.pos = try gfx.uniform.init(_data.chunk.program, "chunk.pos");
+        _data.chunk.texture = try gfx.texture.init("dirt.png");
     }
+
     { // LINE
-        _data.line.buffer = try gfx.buffer(.{
+        _data.line.buffer = try gfx.buffer.init(.{
             .name = "line",
             .target = .vbo,
             .datatype = .u8,
             .vertsize = 3,
             .usage = .static_draw,
         });
-        gfx.bufferData(_data.line.buffer, &.{ 0, 0, 0, 1, 1, 1 });
-        _data.line.mesh = try gfx.mesh(.{
+        gfx.buffer.data(_data.line.buffer, &.{ 0, 0, 0, 1, 1, 1 });
+        _data.line.mesh = try gfx.mesh.init(.{
             .name = "line",
             .buffers = &.{_data.line.buffer},
             .vertcnt = 2,
             .drawmode = .lines,
         });
-        _data.line.program = try gfx.program("line");
-        _data.line.uniform.model = try gfx.uniform(_data.line.program, "model");
-        _data.line.uniform.view = try gfx.uniform(_data.line.program, "view");
-        _data.line.uniform.proj = try gfx.uniform(_data.line.program, "proj");
-        _data.line.uniform.color = try gfx.uniform(_data.line.program, "color");
+        _data.line.program = try gfx.program.init("line");
+        _data.line.uniform.model = try gfx.uniform.init(_data.line.program, "model");
+        _data.line.uniform.view = try gfx.uniform.init(_data.line.program, "view");
+        _data.line.uniform.proj = try gfx.uniform.init(_data.line.program, "proj");
+        _data.line.uniform.color = try gfx.uniform.init(_data.line.program, "color");
     }
+
     { // RECT
-        _data.rect.buffer = try gfx.buffer(.{
+        _data.rect.buffer = try gfx.buffer.init(.{
             .name = "rect",
             .target = .vbo,
             .datatype = .u8,
             .vertsize = 2,
             .usage = .static_draw,
         });
-        gfx.bufferData(_data.rect.buffer, &.{ 0, 0, 0, 1, 1, 0, 1, 1 });
-        _data.rect.mesh = try gfx.mesh(.{
+        gfx.buffer.data(_data.rect.buffer, &.{ 0, 0, 0, 1, 1, 0, 1, 1 });
+        _data.rect.mesh = try gfx.mesh.init(.{
             .name = "rect",
             .buffers = &.{_data.rect.buffer},
             .vertcnt = 4,
             .drawmode = .triangle_strip,
         });
-        _data.rect.program = try gfx.program("rect");
-        _data.rect.uniform.vpsize = try gfx.uniform(_data.rect.program, "vpsize");
-        _data.rect.uniform.scale = try gfx.uniform(_data.rect.program, "scale");
-        _data.rect.uniform.rect = try gfx.uniform(_data.rect.program, "rect");
-        _data.rect.uniform.texrect = try gfx.uniform(_data.rect.program, "texrect");
+        _data.rect.program = try gfx.program.init("rect");
+        _data.rect.uniform.vpsize = try gfx.uniform.init(_data.rect.program, "vpsize");
+        _data.rect.uniform.scale = try gfx.uniform.init(_data.rect.program, "scale");
+        _data.rect.uniform.rect = try gfx.uniform.init(_data.rect.program, "rect");
+        _data.rect.uniform.texrect = try gfx.uniform.init(_data.rect.program, "texrect");
     }
+
     { // PANEL
-        _data.panel.texture = try gfx.texture("panel.png");
+        _data.panel.texture = try gfx.texture.init("panel.png");
     }
+
     { // BUTTON
-        _data.button.texture = try gfx.texture("button.png");
+        _data.button.texture = try gfx.texture.init("button.png");
     }
+
     { // SWITCHER
-        _data.switcher.texture = try gfx.texture("switcher.png");
+        _data.switcher.texture = try gfx.texture.init("switcher.png");
     }
+
     { // SLIDER
-        _data.slider.texture = try gfx.texture("slider.png");
+        _data.slider.texture = try gfx.texture.init("slider.png");
     }
+
     { // TEXT
-        _data.text.program = try gfx.program("text");
-        _data.text.uniform.vpsize = try gfx.uniform(_data.text.program, "vpsize");
-        _data.text.uniform.scale = try gfx.uniform(_data.text.program, "scale");
-        _data.text.uniform.pos = try gfx.uniform(_data.text.program, "pos");
-        _data.text.uniform.tex = try gfx.uniform(_data.text.program, "tex");
-        _data.text.uniform.color = try gfx.uniform(_data.text.program, "color");
-        _data.text.texture = try gfx.texture("text.png");
+        _data.text.program = try gfx.program.init("text");
+        _data.text.uniform.vpsize = try gfx.uniform.init(_data.text.program, "vpsize");
+        _data.text.uniform.scale = try gfx.uniform.init(_data.text.program, "scale");
+        _data.text.uniform.pos = try gfx.uniform.init(_data.text.program, "pos");
+        _data.text.uniform.tex = try gfx.uniform.init(_data.text.program, "tex");
+        _data.text.uniform.color = try gfx.uniform.init(_data.text.program, "color");
+        _data.text.texture = try gfx.texture.init("text.png");
     }
+
     { // CURSOR
-        _data.cursor.texture = try gfx.texture("cursor.png");
+        _data.cursor.texture = try gfx.texture.init("cursor.png");
     }
 }
 
@@ -304,23 +312,23 @@ pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 
     { // CHUNK
-        gfx.programUse(_data.chunk.program);
-        gfx.textureUse(_data.chunk.texture);
-        gfx.uniformSet(_data.chunk.uniform.model, zm.identity());
-        gfx.uniformSet(_data.chunk.uniform.view, camera.view);
-        gfx.uniformSet(_data.chunk.uniform.proj, camera.proj);
-        gfx.uniformSet(_data.chunk.uniform.light.color, light.color);
-        gfx.uniformSet(_data.chunk.uniform.light.direction, light.direction);
-        gfx.uniformSet(_data.chunk.uniform.light.ambient, light.ambient);
-        gfx.uniformSet(_data.chunk.uniform.light.diffuse, light.diffuse);
-        gfx.uniformSet(_data.chunk.uniform.light.specular, light.specular);
-        gfx.uniformSet(_data.chunk.uniform.chunk.width, @as(f32, @floatFromInt(world.Chunk.width)));
+        gfx.program.use(_data.chunk.program);
+        gfx.texture.use(_data.chunk.texture);
+        gfx.uniform.set(_data.chunk.uniform.model, zm.identity());
+        gfx.uniform.set(_data.chunk.uniform.view, camera.view);
+        gfx.uniform.set(_data.chunk.uniform.proj, camera.proj);
+        gfx.uniform.set(_data.chunk.uniform.light.color, light.color);
+        gfx.uniform.set(_data.chunk.uniform.light.direction, light.direction);
+        gfx.uniform.set(_data.chunk.uniform.light.ambient, light.ambient);
+        gfx.uniform.set(_data.chunk.uniform.light.diffuse, light.diffuse);
+        gfx.uniform.set(_data.chunk.uniform.light.specular, light.specular);
+        gfx.uniform.set(_data.chunk.uniform.chunk.width, @as(f32, @floatFromInt(world.Chunk.width)));
 
         for (0..world.width) |ychunk| {
             for (0..world.width) |xchunk| {
-                gfx.uniformSet(_data.chunk.uniform.chunk.pos, @Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
+                gfx.uniform.set(_data.chunk.uniform.chunk.pos, @Vector(3, f32){ @floatFromInt(xchunk), @floatFromInt(ychunk), 0.0 });
                 if (_data.chunk.mesh[ychunk][xchunk]) |mesh| {
-                    gfx.meshDraw(mesh);
+                    gfx.mesh.draw(mesh);
                 } else if (world.chunk.isInit(.{ xchunk, ychunk })) {
                     const chunks = world.chunk.getSlicePtrs(.{ xchunk, ychunk });
                     const width = world.Chunk.width;
@@ -424,24 +432,24 @@ pub fn draw() !void {
                         }
                     }
 
-                    _data.chunk.buffer.nrm.id[ychunk][xchunk] = try gfx.buffer(.{
+                    _data.chunk.buffer.nrm.id[ychunk][xchunk] = try gfx.buffer.init(.{
                         .name = "chunk_nrm",
                         .target = .vbo,
                         .datatype = .i8,
                         .vertsize = _data.chunk.buffer.nrm.vertsize,
                         .usage = .static_draw,
                     });
-                    gfx.bufferData(_data.chunk.buffer.nrm.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.nrm.data[0..]));
-                    _data.chunk.buffer.ebo.id[ychunk][xchunk] = try gfx.buffer(.{
+                    gfx.buffer.data(_data.chunk.buffer.nrm.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.nrm.data[0..]));
+                    _data.chunk.buffer.ebo.id[ychunk][xchunk] = try gfx.buffer.init(.{
                         .name = "chunk_ebo",
                         .target = .ebo,
                         .datatype = .u32,
                         .vertsize = 1,
                         .usage = .static_draw,
                     });
-                    gfx.bufferData(_data.chunk.buffer.ebo.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.ebo.data[0..len]));
+                    gfx.buffer.data(_data.chunk.buffer.ebo.id[ychunk][xchunk].?, std.mem.sliceAsBytes(_data.chunk.buffer.ebo.data[0..len]));
 
-                    _data.chunk.mesh[ychunk][xchunk] = try gfx.mesh(.{
+                    _data.chunk.mesh[ychunk][xchunk] = try gfx.mesh.init(.{
                         .name = "chunk",
                         .buffers = &.{
                             _data.chunk.buffer.pos.id,
@@ -451,7 +459,7 @@ pub fn draw() !void {
                         .drawmode = .triangles,
                         .ebo = _data.chunk.buffer.ebo.id[ychunk][xchunk].?,
                     });
-                    gfx.meshDraw(_data.chunk.mesh[ychunk][xchunk].?);
+                    gfx.mesh.draw(_data.chunk.mesh[ychunk][xchunk].?);
                 }
             }
         }
@@ -460,7 +468,7 @@ pub fn draw() !void {
     gl.disable(gl.DEPTH_TEST);
 
     { // LINE
-        gfx.programUse(_data.line.program);
+        gfx.program.use(_data.line.program);
         for (world.lines.items) |l| {
             if (l.show) {
                 const model = Mat{
@@ -469,11 +477,11 @@ pub fn draw() !void {
                     .{ 0.0, 0.0, l.p2[2] - l.p1[2], 0.0 },
                     .{ l.p1[0], l.p1[1], l.p1[2], 1.0 },
                 };
-                gfx.uniformSet(_data.line.uniform.model, model);
-                gfx.uniformSet(_data.line.uniform.view, camera.view);
-                gfx.uniformSet(_data.line.uniform.proj, camera.proj);
-                gfx.uniformSet(_data.line.uniform.color, l.color);
-                gfx.meshDraw(_data.line.mesh);
+                gfx.uniform.set(_data.line.uniform.model, model);
+                gfx.uniform.set(_data.line.uniform.view, camera.view);
+                gfx.uniform.set(_data.line.uniform.proj, camera.proj);
+                gfx.uniform.set(_data.line.uniform.color, l.color);
+                gfx.mesh.draw(_data.line.mesh);
             }
         }
     }
@@ -481,47 +489,47 @@ pub fn draw() !void {
     gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // RECT
-        gfx.programUse(_data.rect.program);
-        gfx.uniformSet(_data.rect.uniform.vpsize, window.size);
-        gfx.uniformSet(_data.rect.uniform.scale, gui.scale);
+        gfx.program.use(_data.rect.program);
+        gfx.uniform.set(_data.rect.uniform.vpsize, window.size);
+        gfx.uniform.set(_data.rect.uniform.scale, gui.scale);
     }
     { // PANEL
-        gfx.textureUse(_data.panel.texture);
+        gfx.texture.use(_data.panel.texture);
         for (gui.panels.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                gfx.uniformSet(
+                gfx.uniform.set(
                     _data.rect.uniform.rect,
                     item.alignment.transform(item.rect.scale(gui.scale), window.size).vector(),
                 );
-                gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){
+                gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){
                     0,
                     0,
                     @intCast(gfx.textures.items[_data.panel.texture].size[0]),
                     @intCast(gfx.textures.items[_data.panel.texture].size[1]),
                 });
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
             }
         }
     }
     { // BUTTON
-        gfx.textureUse(_data.button.texture);
+        gfx.texture.use(_data.button.texture);
         for (gui.buttons.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                gfx.uniformSet(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                gfx.uniform.set(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 8, 8 }),
-                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 8, 0, 16, 8 }),
-                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 16, 0, 24, 8 }),
+                    .empty => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 8, 8 }),
+                    .focus => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 8, 0, 16, 8 }),
+                    .press => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 16, 0, 24, 8 }),
                 }
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
             }
         }
     }
     { // SWITCHER
-        gfx.textureUse(_data.switcher.texture);
+        gfx.texture.use(_data.switcher.texture);
         for (gui.switchers.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                gfx.uniformSet(
+                gfx.uniform.set(
                     _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = .{
@@ -535,13 +543,13 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
-                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
-                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
+                    .empty => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
                 }
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
 
-                gfx.uniformSet(
+                gfx.uniform.set(
                     _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = .{
@@ -555,31 +563,31 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 4, 16 }),
-                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 10, 16 }),
-                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 16, 16 }),
+                    .empty => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 4, 16 }),
+                    .focus => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 10, 16 }),
+                    .press => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 16, 16 }),
                 }
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
             }
         }
     }
     { // SLIDER
-        gfx.textureUse(_data.slider.texture);
-        gfx.uniformSet(_data.rect.uniform.vpsize, window.size);
-        gfx.uniformSet(_data.rect.uniform.scale, gui.scale);
+        gfx.texture.use(_data.slider.texture);
+        gfx.uniform.set(_data.rect.uniform.vpsize, window.size);
+        gfx.uniform.set(_data.rect.uniform.scale, gui.scale);
         for (gui.sliders.items) |item| {
             if (gui.menus.items[item.menu].show) {
-                gfx.uniformSet(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
+                gfx.uniform.set(_data.rect.uniform.rect, item.alignment.transform(item.rect.scale(gui.scale), window.size).vector());
                 switch (item.state) {
-                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
-                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
-                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
+                    .empty => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 6, 8 }),
+                    .focus => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 0, 12, 8 }),
+                    .press => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 0, 18, 8 }),
                 }
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
 
                 const len: f32 = @floatFromInt(item.rect.scale(gui.scale).size()[0] - 6 * gui.scale);
                 const pos: i32 = @intFromFloat(item.value * len);
-                gfx.uniformSet(
+                gfx.uniform.set(
                     _data.rect.uniform.rect,
                     item.alignment.transform(gui.Rect{
                         .min = item.rect.min * gui.Size{ gui.scale, gui.scale } + gui.Pos{ pos, 0 },
@@ -590,20 +598,20 @@ pub fn draw() !void {
                     }, window.size).vector(),
                 );
                 switch (item.state) {
-                    .empty => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 6, 16 }),
-                    .focus => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 12, 16 }),
-                    .press => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 18, 16 }),
+                    .empty => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 8, 6, 16 }),
+                    .focus => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 6, 8, 12, 16 }),
+                    .press => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 12, 8, 18, 16 }),
                 }
-                gfx.meshDraw(_data.rect.mesh);
+                gfx.mesh.draw(_data.rect.mesh);
             }
         }
     }
     { // TEXT
-        gfx.programUse(_data.text.program);
-        gfx.textureUse(_data.text.texture);
-        gfx.uniformSet(_data.text.uniform.vpsize, window.size);
-        gfx.uniformSet(_data.text.uniform.scale, gui.scale);
-        gfx.uniformSet(_data.text.uniform.color, gui.Color{ 1.0, 1.0, 1.0, 1.0 });
+        gfx.program.use(_data.text.program);
+        gfx.texture.use(_data.text.texture);
+        gfx.uniform.set(_data.text.uniform.vpsize, window.size);
+        gfx.uniform.set(_data.text.uniform.scale, gui.scale);
+        gfx.uniform.set(_data.text.uniform.color, gui.Color{ 1.0, 1.0, 1.0, 1.0 });
         for (gui.texts.items) |item| {
             if (gui.menus.items[item.menu].show) {
                 const pos = item.alignment.transform(item.rect.scale(gui.scale), window.size).min;
@@ -613,27 +621,27 @@ pub fn draw() !void {
                         offset += 3 * gui.scale;
                         continue;
                     }
-                    gfx.uniformSet(_data.text.uniform.pos, gui.Pos{ pos[0] + offset, pos[1] });
-                    gfx.uniformSet(_data.text.uniform.tex, gui.Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
-                    gfx.meshDraw(_data.rect.mesh);
+                    gfx.uniform.set(_data.text.uniform.pos, gui.Pos{ pos[0] + offset, pos[1] });
+                    gfx.uniform.set(_data.text.uniform.tex, gui.Pos{ gui.font.chars[cid].pos, gui.font.chars[cid].width });
+                    gfx.mesh.draw(_data.rect.mesh);
                     offset += (gui.font.chars[cid].width + 1) * gui.scale;
                 }
             }
         }
     }
     { // CURSOR
-        gfx.programUse(_data.rect.program);
-        gfx.textureUse(_data.cursor.texture);
+        gfx.program.use(_data.rect.program);
+        gfx.texture.use(_data.cursor.texture);
         const p1 = 4 * gui.scale - @divTrunc(gui.scale, 2);
         const p2 = 3 * gui.scale + @divTrunc(gui.scale, 2);
-        gfx.uniformSet(_data.rect.uniform.rect, (gui.Rect{
+        gfx.uniform.set(_data.rect.uniform.rect, (gui.Rect{
             .min = gui.cursor.pos - gui.Pos{ p1, p1 },
             .max = gui.cursor.pos + gui.Pos{ p2, p2 },
         }).vector());
         switch (gui.cursor.press) {
-            false => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 7, 7 }),
-            true => gfx.uniformSet(_data.rect.uniform.texrect, @Vector(4, i32){ 7, 0, 14, 7 }),
+            false => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 0, 0, 7, 7 }),
+            true => gfx.uniform.set(_data.rect.uniform.texrect, @Vector(4, i32){ 7, 0, 14, 7 }),
         }
-        gfx.meshDraw(_data.rect.mesh);
+        gfx.mesh.draw(_data.rect.mesh);
     }
 }

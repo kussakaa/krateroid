@@ -49,11 +49,11 @@ pub fn main() !void {
 
     var is_camera_move: bool = false;
     var is_camera_rotate: bool = false;
-    camera.pos = .{ 32.0, 32.0, 0.0, 1.0 };
-    camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
+    camera.pos = .{ 64.0, 64.0, 0.0, 1.0 };
+    camera.rot = .{ -pi / 3.0, 0.0, pi / 4.0, 1.0 };
     camera.scale = 50.0;
 
-    try world.init(.{ .allocator = allocator });
+    try world.init(.{ .allocator = allocator, .seed = 32478287 });
     defer world.deinit();
 
     // X
