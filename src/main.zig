@@ -50,10 +50,13 @@ pub fn main() !void {
     var is_camera_move: bool = false;
     var is_camera_rotate: bool = false;
     camera.pos = .{ 64.0, 64.0, 0.0, 1.0 };
-    camera.rot = .{ -pi / 3.0, 0.0, pi / 4.0, 1.0 };
+    camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
     camera.scale = 50.0;
 
-    try world.init(.{ .allocator = allocator, .seed = 32478287 });
+    try world.init(.{
+        .allocator = allocator,
+        .terra = .{ .seed = 32478287 },
+    });
     defer world.deinit();
 
     // X
@@ -80,9 +83,11 @@ pub fn main() !void {
         .show = config.show_info,
     });
 
-    for (0..world.width) |y| {
-        for (0..world.width) |x| {
-            try world.chunk.init(.{ x, y });
+    for (0..world.terra.h) |z| {
+        for (0..world.terra.w) |y| {
+            for (0..world.terra.w) |x| {
+                try world.terra.initChunk(.{ @intCast(x), @intCast(y), @intCast(z) });
+            }
         }
     }
 
