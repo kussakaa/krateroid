@@ -182,7 +182,7 @@ pub fn init(allocator: Allocator) !void {
         terra.uniform.light.specular = try gfx.Uniform.init(terra.program, "light.specular");
         terra.uniform.chunk.width = try gfx.Uniform.init(terra.program, "chunk.width");
         terra.uniform.chunk.pos = try gfx.Uniform.init(terra.program, "chunk.pos");
-        terra.texture = try gfx.Texture.init(allocator, "dirt.png");
+        terra.texture = try gfx.Texture.init(allocator, "grass.png");
     }
 
     { // LINE

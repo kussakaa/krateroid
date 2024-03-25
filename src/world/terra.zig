@@ -3,7 +3,7 @@ const Array = std.ArrayListUnmanaged;
 const Allocator = std.mem.Allocator;
 const Noise = @import("znoise").FnlGenerator;
 
-pub const w = 8; // width in chunks
+pub const w = 4; // width in chunks
 pub const h = 2; // height in chunks
 pub const v = w * w * h;
 
@@ -13,7 +13,7 @@ pub const Chunk = @import("Chunk.zig");
 
 var _allocator: Allocator = undefined;
 var _chunks: [v]?*Chunk = undefined;
-var _seed: Seed = 6969;
+var _seed: Seed = undefined;
 
 pub fn init(info: struct {
     allocator: Allocator,
@@ -52,11 +52,11 @@ pub fn initChunk(pos: Chunk.Pos) !void {
                 );
 
                 const cellular: f32 = cellular_gen.noise2(
-                    @as(f32, @floatFromInt(x + pos[0] * Chunk.w)) * 10.0,
-                    @as(f32, @floatFromInt(y + pos[1] * Chunk.w)) * 10.0,
+                    @as(f32, @floatFromInt(x + pos[0] * Chunk.w)) * 3.0,
+                    @as(f32, @floatFromInt(y + pos[1] * Chunk.w)) * 3.0,
                 );
 
-                const block = Block{ .id = @as(u8, @intFromBool(@as(f32, @floatFromInt(z + pos[2] * Chunk.w)) < (value + 1.0) * 20.0 + (cellular + 1.0) * 0.0 + 10.0)) };
+                const block = Block{ .id = @as(u8, @intFromBool(@as(f32, @floatFromInt(z + pos[2] * Chunk.w)) < (value + 1.0) * 5.0 + (cellular + 1.0) * 20.0 + 10.0)) };
                 chunk.setBlock(.{ @intCast(x), @intCast(y), @intCast(z) }, block);
             }
         }
@@ -78,9 +78,5 @@ pub inline fn chunkIndexFromChunkPos(pos: Chunk.Pos) u32 {
 }
 
 pub inline fn chunkPosFromBlockPos(pos: Block.Pos) Chunk.Pos {
-    return .{
-        @divTrunc(pos[0], Chunk.w),
-        @divTrunc(pos[1], Chunk.w),
-        @divTrunc(pos[2], Chunk.w),
-    };
+    return @divTrunc(pos, Chunk.Pos{ Chunk.w, Chunk.w, Chunk.w });
 }

@@ -127,7 +127,7 @@ pub fn init() !void {
         .menu = settings.id,
         .pos = .{ 122, -25 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = config.show_info,
+        .status = config.debug.show_info,
     });
 
     _ = try gui.text.init(W("grid"), .{
@@ -144,7 +144,7 @@ pub fn init() !void {
         .menu = settings.id,
         .pos = .{ 122, -17 },
         .alignment = .{ .v = .center, .h = .center },
-        .status = config.show_grid,
+        .status = config.debug.show_grid,
     });
 
     _ = try gui.text.init(W("background color"), .{
@@ -161,7 +161,7 @@ pub fn init() !void {
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[0],
+        .value = config.drawer.background.color[0],
     });
     _ = try gui.text.init(W("g"), .{
         .menu = settings.id,
@@ -172,7 +172,7 @@ pub fn init() !void {
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[1],
+        .value = config.drawer.background.color[1],
     });
     _ = try gui.text.init(W("b"), .{
         .menu = settings.id,
@@ -183,11 +183,11 @@ pub fn init() !void {
         .menu = settings.id,
         .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = drawer.colors.bg[2],
+        .value = config.drawer.background.color[2],
     });
 
     info.id = try gui.menu.init(.{
-        .show = config.show_info,
+        .show = config.debug.show_info,
     });
     _ = try gui.text.init(W("krateroid 0.0.1"), .{
         .menu = info.id,
@@ -209,9 +209,9 @@ pub fn init() !void {
 }
 
 pub fn update() !void {
-    gui.switchers.items[settings.switcher.show_info].status = config.show_info;
-    gui.switchers.items[settings.switcher.show_grid].status = config.show_grid;
-    gui.menus.items[info.id].show = config.show_info;
+    gui.switchers.items[settings.switcher.show_info].status = config.debug.show_info;
+    gui.switchers.items[settings.switcher.show_grid].status = config.debug.show_grid;
+    gui.menus.items[info.id].show = config.debug.show_info;
 
     var fps_str_buffer = [1]u8{'$'} ** 6;
     _ = try std.fmt.bufPrint(&fps_str_buffer, "{}", .{window.fps});

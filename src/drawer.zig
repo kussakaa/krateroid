@@ -2,7 +2,7 @@ const std = @import("std");
 const zm = @import("zmath");
 const gl = @import("zopengl").bindings;
 
-// modules
+const config = @import("config.zig");
 const window = @import("window.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
@@ -21,17 +21,6 @@ const Vec = zm.Vec;
 const Color = Vec;
 
 var _allocator: Allocator = undefined;
-pub var polygon_mode: gl.Enum = gl.FILL;
-pub const colors = struct {
-    pub var bg: Color = .{ 0.0, 0.0, 0.0, 1.0 };
-};
-const light = struct {
-    var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
-    var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
-    var ambient: f32 = 0.4;
-    var diffuse: f32 = 0.4;
-    var specular: f32 = 0.1;
-};
 
 pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
@@ -58,8 +47,14 @@ pub fn deinit() void {
 
 pub fn draw() !void {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clearColor(colors.bg[0], colors.bg[1], colors.bg[2], colors.bg[3]);
+    gl.clearColor(
+        config.drawer.background.color[0],
+        config.drawer.background.color[1],
+        config.drawer.background.color[2],
+        config.drawer.background.color[3],
+    );
     gl.enable(gl.DEPTH_TEST);
+    const polygon_mode: gl.Enum = if (config.debug.show_grid) gl.LINE else gl.FILL;
     gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
 
     { // TERRA
@@ -78,11 +73,11 @@ pub fn draw() !void {
         data.terra.uniform.model.set(zm.identity());
         data.terra.uniform.view.set(camera.view);
         data.terra.uniform.proj.set(camera.proj);
-        data.terra.uniform.light.color.set(light.color);
-        data.terra.uniform.light.direction.set(light.direction);
-        data.terra.uniform.light.ambient.set(light.ambient);
-        data.terra.uniform.light.diffuse.set(light.diffuse);
-        data.terra.uniform.light.specular.set(light.specular);
+        data.terra.uniform.light.color.set(config.drawer.light.color);
+        data.terra.uniform.light.direction.set(config.drawer.light.direction);
+        data.terra.uniform.light.ambient.set(config.drawer.light.ambient);
+        data.terra.uniform.light.diffuse.set(config.drawer.light.diffuse);
+        data.terra.uniform.light.specular.set(config.drawer.light.specular);
         data.terra.uniform.chunk.width.set(@as(f32, @floatFromInt(chunk_w)));
 
         var chunk_pos = terra.Chunk.Pos{ 0, 0, 0 };

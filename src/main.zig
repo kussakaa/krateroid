@@ -64,7 +64,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 },
         .color = .{ 1.0, 0.5, 0.5, 1.0 },
-        .show = config.show_info,
+        .show = config.debug.show_info,
     });
 
     // Y
@@ -72,7 +72,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 },
         .color = .{ 0.5, 1.0, 0.5, 1.0 },
-        .show = config.show_info,
+        .show = config.debug.show_info,
     });
 
     // Z
@@ -80,7 +80,7 @@ pub fn main() !void {
         .p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 },
         .p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 },
         .color = .{ 0.5, 0.5, 1.0, 1.0 },
-        .show = config.show_info,
+        .show = config.debug.show_info,
     });
 
     for (0..world.terra.h) |z| {
@@ -105,8 +105,6 @@ pub fn main() !void {
     try drawer.init(.{ .allocator = allocator });
     defer drawer.deinit();
 
-    drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
-
     loop: while (true) {
         inputproc: while (true) {
             switch (input.pollEvent()) {
@@ -119,14 +117,13 @@ pub fn main() !void {
                             gui.menus.items[menus.settings.id].show = false;
                         }
                         if (id == .f3) {
-                            config.show_info = !config.show_info;
-                            world.lines.items[x_axis].show = config.show_info;
-                            world.lines.items[y_axis].show = config.show_info;
-                            world.lines.items[z_axis].show = config.show_info;
+                            config.debug.show_info = !config.debug.show_info;
+                            world.lines.items[x_axis].show = config.debug.show_info;
+                            world.lines.items[y_axis].show = config.debug.show_info;
+                            world.lines.items[z_axis].show = config.debug.show_info;
                         }
                         if (id == .f5) {
-                            config.show_grid = !config.show_grid;
-                            drawer.polygon_mode = if (config.show_grid) gl.LINE else gl.FILL;
+                            config.debug.show_grid = !config.debug.show_grid;
                         }
                         if (id == .f10) break :loop;
                         if (id == .kp_minus) gui.scale = @max(gui.scale - 1, 1);
@@ -242,18 +239,13 @@ pub fn main() !void {
                     .switched => |switched| {
                         try audio_engine.playSound("data/sound/press.wav", null);
                         if (switched.id == menus.settings.switcher.show_info) {
-                            config.show_info = switched.data;
-                            gui.menus.items[menus.info.id].show = config.show_info;
-                            world.lines.items[x_axis].show = config.show_info;
-                            world.lines.items[y_axis].show = config.show_info;
-                            world.lines.items[z_axis].show = config.show_info;
+                            config.debug.show_info = switched.data;
+                            gui.menus.items[menus.info.id].show = config.debug.show_info;
+                            world.lines.items[x_axis].show = config.debug.show_info;
+                            world.lines.items[y_axis].show = config.debug.show_info;
+                            world.lines.items[z_axis].show = config.debug.show_info;
                         } else if (switched.id == menus.settings.switcher.show_grid) {
-                            config.show_grid = switched.data;
-                            if (config.show_grid) {
-                                drawer.polygon_mode = gl.LINE;
-                            } else {
-                                drawer.polygon_mode = gl.FILL;
-                            }
+                            config.debug.show_grid = switched.data;
                         }
                     },
                 },
@@ -268,11 +260,11 @@ pub fn main() !void {
                     },
                     .scrolled => |s| {
                         if (s.id == menus.settings.slider.bg_r)
-                            drawer.colors.bg[0] = s.data;
+                            config.drawer.background.color[0] = s.data;
                         if (s.id == menus.settings.slider.bg_g)
-                            drawer.colors.bg[1] = s.data;
+                            config.drawer.background.color[1] = s.data;
                         if (s.id == menus.settings.slider.bg_b)
-                            drawer.colors.bg[2] = s.data;
+                            config.drawer.background.color[2] = s.data;
                     },
                 },
             }

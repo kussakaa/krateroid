@@ -40,8 +40,8 @@ void main()
     vec3 p = v_pos;
     vec3 n = normalize(max(abs(v_nrm), 0.00001));
     n /= vec3(n.x + n.y + n.z);
-    vec3 t = vec3(texture(texture0, p.xy * 0.1) * n.z +
-		  texture(texture0, p.xz * 0.1) * n.y +
-		  texture(texture0, p.yz * 0.1) * n.x);
-    f_color = vec4(v_light*t, 1.0);
+    vec3 t = vec3(texture(texture0, p.xy * (1.0 / 8.0)) * n.z +
+		  texture(texture0, p.xz * (1.0 / 8.0)) * n.y +
+		  texture(texture0, p.yz * (1.0 / 8.0)) * n.x);
+    f_color = vec4(v_light*t*vec3(0.7, 0.9, 0.7), 1.0);
 }
