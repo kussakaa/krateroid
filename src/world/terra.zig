@@ -3,7 +3,7 @@ const Array = std.ArrayListUnmanaged;
 const Allocator = std.mem.Allocator;
 const Noise = @import("znoise").FnlGenerator;
 
-pub const w = 4; // width in chunks
+pub const w = 8; // width in chunks
 pub const h = 2; // height in chunks
 pub const v = w * w * h;
 
