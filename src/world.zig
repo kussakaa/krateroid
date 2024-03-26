@@ -15,9 +15,6 @@ pub fn init(info: struct {
     allocator: Allocator = std.heap.page_allocator,
     terra: struct { seed: i32 = 6969 },
 }) !void {
-    try shape.init(.{
-        .allocator = info.allocator,
-    });
     try terra.init(.{
         .allocator = info.allocator,
         .seed = 6969,
@@ -25,6 +22,5 @@ pub fn init(info: struct {
 }
 
 pub fn deinit() void {
-    shape.deinit();
     terra.deinit();
 }

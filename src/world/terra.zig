@@ -22,6 +22,14 @@ pub fn init(info: struct {
     _allocator = info.allocator;
     _seed = info.seed;
     @memset(_chunks[0..], null);
+
+    for (0..h) |z| {
+        for (0..w) |y| {
+            for (0..w) |x| {
+                try initChunk(.{ @intCast(x), @intCast(y), @intCast(z) });
+            }
+        }
+    }
 }
 
 pub fn deinit() void {

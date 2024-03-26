@@ -219,33 +219,23 @@ pub fn draw() !void {
     }
 
     gl.disable(gl.DEPTH_TEST);
+    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // LINE
         data.line.program.use();
-        for (world.shape.lines.items) |item| {
-            if (item.show) {
-                const model = Mat{
-                    .{ item.p2[0] - item.p1[0], 0.0, 0.0, 0.0 },
-                    .{ 0.0, item.p2[1] - item.p1[1], 0.0, 0.0 },
-                    .{ 0.0, 0.0, item.p2[2] - item.p1[2], 0.0 },
-                    .{ item.p1[0], item.p1[1], item.p1[2], 1.0 },
-                };
-                data.line.uniform.model.set(model);
-                data.line.uniform.view.set(camera.view);
-                data.line.uniform.proj.set(camera.proj);
-                data.line.uniform.color.set(item.color);
-                data.line.mesh.draw();
-            }
-        }
+        data.line.uniform.model.set(zm.identity());
+        data.line.uniform.view.set(camera.view);
+        data.line.uniform.proj.set(camera.proj);
+        data.line.mesh.vertcnt = @intCast(world.shape.lines.cnt * 2);
+        data.line.mesh.draw();
     }
-
-    gl.polygonMode(gl.FRONT_AND_BACK, gl.FILL);
 
     { // RECT
         data.rect.program.use();
         data.rect.uniform.vpsize.set(window.size);
         data.rect.uniform.scale.set(gui.scale);
     }
+
     { // PANEL
         data.panel.texture.use();
         for (gui.panels.items) |item| {
@@ -261,6 +251,7 @@ pub fn draw() !void {
             }
         }
     }
+
     { // BUTTON
         data.button.texture.use();
         for (gui.buttons.items) |item| {
@@ -275,6 +266,7 @@ pub fn draw() !void {
             }
         }
     }
+
     { // SWITCHER
         data.switcher.texture.use();
         for (gui.switchers.items) |item| {
@@ -319,6 +311,7 @@ pub fn draw() !void {
             }
         }
     }
+
     { // SLIDER
         data.slider.texture.use();
         data.rect.uniform.vpsize.set(window.size);
@@ -353,6 +346,7 @@ pub fn draw() !void {
             }
         }
     }
+
     { // TEXT
         data.text.program.use();
         data.text.texture.use();
@@ -376,6 +370,7 @@ pub fn draw() !void {
             }
         }
     }
+
     { // CURSOR
         data.rect.program.use();
         data.cursor.texture.use();

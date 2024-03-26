@@ -57,14 +57,14 @@ pub const terra = struct {
 };
 
 pub const line = struct {
-    pub var buffer: gfx.Buffer = undefined;
+    pub var pos_buffer: gfx.Buffer = undefined;
+    pub var color_buffer: gfx.Buffer = undefined;
     pub var mesh: gfx.Mesh = undefined;
     pub var program: gfx.Program = undefined;
     pub const uniform = struct {
         pub var model: gfx.Uniform = undefined;
         pub var view: gfx.Uniform = undefined;
         pub var proj: gfx.Uniform = undefined;
-        pub var color: gfx.Uniform = undefined;
     };
 };
 
@@ -186,25 +186,32 @@ pub fn init(allocator: Allocator) !void {
     }
 
     { // LINE
-        line.buffer = try gfx.Buffer.init(.{
-            .name = "line",
+        line.pos_buffer = try gfx.Buffer.init(.{
+            .name = "pos_line",
             .target = .vbo,
-            .datatype = .u8,
+            .datatype = .f32,
             .vertsize = 3,
             .usage = .static_draw,
         });
-        line.buffer.data(&.{ 0, 0, 0, 1, 1, 1 });
+        line.pos_buffer.data(std.mem.sliceAsBytes(world.shape.lines.vert[0..]));
+        line.color_buffer = try gfx.Buffer.init(.{
+            .name = "color_line",
+            .target = .vbo,
+            .datatype = .f32,
+            .vertsize = 4,
+            .usage = .static_draw,
+        });
+        line.color_buffer.data(std.mem.sliceAsBytes(world.shape.lines.color[0..]));
         line.mesh = try gfx.Mesh.init(.{
             .name = "line",
-            .buffers = &.{line.buffer},
-            .vertcnt = 2,
+            .buffers = &.{ line.pos_buffer, line.color_buffer },
+            .vertcnt = world.shape.lines.len,
             .drawmode = .lines,
         });
         line.program = try gfx.Program.init(allocator, "line");
         line.uniform.model = try gfx.Uniform.init(line.program, "model");
         line.uniform.view = try gfx.Uniform.init(line.program, "view");
         line.uniform.proj = try gfx.Uniform.init(line.program, "proj");
-        line.uniform.color = try gfx.Uniform.init(line.program, "color");
     }
 
     { // RECT
@@ -280,7 +287,8 @@ pub fn deinit() void {
 
     line.program.deinit();
     line.mesh.deinit();
-    line.buffer.deinit();
+    line.pos_buffer.deinit();
+    line.color_buffer.deinit();
 
     terra.texture.deinit();
     terra.program.deinit();
