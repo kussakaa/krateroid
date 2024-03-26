@@ -222,7 +222,7 @@ pub fn draw() !void {
 
     { // LINE
         data.line.program.use();
-        for (world.lines.items) |item| {
+        for (world.shape.lines.items) |item| {
             if (item.show) {
                 const model = Mat{
                     .{ item.p2[0] - item.p1[0], 0.0, 0.0, 0.0 },

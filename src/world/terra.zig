@@ -8,8 +8,8 @@ pub const h = 2; // height in chunks
 pub const v = w * w * h;
 
 pub const Seed = i32;
-pub const Block = @import("Block.zig");
-pub const Chunk = @import("Chunk.zig");
+pub const Block = @import("terra/Block.zig");
+pub const Chunk = @import("terra/Chunk.zig");
 
 var _allocator: Allocator = undefined;
 var _chunks: [v]?*Chunk = undefined;
