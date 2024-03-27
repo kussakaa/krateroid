@@ -6,29 +6,35 @@ Strategic 3d game with huge world and destructible terrain
 
 ![Главное меню](screenshot.png)
 
-## PLANNED
+## TODO
 
-* [ ] Drawer
+* [-] Drawer
   * [ ] UBO?
-  * [x] Basic light
+  * [X] Basic light
   * [ ] Shadows
   * [ ] Blur?
   * [ ] SSAO?
-* [ ] World 
-  * [ ] Chunk
-    * [x] Mesh render
-	* [ ] Texturing
-	* [ ] Materials
-  * [ ] Beautiful Generation
+* [-] World 
+  * [-] Terrain
+    * [X] Texturing 
+    * [ ] Materials 
+    * [ ] Beautiful generation
+    * [X] Many chunks
   * [ ] Entities
-* [ ] GUI
-  * [x] Text
-  * [x] Button
-  * [x] Panel
-  * [x] Menu
-  * [x] Switcher
-  * [x] Slider
-  * [ ] Text field
+    * [ ] Actors
+    * [ ] Vehicles
+  * [-] Shapes
+    * [X] Lines
+    * [ ] Quads
+    * [ ] Spheres
+* [-] GUI
+  * [X] Texts
+  * [X] Buttons
+  * [X] Panels
+  * [X] Menus
+  * [X] Switchers
+  * [X] Sliders
+  * [ ] Text fields
   * [ ] Animations?
 * [ ] Configs (JSON, TOML, INI, ZIGGY)?
 * [ ] Network?
