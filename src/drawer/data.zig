@@ -57,7 +57,7 @@ pub const terra = struct {
 };
 
 pub const line = struct {
-    pub var pos_buffer: gfx.Buffer = undefined;
+    pub var vertex_buffer: gfx.Buffer = undefined;
     pub var color_buffer: gfx.Buffer = undefined;
     pub var mesh: gfx.Mesh = undefined;
     pub var program: gfx.Program = undefined;
@@ -159,7 +159,7 @@ pub fn init(allocator: Allocator) !void {
         }
 
         terra.pos_buffer = try gfx.Buffer.init(.{
-            .name = "chunk_pos",
+            .name = "terra vertex",
             .target = .vbo,
             .datatype = .f32,
             .vertsize = pos_buffer_vertsize,
@@ -186,28 +186,31 @@ pub fn init(allocator: Allocator) !void {
     }
 
     { // LINE
-        line.pos_buffer = try gfx.Buffer.init(.{
-            .name = "pos_line",
+        line.vertex_buffer = try gfx.Buffer.init(.{
+            .name = "line color",
             .target = .vbo,
             .datatype = .f32,
             .vertsize = 3,
             .usage = .static_draw,
         });
-        line.pos_buffer.data(std.mem.sliceAsBytes(world.shape.lines.vert[0..]));
+        line.vertex_buffer.data(std.mem.sliceAsBytes(world.shape.lines.vertex[0..]));
+
         line.color_buffer = try gfx.Buffer.init(.{
-            .name = "color_line",
+            .name = "line vertex",
             .target = .vbo,
             .datatype = .f32,
             .vertsize = 4,
             .usage = .static_draw,
         });
         line.color_buffer.data(std.mem.sliceAsBytes(world.shape.lines.color[0..]));
+
         line.mesh = try gfx.Mesh.init(.{
             .name = "line",
-            .buffers = &.{ line.pos_buffer, line.color_buffer },
+            .buffers = &.{ line.vertex_buffer, line.color_buffer },
             .vertcnt = world.shape.lines.len,
             .drawmode = .lines,
         });
+
         line.program = try gfx.Program.init(allocator, "line");
         line.uniform.model = try gfx.Uniform.init(line.program, "model");
         line.uniform.view = try gfx.Uniform.init(line.program, "view");
@@ -287,7 +290,7 @@ pub fn deinit() void {
 
     line.program.deinit();
     line.mesh.deinit();
-    line.pos_buffer.deinit();
+    line.vertex_buffer.deinit();
     line.color_buffer.deinit();
 
     terra.texture.deinit();

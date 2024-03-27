@@ -37,7 +37,7 @@ pub fn main() !void {
     const audio_engine = try audio.Engine.create(null);
     defer audio_engine.destroy();
 
-    try audio_engine.setVolume(0.3);
+    try audio_engine.setVolume(config.audio.volume);
 
     try window.init(.{ .title = "krateroid" });
     defer window.deinit();
@@ -61,45 +61,34 @@ pub fn main() !void {
 
     // X
     _ = try world.shape.lines.add(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 32.0, 0.0, 0.0, 1.0 },
+        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
         .c2 = .{ 1.0, 0.5, 0.5, 1.0 },
     });
 
     // Y
     _ = try world.shape.lines.add(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 32.0, 0.0, 1.0 },
+        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
         .c2 = .{ 0.5, 1.0, 0.5, 1.0 },
     });
 
     // Z
     _ = try world.shape.lines.add(.{
-        .p1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .p2 = .{ 0.0, 0.0, 32.0, 1.0 },
+        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
+        .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
         .c2 = .{ 0.5, 0.5, 1.0, 1.0 },
     });
 
-    for (0..world.terra.h) |z| {
-        for (0..world.terra.w) |y| {
-            for (0..world.terra.w) |x| {
-                try world.terra.initChunk(.{ @intCast(x), @intCast(y), @intCast(z) });
-            }
-        }
-    }
-
-    try gui.init(.{
-        .allocator = allocator,
-        .scale = 3,
-    });
+    try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
     try menus.init();
 
-    try gfx.init(.{ .allocator = allocator });
+    gfx.init(.{ .allocator = allocator });
     defer gfx.deinit();
 
     try drawer.init(.{ .allocator = allocator });
@@ -259,12 +248,10 @@ pub fn main() !void {
                         try audio_engine.playSound("data/sound/press.wav", null);
                     },
                     .scrolled => |s| {
-                        if (s.id == menus.settings.slider.bg_r)
-                            config.drawer.background.color[0] = s.data;
-                        if (s.id == menus.settings.slider.bg_g)
-                            config.drawer.background.color[1] = s.data;
-                        if (s.id == menus.settings.slider.bg_b)
-                            config.drawer.background.color[2] = s.data;
+                        if (s.id == menus.settings.slider.volume) {
+                            config.audio.volume = s.data;
+                            try audio_engine.setVolume(config.audio.volume);
+                        }
                     },
                 },
             }

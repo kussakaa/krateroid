@@ -21,9 +21,8 @@ pub const settings = struct {
         pub var show_grid: gui.Switcher.Id = undefined;
     };
     pub const slider = struct {
-        pub var bg_r: gui.Slider.Id = undefined;
-        pub var bg_g: gui.Slider.Id = undefined;
-        pub var bg_b: gui.Slider.Id = undefined;
+        pub var volume: gui.Slider.Id = undefined;
+        pub var volume_str_buffer = [1]u16{'0'} ** 4;
     };
 };
 
@@ -147,43 +146,21 @@ pub fn init() !void {
         .status = config.debug.show_grid,
     });
 
-    _ = try gui.text.init(W("background color"), .{
+    _ = try gui.text.init(W("volume:"), .{
         .menu = settings.id,
         .pos = .{ 42, -8 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    _ = try gui.text.init(W("r"), .{
+    _ = try gui.text.init(&settings.slider.volume_str_buffer, .{
         .menu = settings.id,
-        .pos = .{ 42, 0 },
+        .pos = .{ 71, -8 },
         .alignment = .{ .v = .center, .h = .center },
     });
-    settings.slider.bg_r = try gui.slider.init(.{
+    settings.slider.volume = try gui.slider.init(.{
         .menu = settings.id,
-        .rect = .{ .min = .{ 47, 0 }, .max = .{ 134, 8 } },
+        .rect = .{ .min = .{ 42, 0 }, .max = .{ 134, 8 } },
         .alignment = .{ .v = .center, .h = .center },
-        .value = config.drawer.background.color[0],
-    });
-    _ = try gui.text.init(W("g"), .{
-        .menu = settings.id,
-        .pos = .{ 42, 8 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    settings.slider.bg_g = try gui.slider.init(.{
-        .menu = settings.id,
-        .rect = .{ .min = .{ 47, 8 }, .max = .{ 134, 16 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = config.drawer.background.color[1],
-    });
-    _ = try gui.text.init(W("b"), .{
-        .menu = settings.id,
-        .pos = .{ 42, 16 },
-        .alignment = .{ .v = .center, .h = .center },
-    });
-    settings.slider.bg_b = try gui.slider.init(.{
-        .menu = settings.id,
-        .rect = .{ .min = .{ 47, 16 }, .max = .{ 134, 24 } },
-        .alignment = .{ .v = .center, .h = .center },
-        .value = config.drawer.background.color[2],
+        .value = config.audio.volume,
     });
 
     info.id = try gui.menu.init(.{
@@ -212,6 +189,10 @@ pub fn update() !void {
     gui.switchers.items[settings.switcher.show_info].status = config.debug.show_info;
     gui.switchers.items[settings.switcher.show_grid].status = config.debug.show_grid;
     gui.menus.items[info.id].show = config.debug.show_info;
+
+    var volume_str_buffer = [1]u8{'$'} ** 4;
+    _ = try std.fmt.bufPrint(&volume_str_buffer, "{}", .{@as(u32, @intFromFloat(gui.sliders.items[settings.slider.volume].value * 100.0))});
+    _ = try std.unicode.utf8ToUtf16Le(&settings.slider.volume_str_buffer, &volume_str_buffer);
 
     var fps_str_buffer = [1]u8{'$'} ** 6;
     _ = try std.fmt.bufPrint(&fps_str_buffer, "{}", .{window.fps});

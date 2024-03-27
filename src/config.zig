@@ -7,6 +7,11 @@ pub const debug = struct {
     pub var show_info: bool = false;
     pub var show_grid: bool = false;
 };
+
+pub const audio = struct {
+    pub var volume: f32 = 0.3;
+};
+
 pub const drawer = struct {
     pub const background = struct {
         pub var color: Color = .{ 0.0, 0.0, 0.0, 1.0 };

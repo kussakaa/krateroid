@@ -12,7 +12,7 @@ pub const Shader = @import("gfx/Shader.zig");
 pub const Program = @import("gfx/Program.zig");
 pub const Uniform = @import("gfx/Uniform.zig");
 
-pub fn init(info: struct { allocator: Allocator }) !void {
+pub fn init(info: struct { allocator: Allocator }) void {
     stb.init(info.allocator);
 }
 
