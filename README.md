@@ -8,14 +8,14 @@ Strategic 3d game with huge world and destructible terrain
 
 ## TODO
 
-* [-] Drawer
+* [ ] Drawer
   * [ ] UBO?
   * [X] Basic light
   * [ ] Shadows
   * [ ] Blur?
   * [ ] SSAO?
-* [-] World 
-  * [-] Terrain
+* [ ] World 
+  * [ ] Terrain
     * [X] Texturing 
     * [ ] Materials 
     * [ ] Beautiful generation
@@ -23,11 +23,11 @@ Strategic 3d game with huge world and destructible terrain
   * [ ] Entities
     * [ ] Actors
     * [ ] Vehicles
-  * [-] Shapes
+  * [ ] Shapes
     * [X] Lines
     * [ ] Quads
     * [ ] Spheres
-* [-] GUI
+* [ ] GUI
   * [X] Texts
   * [X] Buttons
   * [X] Panels
