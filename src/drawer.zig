@@ -62,14 +62,15 @@ pub fn draw() !void {
         const terra_h = terra.h;
         const terra_w = terra.w;
         const chunk_w = terra.Chunk.w;
-        const nrm_buffer_vertsize = 3;
+        const vertex_size = 3;
+        const normal_size = 3;
         const s = struct {
-            var nrm_buffer_data = [1]i8{0} ** ((chunk_w + 1) * (chunk_w + 1) * chunk_w * nrm_buffer_vertsize * 3);
-            var ebo_buffer_data = [1]u32{0} ** (1024 * 1024);
+            var vertex_buffer_data = [1]f32{0.0} ** (1024 * 1024 * vertex_size);
+            var normal_buffer_data = [1]i8{0} ** (1024 * 1024 * normal_size);
         };
 
         data.terra.program.use();
-        data.terra.texture.use();
+        data.terra.texture.dirt.use();
         data.terra.uniform.model.set(zm.identity());
         data.terra.uniform.view.set(camera.view);
         data.terra.uniform.proj.set(camera.proj);
@@ -90,8 +91,6 @@ pub fn draw() !void {
                     if (data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)]) |mesh| {
                         mesh.draw();
                     } else if (terra.isInitChunk(chunk_pos)) {
-                        @memset(s.nrm_buffer_data[0..], 0);
-
                         var len: usize = 0;
                         var block_pos = terra.Block.Pos{ 0, 0, 0 };
                         while (block_pos[2] < chunk_w) : (block_pos[2] += 1) {
@@ -131,85 +130,68 @@ pub fn draw() !void {
 
                                     if (index == 0) continue;
                                     var i: usize = 0;
-                                    while (mct.pos[index][i] < 12) : (i += 3) {
-                                        const v1_edge = mct.pos[index][i + 0];
-                                        const v1_offset = switch (v1_edge) {
-                                            0, 2, 4, 6 => block_pos[0] + block_pos[1] * (chunk_w) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            1, 3, 5, 7 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            8, 9, 10, 11 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * (chunk_w + 1) * (chunk_w + 1),
-                                            else => 0,
-                                        };
-                                        const v1: u32 = data.terra.edge[v1_edge] + @as(u32, @intCast(v1_offset));
-                                        s.ebo_buffer_data[len + 0] = v1;
-
-                                        const v2_edge = mct.pos[index][i + 1];
-                                        const v2_offset = switch (v2_edge) {
-                                            0, 2, 4, 6 => block_pos[0] + block_pos[1] * (chunk_w) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            1, 3, 5, 7 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            8, 9, 10, 11 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * (chunk_w + 1) * (chunk_w + 1),
-                                            else => 0,
-                                        };
-                                        const v2: u32 = data.terra.edge[v2_edge] + @as(u32, @intCast(v2_offset));
-                                        s.ebo_buffer_data[len + 1] = v2;
-
-                                        const v3_edge = mct.pos[index][i + 2];
-                                        const v3_offset = switch (v3_edge) {
-                                            0, 2, 4, 6 => block_pos[0] + block_pos[1] * (chunk_w) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            1, 3, 5, 7 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * chunk_w * (chunk_w + 1),
-                                            8, 9, 10, 11 => block_pos[0] + block_pos[1] * (chunk_w + 1) + block_pos[2] * (chunk_w + 1) * (chunk_w + 1),
-                                            else => 0,
-                                        };
-                                        const v3: u32 = data.terra.edge[v3_edge] + @as(u32, @intCast(v3_offset));
-                                        s.ebo_buffer_data[len + 2] = v3;
-
-                                        const n = @Vector(3, i8){
-                                            mct.nrm[index][i + 0],
-                                            mct.nrm[index][i + 1],
-                                            mct.nrm[index][i + 2],
+                                    while (mct.vertex[index][i] < 12) : (i += 3) {
+                                        const v1 = mct.edge[mct.vertex[index][i + 0]];
+                                        const v2 = mct.edge[mct.vertex[index][i + 1]];
+                                        const v3 = mct.edge[mct.vertex[index][i + 2]];
+                                        const n = [3]i8{
+                                            mct.normal[index][i + 0],
+                                            mct.normal[index][i + 1],
+                                            mct.normal[index][i + 2],
                                         };
 
-                                        s.nrm_buffer_data[v1 * nrm_buffer_vertsize + 0] += n[0];
-                                        s.nrm_buffer_data[v1 * nrm_buffer_vertsize + 1] += n[1];
-                                        s.nrm_buffer_data[v1 * nrm_buffer_vertsize + 2] += n[2];
-                                        s.nrm_buffer_data[v2 * nrm_buffer_vertsize + 0] += n[0];
-                                        s.nrm_buffer_data[v2 * nrm_buffer_vertsize + 1] += n[1];
-                                        s.nrm_buffer_data[v2 * nrm_buffer_vertsize + 2] += n[2];
-                                        s.nrm_buffer_data[v3 * nrm_buffer_vertsize + 0] += n[0];
-                                        s.nrm_buffer_data[v3 * nrm_buffer_vertsize + 1] += n[1];
-                                        s.nrm_buffer_data[v3 * nrm_buffer_vertsize + 2] += n[2];
+                                        s.vertex_buffer_data[len * 3 + 0] = v1[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                        s.vertex_buffer_data[len * 3 + 1] = v1[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                        s.vertex_buffer_data[len * 3 + 2] = v1[2] + @as(f32, @floatFromInt(block_pos[2]));
+                                        s.vertex_buffer_data[len * 3 + 3] = v2[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                        s.vertex_buffer_data[len * 3 + 4] = v2[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                        s.vertex_buffer_data[len * 3 + 5] = v2[2] + @as(f32, @floatFromInt(block_pos[2]));
+                                        s.vertex_buffer_data[len * 3 + 6] = v3[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                        s.vertex_buffer_data[len * 3 + 7] = v3[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                        s.vertex_buffer_data[len * 3 + 8] = v3[2] + @as(f32, @floatFromInt(block_pos[2]));
+
+                                        s.normal_buffer_data[len * 3 + 0] = n[0];
+                                        s.normal_buffer_data[len * 3 + 1] = n[1];
+                                        s.normal_buffer_data[len * 3 + 2] = n[2];
+                                        s.normal_buffer_data[len * 3 + 3] = n[0];
+                                        s.normal_buffer_data[len * 3 + 4] = n[1];
+                                        s.normal_buffer_data[len * 3 + 5] = n[2];
+                                        s.normal_buffer_data[len * 3 + 6] = n[0];
+                                        s.normal_buffer_data[len * 3 + 7] = n[1];
+                                        s.normal_buffer_data[len * 3 + 8] = n[2];
+
                                         len += 3;
                                     }
                                 }
                             }
                         }
 
-                        data.terra.nrm_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
-                            .name = "chunk_nrm",
+                        data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
+                            .name = "terra_chunk_vertex",
+                            .target = .vbo,
+                            .datatype = .f32,
+                            .vertsize = vertex_size,
+                            .usage = .static_draw,
+                        });
+                        data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.vertex_buffer_data[0 .. len * 3]));
+
+                        data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
+                            .name = "terra_chunk_normal",
                             .target = .vbo,
                             .datatype = .i8,
-                            .vertsize = nrm_buffer_vertsize,
+                            .vertsize = normal_size,
                             .usage = .static_draw,
                         });
-                        data.terra.nrm_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.nrm_buffer_data[0..]));
-
-                        data.terra.ebo_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
-                            .name = "chunk_ebo",
-                            .target = .ebo,
-                            .datatype = .u32,
-                            .vertsize = 1,
-                            .usage = .static_draw,
-                        });
-                        data.terra.ebo_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.ebo_buffer_data[0..len]));
+                        data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.normal_buffer_data[0 .. len * 3]));
 
                         data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Mesh.init(.{
-                            .name = "chunk",
+                            .name = "terra_chunk",
                             .buffers = &.{
-                                data.terra.pos_buffer,
-                                data.terra.nrm_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
+                                data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
+                                data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
                             },
                             .vertcnt = @intCast(len),
                             .drawmode = .triangles,
-                            .ebo = &data.terra.ebo_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
                         });
                         data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)].?.draw();
                     }

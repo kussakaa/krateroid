@@ -60,7 +60,7 @@ pub fn main() !void {
     defer world.deinit();
 
     // X
-    _ = try world.shape.lines.add(.{
+    _ = try world.shape.lines.init(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -68,7 +68,7 @@ pub fn main() !void {
     });
 
     // Y
-    _ = try world.shape.lines.add(.{
+    _ = try world.shape.lines.init(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -76,7 +76,7 @@ pub fn main() !void {
     });
 
     // Z
-    _ = try world.shape.lines.add(.{
+    _ = try world.shape.lines.init(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },

@@ -8,21 +8,25 @@ pub var vertex = [1]f32{0.0} ** (vertex_size * len);
 pub const color_size = 4 * 2;
 pub var color = [1]f32{0.0} ** (color_size * len);
 
-pub inline fn add(info: struct {
+const InitInfo = struct {
     v1: zm.F32x4,
     v2: zm.F32x4,
     c1: zm.F32x4 = zm.f32x4s(1.0),
     c2: zm.F32x4 = zm.f32x4s(1.0),
-}) !Id {
+};
+
+pub inline fn init(info: InitInfo) !Id {
     const id = cnt;
     cnt += 1;
+    set(id, info);
+    return id;
+}
 
+pub inline fn set(id: Id, info: InitInfo) void {
     setVertex1(id, info.v1);
     setVertex2(id, info.v2);
     setColor1(id, info.c1);
     setColor2(id, info.c2);
-
-    return id;
 }
 
 pub inline fn setVertex1(id: Id, v: zm.F32x4) void {

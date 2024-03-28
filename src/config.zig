@@ -17,10 +17,10 @@ pub const drawer = struct {
         pub var color: Color = .{ 0.0, 0.0, 0.0, 1.0 };
     };
     pub const light = struct {
-        pub var color: Color = .{ 1.0, 1.0, 1.0, 1.0 };
+        pub var color: Color = .{ 0.9, 0.9, 0.7, 1.0 };
         pub var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
-        pub var ambient: f32 = 0.4;
-        pub var diffuse: f32 = 0.4;
+        pub var ambient: f32 = 0.6;
+        pub var diffuse: f32 = 0.3;
         pub var specular: f32 = 0.1;
     };
 };
