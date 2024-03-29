@@ -1,4 +1,4 @@
-const sdl = @import("zsdl");
+const sdl = @import("zsdl2");
 const Pos = @Vector(2, i32);
 const Size = @Vector(2, i32);
 

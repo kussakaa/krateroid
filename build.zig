@@ -1,12 +1,6 @@
 const std = @import("std");
-const zmath = @import("zmath");
-const znoise = @import("znoise");
-const zopengl = @import("zopengl");
-const zsdl = @import("zsdl");
-const zstbi = @import("zstbi");
-const zaudio = @import("zaudio");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -17,23 +11,30 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
 
-    const zmath_pkg = zmath.package(b, target, optimize, .{});
-    zmath_pkg.link(exe);
+    const zmath = b.dependency("zmath", .{});
+    exe.root_module.addImport("zmath", zmath.module("root"));
 
-    const znoise_pkg = znoise.package(b, target, optimize, .{});
-    znoise_pkg.link(exe);
+    const znoise = b.dependency("znoise", .{});
+    exe.root_module.addImport("znoise", znoise.module("root"));
+    exe.linkLibrary(znoise.artifact("FastNoiseLite"));
 
-    const zopengl_pkg = zopengl.package(b, target, optimize, .{});
-    zopengl_pkg.link(exe);
+    const zopengl = b.dependency("zopengl", .{});
+    exe.root_module.addImport("zopengl", zopengl.module("root"));
 
-    const zsdl_pkg = zsdl.package(b, target, optimize, .{});
-    zsdl_pkg.link(exe);
+    const zsdl = b.dependency("zsdl", .{});
+    const zsdl_path = zsdl.path("").getPath(b);
+    exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
+    try @import("zsdl").addLibraryPathsTo(exe, zsdl_path);
+    @import("zsdl").link_SDL2(exe);
+    try @import("zsdl").install_sdl2(&exe.step, target.result, .bin, zsdl_path);
 
-    const zstbi_pkg = zstbi.package(b, target, optimize, .{});
-    zstbi_pkg.link(exe);
+    const zstbi = b.dependency("zstbi", .{});
+    exe.root_module.addImport("zstbi", zstbi.module("root"));
+    exe.linkLibrary(zstbi.artifact("zstbi"));
 
-    const zaudio_pkg = zaudio.package(b, target, optimize, .{});
-    zaudio_pkg.link(exe);
+    const zaudio = b.dependency("zaudio", .{});
+    exe.root_module.addImport("zaudio", zaudio.module("root"));
+    exe.linkLibrary(zaudio.artifact("miniaudio"));
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);

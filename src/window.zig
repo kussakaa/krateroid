@@ -1,6 +1,6 @@
 const std = @import("std");
 const log = std.log.scoped(.window);
-const sdl = @import("zsdl");
+const sdl = @import("zsdl2");
 const zopengl = @import("zopengl");
 const gl = zopengl.bindings;
 const Allocator = std.mem.Allocator;

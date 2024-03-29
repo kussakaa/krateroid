@@ -15,7 +15,6 @@ const mct = @import("drawer/mct.zig");
 const log = std.log.scoped(.drawer);
 const Allocator = std.mem.Allocator;
 const Array = std.ArrayListUnmanaged;
-
 const Mat = zm.Mat;
 const Vec = zm.Vec;
 const Color = Vec;

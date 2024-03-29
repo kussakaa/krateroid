@@ -107,5 +107,6 @@ pub fn deinit(self: Self) void {
 }
 
 pub fn use(self: Self) void {
+    gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, self.id);
 }
