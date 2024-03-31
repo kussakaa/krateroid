@@ -60,7 +60,7 @@ pub fn main() !void {
     defer world.deinit();
 
     // X
-    _ = try world.shape.lines.init(.{
+    _ = world.shape.lines.add(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -68,7 +68,7 @@ pub fn main() !void {
     });
 
     // Y
-    _ = try world.shape.lines.init(.{
+    _ = world.shape.lines.add(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -76,7 +76,7 @@ pub fn main() !void {
     });
 
     // Z
-    _ = try world.shape.lines.init(.{
+    _ = world.shape.lines.add(.{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -197,9 +197,12 @@ pub fn main() !void {
 
         guiproc: while (true) {
             const e = gui.pollEvent();
+
             //if (e != .none) log.info("gui event: {}", .{e});
+
             switch (e) {
                 .none => break :guiproc,
+
                 .button => |item| switch (item) {
                     .focused => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
@@ -218,6 +221,7 @@ pub fn main() !void {
                         }
                     },
                 },
+
                 .switcher => |item| switch (item) {
                     .focused => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
@@ -238,6 +242,7 @@ pub fn main() !void {
                         }
                     },
                 },
+
                 .slider => |item| switch (item) {
                     .focused => |_| {
                         try audio_engine.playSound("data/sound/focus.wav", null);
@@ -256,6 +261,8 @@ pub fn main() !void {
                 },
             }
         }
+
+        world.update();
 
         try menus.update();
         camera.update();

@@ -64,6 +64,7 @@ pub fn initChunk(pos: Chunk.Pos) !void {
                     @as(f32, @floatFromInt(y + pos[1] * Chunk.w)) * 3.0,
                 );
 
+                //                const block = Block{ .id = @as(u8, @intFromBool((value * 0.0 + cellular) > -0.3)) };
                 const block = Block{ .id = @as(u8, @intFromBool(@as(f32, @floatFromInt(z + pos[2] * Chunk.w)) < (value + 1.0) * 5.0 + (cellular + 1.0) * 20.0 + 10.0)) };
                 chunk.setBlock(.{ @intCast(x), @intCast(y), @intCast(z) }, block);
             }

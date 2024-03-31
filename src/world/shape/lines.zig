@@ -1,12 +1,11 @@
+const std = @import("std");
 const zm = @import("zmath");
 
 pub const Id = usize;
-pub const len = 256;
+pub const len = 1024;
 pub var cnt: usize = 0;
-pub const vertex_size = 3 * 2;
-pub var vertex = [1]f32{0.0} ** (vertex_size * len);
-pub const color_size = 4 * 2;
-pub var color = [1]f32{0.0} ** (color_size * len);
+pub var vertex: [len * 2]zm.F32x4 = undefined;
+pub var color: [len * 2]zm.F32x4 = undefined;
 
 const InitInfo = struct {
     v1: zm.F32x4,
@@ -15,7 +14,10 @@ const InitInfo = struct {
     c2: zm.F32x4 = zm.f32x4s(1.0),
 };
 
-pub inline fn init(info: InitInfo) !Id {
+pub fn init() void {}
+pub fn deinit() void {}
+
+pub inline fn add(info: InitInfo) Id {
     const id = cnt;
     cnt += 1;
     set(id, info);
@@ -30,27 +32,25 @@ pub inline fn set(id: Id, info: InitInfo) void {
 }
 
 pub inline fn setVertex1(id: Id, v: zm.F32x4) void {
-    vertex[id * vertex_size + 0] = v[0];
-    vertex[id * vertex_size + 1] = v[1];
-    vertex[id * vertex_size + 2] = v[2];
+    vertex[id * 2 + 0] = v;
 }
 
 pub inline fn setVertex2(id: Id, v: zm.F32x4) void {
-    vertex[id * vertex_size + 3] = v[0];
-    vertex[id * vertex_size + 4] = v[1];
-    vertex[id * vertex_size + 5] = v[2];
+    vertex[id * 2 + 1] = v;
 }
 
 pub inline fn setColor1(id: Id, c: zm.F32x4) void {
-    color[id * color_size + 0] = c[0];
-    color[id * color_size + 1] = c[1];
-    color[id * color_size + 2] = c[2];
-    color[id * color_size + 3] = c[3];
+    color[id * 2 + 0] = c;
 }
 
 pub inline fn setColor2(id: Id, c: zm.F32x4) void {
-    color[id * color_size + 4] = c[0];
-    color[id * color_size + 5] = c[1];
-    color[id * color_size + 6] = c[2];
-    color[id * color_size + 7] = c[3];
+    color[id * 2 + 1] = c;
+}
+
+pub inline fn getVertexBytes() []const u8 {
+    return std.mem.sliceAsBytes(vertex[0..]);
+}
+
+pub inline fn getColorBytes() []const u8 {
+    return std.mem.sliceAsBytes(color[0..]);
 }

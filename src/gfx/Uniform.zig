@@ -2,6 +2,7 @@ const std = @import("std");
 const log = std.log.scoped(.gfx);
 
 const Program = @import("Program.zig");
+const Texture = @import("Texture.zig");
 
 const gl = @import("zopengl").bindings;
 
@@ -64,6 +65,9 @@ pub fn set(self: Self, value: anytype) void {
         @Vector(3, u32) => {
             const array: [3]u32 = value;
             gl.uniform3uiv(self.id, 1, &array);
+        },
+        Texture => {
+            gl.uniform1i(self.id, value.id);
         },
         else => @compileError("gfx.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
     }

@@ -37,15 +37,38 @@ pub const terra = struct {
     };
 };
 
-pub const line = struct {
-    pub var vertex_buffer: gfx.Buffer = undefined;
-    pub var color_buffer: gfx.Buffer = undefined;
-    pub var mesh: gfx.Mesh = undefined;
-    pub var program: gfx.Program = undefined;
-    pub const uniform = struct {
-        pub var model: gfx.Uniform = undefined;
-        pub var view: gfx.Uniform = undefined;
-        pub var proj: gfx.Uniform = undefined;
+pub const entity = struct {
+    pub const actor = struct {
+        pub var vertex_buffer: gfx.Buffer = undefined;
+        pub var normal_buffer: gfx.Buffer = undefined;
+        pub var mesh: gfx.Mesh = undefined;
+        pub var program: gfx.Program = undefined;
+        pub const uniform = struct {};
+    };
+
+    pub const bullet = struct {
+        pub var vertex_buffer: gfx.Buffer = undefined;
+        pub var mesh: gfx.Mesh = undefined;
+        pub var program: gfx.Program = undefined;
+        pub const uniform = struct {
+            pub var model: gfx.Uniform = undefined;
+            pub var view: gfx.Uniform = undefined;
+            pub var proj: gfx.Uniform = undefined;
+        };
+    };
+};
+
+pub const shape = struct {
+    pub const line = struct {
+        pub var vertex_buffer: gfx.Buffer = undefined;
+        pub var color_buffer: gfx.Buffer = undefined;
+        pub var mesh: gfx.Mesh = undefined;
+        pub var program: gfx.Program = undefined;
+        pub const uniform = struct {
+            pub var model: gfx.Uniform = undefined;
+            pub var view: gfx.Uniform = undefined;
+            pub var proj: gfx.Uniform = undefined;
+        };
     };
 };
 
@@ -122,36 +145,67 @@ pub fn init(allocator: Allocator) !void {
         terra.texture.stone = try gfx.Texture.init(allocator, "world/terra/stone.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
     }
 
-    { // LINE
-        line.vertex_buffer = try gfx.Buffer.init(.{
-            .name = "line color",
-            .target = .vbo,
-            .datatype = .f32,
-            .vertsize = 3,
-            .usage = .static_draw,
-        });
-        line.vertex_buffer.data(std.mem.sliceAsBytes(world.shape.lines.vertex[0..]));
+    { // ENTITY
+        { // ACTOR
 
-        line.color_buffer = try gfx.Buffer.init(.{
-            .name = "line vertex",
-            .target = .vbo,
-            .datatype = .f32,
-            .vertsize = 4,
-            .usage = .static_draw,
-        });
-        line.color_buffer.data(std.mem.sliceAsBytes(world.shape.lines.color[0..]));
+        }
 
-        line.mesh = try gfx.Mesh.init(.{
-            .name = "line",
-            .buffers = &.{ line.vertex_buffer, line.color_buffer },
-            .vertcnt = world.shape.lines.len,
-            .drawmode = .lines,
-        });
+        { // BULLETS
+            entity.bullet.vertex_buffer = try gfx.Buffer.init(.{
+                .name = "world entity bullet vertex",
+                .target = .vbo,
+                .datatype = .f32,
+                .vertsize = 4,
+                .usage = .dynamic_draw,
+            });
+            entity.bullet.vertex_buffer.data(world.entity.bullets.getPosBytes());
 
-        line.program = try gfx.Program.init(allocator, "line");
-        line.uniform.model = try gfx.Uniform.init(line.program, "model");
-        line.uniform.view = try gfx.Uniform.init(line.program, "view");
-        line.uniform.proj = try gfx.Uniform.init(line.program, "proj");
+            entity.bullet.mesh = try gfx.Mesh.init(.{
+                .name = "world entity bullet",
+                .buffers = &.{entity.bullet.vertex_buffer},
+                .vertcnt = world.entity.bullets.len,
+                .drawmode = .points,
+            });
+
+            entity.bullet.program = try gfx.Program.init(allocator, "bullets");
+            entity.bullet.uniform.model = try gfx.Uniform.init(entity.bullet.program, "model");
+            entity.bullet.uniform.view = try gfx.Uniform.init(entity.bullet.program, "view");
+            entity.bullet.uniform.proj = try gfx.Uniform.init(entity.bullet.program, "proj");
+        }
+    }
+
+    { // SHAPE
+        { // LINE
+            shape.line.vertex_buffer = try gfx.Buffer.init(.{
+                .name = "world shape line vertex",
+                .target = .vbo,
+                .datatype = .f32,
+                .vertsize = 4,
+                .usage = .static_draw,
+            });
+            shape.line.vertex_buffer.data(std.mem.sliceAsBytes(world.shape.lines.getVertexBytes()));
+
+            shape.line.color_buffer = try gfx.Buffer.init(.{
+                .name = "world shape line vertex",
+                .target = .vbo,
+                .datatype = .f32,
+                .vertsize = 4,
+                .usage = .static_draw,
+            });
+            shape.line.color_buffer.data(std.mem.sliceAsBytes(world.shape.lines.getColorBytes()));
+
+            shape.line.mesh = try gfx.Mesh.init(.{
+                .name = "world shape line",
+                .buffers = &.{ shape.line.vertex_buffer, shape.line.color_buffer },
+                .vertcnt = world.shape.lines.len,
+                .drawmode = .lines,
+            });
+
+            shape.line.program = try gfx.Program.init(allocator, "line");
+            shape.line.uniform.model = try gfx.Uniform.init(shape.line.program, "model");
+            shape.line.uniform.view = try gfx.Uniform.init(shape.line.program, "view");
+            shape.line.uniform.proj = try gfx.Uniform.init(shape.line.program, "proj");
+        }
     }
 
     { // RECT
@@ -208,35 +262,40 @@ pub fn init(allocator: Allocator) !void {
 }
 
 pub fn deinit() void {
-    cursor.texture.deinit();
+    { // GUI
+        cursor.texture.deinit();
+        text.texture.deinit();
+        text.program.deinit();
+        slider.texture.deinit();
+        switcher.texture.deinit();
+        button.texture.deinit();
+        panel.texture.deinit();
+        rect.program.deinit();
+        rect.mesh.deinit();
+        rect.buffer.deinit();
+    }
 
-    text.texture.deinit();
-    text.program.deinit();
+    { // WORLD
+        { // SHAPE
+            shape.line.program.deinit();
+            shape.line.mesh.deinit();
+            shape.line.vertex_buffer.deinit();
+            shape.line.color_buffer.deinit();
+        }
 
-    slider.texture.deinit();
+        { // ENTITY
 
-    switcher.texture.deinit();
+        }
 
-    button.texture.deinit();
-
-    panel.texture.deinit();
-
-    rect.program.deinit();
-    rect.mesh.deinit();
-    rect.buffer.deinit();
-
-    line.program.deinit();
-    line.mesh.deinit();
-    line.vertex_buffer.deinit();
-    line.color_buffer.deinit();
-
-    terra.texture.dirt.deinit();
-    terra.texture.grass.deinit();
-    terra.texture.sand.deinit();
-    terra.texture.stone.deinit();
-
-    terra.program.deinit();
-    for (terra.meshes) |item| if (item != null) item.?.deinit();
-    for (terra.vertex_buffers) |item| if (item != null) item.?.deinit();
-    for (terra.normal_buffers) |item| if (item != null) item.?.deinit();
+        { // TERRA
+            terra.texture.dirt.deinit();
+            terra.texture.grass.deinit();
+            terra.texture.sand.deinit();
+            terra.texture.stone.deinit();
+            terra.program.deinit();
+            for (terra.meshes) |item| if (item != null) item.?.deinit();
+            for (terra.vertex_buffers) |item| if (item != null) item.?.deinit();
+            for (terra.normal_buffers) |item| if (item != null) item.?.deinit();
+        }
+    }
 }

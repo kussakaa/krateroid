@@ -35,7 +35,7 @@ pub fn init(
         const info_log = try allocator.alloc(u8, @intCast(info_log_len));
         defer allocator.free(info_log);
         gl.getShaderInfoLog(id, info_log_len, null, info_log.ptr);
-        log.err("shader {} failed compilation: {s}\n", .{ id, info_log });
+        log.err("shader {s} failed compilation: \n{s}\n", .{ path, info_log });
         return error.ShaderCompilation;
     }
 
