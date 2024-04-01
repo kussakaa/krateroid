@@ -7,33 +7,33 @@ const world = @import("../world.zig");
 const gui = @import("../gui.zig");
 
 pub const terra = struct {
-    pub var vertex_buffers: [world.terra.w * world.terra.w * world.terra.h]?gfx.Buffer = undefined;
-    pub var normal_buffers: [world.terra.w * world.terra.w * world.terra.h]?gfx.Buffer = undefined;
-    pub var meshes: [world.terra.w * world.terra.w * world.terra.h]?gfx.Mesh = undefined;
-
-    pub var program: gfx.Program = undefined;
-
-    pub const uniform = struct {
-        pub var model: gfx.Uniform = undefined;
-        pub var view: gfx.Uniform = undefined;
-        pub var proj: gfx.Uniform = undefined;
-        pub const light = struct {
-            pub var color: gfx.Uniform = undefined;
-            pub var direction: gfx.Uniform = undefined;
-            pub var ambient: gfx.Uniform = undefined;
-            pub var diffuse: gfx.Uniform = undefined;
-            pub var specular: gfx.Uniform = undefined;
+    pub const chunk = struct {
+        pub var vertex_buffers: [world.terra.w * world.terra.w * world.terra.h]?gfx.Buffer = undefined;
+        pub var normal_buffers: [world.terra.w * world.terra.w * world.terra.h]?gfx.Buffer = undefined;
+        pub var meshes: [world.terra.w * world.terra.w * world.terra.h]?gfx.Mesh = undefined;
+        pub var program: gfx.Program = undefined;
+        pub const uniform = struct {
+            pub var model: gfx.Uniform = undefined;
+            pub var view: gfx.Uniform = undefined;
+            pub var proj: gfx.Uniform = undefined;
+            pub const light = struct {
+                pub var color: gfx.Uniform = undefined;
+                pub var direction: gfx.Uniform = undefined;
+                pub var ambient: gfx.Uniform = undefined;
+                pub var diffuse: gfx.Uniform = undefined;
+                pub var specular: gfx.Uniform = undefined;
+            };
+            pub const chunk = struct {
+                pub var width: gfx.Uniform = undefined;
+                pub var pos: gfx.Uniform = undefined;
+            };
         };
-        pub const chunk = struct {
-            pub var width: gfx.Uniform = undefined;
-            pub var pos: gfx.Uniform = undefined;
+        pub const texture = struct {
+            pub var dirt: gfx.Texture = undefined;
+            pub var grass: gfx.Texture = undefined;
+            pub var sand: gfx.Texture = undefined;
+            pub var stone: gfx.Texture = undefined;
         };
-    };
-    pub const texture = struct {
-        pub var dirt: gfx.Texture = undefined;
-        pub var grass: gfx.Texture = undefined;
-        pub var sand: gfx.Texture = undefined;
-        pub var stone: gfx.Texture = undefined;
     };
 };
 
@@ -120,29 +120,29 @@ pub const cursor = struct {
 
 pub fn init(allocator: Allocator) !void {
     { // TERRA
-        @memset(terra.normal_buffers[0..], null);
-        @memset(terra.vertex_buffers[0..], null);
-        @memset(terra.meshes[0..], null);
+        @memset(terra.chunk.normal_buffers[0..], null);
+        @memset(terra.chunk.vertex_buffers[0..], null);
+        @memset(terra.chunk.meshes[0..], null);
 
-        terra.program = try gfx.Program.init(allocator, "terra");
+        terra.chunk.program = try gfx.Program.init(allocator, "world/terra/chunk");
 
-        terra.uniform.model = try gfx.Uniform.init(terra.program, "model");
-        terra.uniform.view = try gfx.Uniform.init(terra.program, "view");
-        terra.uniform.proj = try gfx.Uniform.init(terra.program, "proj");
+        terra.chunk.uniform.model = try gfx.Uniform.init(terra.chunk.program, "model");
+        terra.chunk.uniform.view = try gfx.Uniform.init(terra.chunk.program, "view");
+        terra.chunk.uniform.proj = try gfx.Uniform.init(terra.chunk.program, "proj");
 
-        terra.uniform.light.color = try gfx.Uniform.init(terra.program, "light.color");
-        terra.uniform.light.direction = try gfx.Uniform.init(terra.program, "light.direction");
-        terra.uniform.light.ambient = try gfx.Uniform.init(terra.program, "light.ambient");
-        terra.uniform.light.diffuse = try gfx.Uniform.init(terra.program, "light.diffuse");
-        terra.uniform.light.specular = try gfx.Uniform.init(terra.program, "light.specular");
+        terra.chunk.uniform.light.color = try gfx.Uniform.init(terra.chunk.program, "light.color");
+        terra.chunk.uniform.light.direction = try gfx.Uniform.init(terra.chunk.program, "light.direction");
+        terra.chunk.uniform.light.ambient = try gfx.Uniform.init(terra.chunk.program, "light.ambient");
+        terra.chunk.uniform.light.diffuse = try gfx.Uniform.init(terra.chunk.program, "light.diffuse");
+        terra.chunk.uniform.light.specular = try gfx.Uniform.init(terra.chunk.program, "light.specular");
 
-        terra.uniform.chunk.width = try gfx.Uniform.init(terra.program, "chunk.width");
-        terra.uniform.chunk.pos = try gfx.Uniform.init(terra.program, "chunk.pos");
+        terra.chunk.uniform.chunk.width = try gfx.Uniform.init(terra.chunk.program, "chunk.width");
+        terra.chunk.uniform.chunk.pos = try gfx.Uniform.init(terra.chunk.program, "chunk.pos");
 
-        terra.texture.dirt = try gfx.Texture.init(allocator, "world/terra/dirt.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
-        terra.texture.grass = try gfx.Texture.init(allocator, "world/terra/grass.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
-        terra.texture.sand = try gfx.Texture.init(allocator, "world/terra/sand.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
-        terra.texture.stone = try gfx.Texture.init(allocator, "world/terra/stone.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
+        terra.chunk.texture.dirt = try gfx.Texture.init(allocator, "world/terra/dirt.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
+        terra.chunk.texture.grass = try gfx.Texture.init(allocator, "world/terra/grass.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
+        terra.chunk.texture.sand = try gfx.Texture.init(allocator, "world/terra/sand.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
+        terra.chunk.texture.stone = try gfx.Texture.init(allocator, "world/terra/stone.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
     }
 
     { // ENTITY
@@ -161,13 +161,13 @@ pub fn init(allocator: Allocator) !void {
             entity.bullet.vertex_buffer.data(world.entity.bullets.getPosBytes());
 
             entity.bullet.mesh = try gfx.Mesh.init(.{
-                .name = "world entity bullet",
+                .name = "world entity bullet mesh",
                 .buffers = &.{entity.bullet.vertex_buffer},
                 .vertcnt = world.entity.bullets.len,
                 .drawmode = .points,
             });
 
-            entity.bullet.program = try gfx.Program.init(allocator, "bullets");
+            entity.bullet.program = try gfx.Program.init(allocator, "world/entity/bullet");
             entity.bullet.uniform.model = try gfx.Uniform.init(entity.bullet.program, "model");
             entity.bullet.uniform.view = try gfx.Uniform.init(entity.bullet.program, "view");
             entity.bullet.uniform.proj = try gfx.Uniform.init(entity.bullet.program, "proj");
@@ -195,13 +195,13 @@ pub fn init(allocator: Allocator) !void {
             shape.line.color_buffer.data(std.mem.sliceAsBytes(world.shape.lines.getColorBytes()));
 
             shape.line.mesh = try gfx.Mesh.init(.{
-                .name = "world shape line",
+                .name = "world shape line mesh",
                 .buffers = &.{ shape.line.vertex_buffer, shape.line.color_buffer },
                 .vertcnt = world.shape.lines.len,
                 .drawmode = .lines,
             });
 
-            shape.line.program = try gfx.Program.init(allocator, "line");
+            shape.line.program = try gfx.Program.init(allocator, "world/shape/line");
             shape.line.uniform.model = try gfx.Uniform.init(shape.line.program, "model");
             shape.line.uniform.view = try gfx.Uniform.init(shape.line.program, "view");
             shape.line.uniform.proj = try gfx.Uniform.init(shape.line.program, "proj");
@@ -210,7 +210,7 @@ pub fn init(allocator: Allocator) !void {
 
     { // RECT
         rect.buffer = try gfx.Buffer.init(.{
-            .name = "rect",
+            .name = "gui rect",
             .target = .vbo,
             .datatype = .u8,
             .vertsize = 2,
@@ -218,12 +218,13 @@ pub fn init(allocator: Allocator) !void {
         });
         rect.buffer.data(&.{ 0, 0, 0, 1, 1, 0, 1, 1 });
         rect.mesh = try gfx.Mesh.init(.{
-            .name = "rect",
+            .name = "gui rect",
             .buffers = &.{rect.buffer},
             .vertcnt = 4,
             .drawmode = .triangle_strip,
         });
-        rect.program = try gfx.Program.init(allocator, "rect");
+
+        rect.program = try gfx.Program.init(allocator, "gui/rect");
         rect.uniform.vpsize = try gfx.Uniform.init(rect.program, "vpsize");
         rect.uniform.scale = try gfx.Uniform.init(rect.program, "scale");
         rect.uniform.rect = try gfx.Uniform.init(rect.program, "rect");
@@ -247,7 +248,7 @@ pub fn init(allocator: Allocator) !void {
     }
 
     { // TEXT
-        text.program = try gfx.Program.init(allocator, "text");
+        text.program = try gfx.Program.init(allocator, "gui/text");
         text.uniform.vpsize = try gfx.Uniform.init(text.program, "vpsize");
         text.uniform.scale = try gfx.Uniform.init(text.program, "scale");
         text.uniform.pos = try gfx.Uniform.init(text.program, "pos");
@@ -284,18 +285,20 @@ pub fn deinit() void {
         }
 
         { // ENTITY
-
+            entity.bullet.program.deinit();
+            entity.bullet.mesh.deinit();
+            entity.bullet.vertex_buffer.deinit();
         }
 
         { // TERRA
-            terra.texture.dirt.deinit();
-            terra.texture.grass.deinit();
-            terra.texture.sand.deinit();
-            terra.texture.stone.deinit();
-            terra.program.deinit();
-            for (terra.meshes) |item| if (item != null) item.?.deinit();
-            for (terra.vertex_buffers) |item| if (item != null) item.?.deinit();
-            for (terra.normal_buffers) |item| if (item != null) item.?.deinit();
+            terra.chunk.texture.dirt.deinit();
+            terra.chunk.texture.grass.deinit();
+            terra.chunk.texture.sand.deinit();
+            terra.chunk.texture.stone.deinit();
+            terra.chunk.program.deinit();
+            for (terra.chunk.meshes) |item| if (item != null) item.?.deinit();
+            for (terra.chunk.vertex_buffers) |item| if (item != null) item.?.deinit();
+            for (terra.chunk.normal_buffers) |item| if (item != null) item.?.deinit();
         }
     }
 }

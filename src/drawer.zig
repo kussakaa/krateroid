@@ -30,8 +30,8 @@ pub fn init(info: struct {
     gl.enable(gl.BLEND);
     gl.enable(gl.CULL_FACE);
 
-    gl.lineWidth(1.0);
-    gl.pointSize(5.0);
+    gl.lineWidth(2.0);
+    gl.pointSize(3.0);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
@@ -52,147 +52,148 @@ pub fn draw() !void {
         config.drawer.background.color[3],
     );
     gl.enable(gl.DEPTH_TEST);
-    const polygon_mode: gl.Enum = if (config.debug.show_grid) gl.LINE else gl.FILL;
-    gl.polygonMode(gl.FRONT_AND_BACK, polygon_mode);
+    gl.polygonMode(gl.FRONT_AND_BACK, if (config.debug.show_grid) gl.LINE else gl.FILL);
 
-    {
+    { // WORLD
         { // TERRA
-            const terra = world.terra;
-            const terra_h = terra.h;
-            const terra_w = terra.w;
-            const chunk_w = terra.Chunk.w;
-            const vertex_size = 3;
-            const normal_size = 3;
-            const s = struct {
-                var vertex_buffer_data = [1]f32{0.0} ** (1024 * 1024 * vertex_size);
-                var normal_buffer_data = [1]i8{0} ** (1024 * 1024 * normal_size);
-            };
+            { // CHUNK
+                const terra = world.terra;
+                const terra_h = terra.h;
+                const terra_w = terra.w;
+                const chunk_w = terra.Chunk.w;
+                const vertex_size = 3;
+                const normal_size = 3;
+                const s = struct {
+                    var vertex_buffer_data = [1]f32{0.0} ** (1024 * 1024 * vertex_size);
+                    var normal_buffer_data = [1]i8{0} ** (1024 * 1024 * normal_size);
+                };
 
-            data.terra.program.use();
-            data.terra.texture.dirt.use();
-            data.terra.uniform.model.set(zm.identity());
-            data.terra.uniform.view.set(camera.view);
-            data.terra.uniform.proj.set(camera.proj);
-            data.terra.uniform.light.color.set(config.drawer.light.color);
-            data.terra.uniform.light.direction.set(config.drawer.light.direction);
-            data.terra.uniform.light.ambient.set(config.drawer.light.ambient);
-            data.terra.uniform.light.diffuse.set(config.drawer.light.diffuse);
-            data.terra.uniform.light.specular.set(config.drawer.light.specular);
-            data.terra.uniform.chunk.width.set(@as(f32, @floatFromInt(chunk_w)));
+                data.terra.chunk.program.use();
+                data.terra.chunk.texture.dirt.use();
+                data.terra.chunk.uniform.model.set(zm.identity());
+                data.terra.chunk.uniform.view.set(camera.view);
+                data.terra.chunk.uniform.proj.set(camera.proj);
+                data.terra.chunk.uniform.light.color.set(config.drawer.light.color);
+                data.terra.chunk.uniform.light.direction.set(config.drawer.light.direction);
+                data.terra.chunk.uniform.light.ambient.set(config.drawer.light.ambient);
+                data.terra.chunk.uniform.light.diffuse.set(config.drawer.light.diffuse);
+                data.terra.chunk.uniform.light.specular.set(config.drawer.light.specular);
+                data.terra.chunk.uniform.chunk.width.set(@as(f32, @floatFromInt(chunk_w)));
 
-            var chunk_pos = terra.Chunk.Pos{ 0, 0, 0 };
-            while (chunk_pos[2] < terra_h) : (chunk_pos[2] += 1) {
-                chunk_pos[1] = 0;
-                while (chunk_pos[1] < terra_w) : (chunk_pos[1] += 1) {
-                    chunk_pos[0] = 0;
-                    while (chunk_pos[0] < terra_w) : (chunk_pos[0] += 1) {
-                        data.terra.uniform.chunk.pos.set(@Vector(3, f32){ @floatFromInt(chunk_pos[0]), @floatFromInt(chunk_pos[1]), @floatFromInt(chunk_pos[2]) });
-                        if (data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)]) |mesh| {
-                            mesh.draw();
-                        } else if (terra.isInitChunk(chunk_pos)) {
-                            var len: usize = 0;
-                            var block_pos = terra.Block.Pos{ 0, 0, 0 };
-                            while (block_pos[2] < chunk_w) : (block_pos[2] += 1) {
-                                block_pos[1] = 0;
-                                while (block_pos[1] < chunk_w) : (block_pos[1] += 1) {
-                                    block_pos[0] = 0;
-                                    while (block_pos[0] < chunk_w) : (block_pos[0] += 1) {
-                                        var index: u8 = 0;
+                var chunk_pos = terra.Chunk.Pos{ 0, 0, 0 };
+                while (chunk_pos[2] < terra_h) : (chunk_pos[2] += 1) {
+                    chunk_pos[1] = 0;
+                    while (chunk_pos[1] < terra_w) : (chunk_pos[1] += 1) {
+                        chunk_pos[0] = 0;
+                        while (chunk_pos[0] < terra_w) : (chunk_pos[0] += 1) {
+                            data.terra.chunk.uniform.chunk.pos.set(@Vector(3, f32){ @floatFromInt(chunk_pos[0]), @floatFromInt(chunk_pos[1]), @floatFromInt(chunk_pos[2]) });
+                            if (data.terra.chunk.meshes[terra.chunkIndexFromChunkPos(chunk_pos)]) |mesh| {
+                                mesh.draw();
+                            } else if (terra.isInitChunk(chunk_pos)) {
+                                var len: usize = 0;
+                                var block_pos = terra.Block.Pos{ 0, 0, 0 };
+                                while (block_pos[2] < chunk_w) : (block_pos[2] += 1) {
+                                    block_pos[1] = 0;
+                                    while (block_pos[1] < chunk_w) : (block_pos[1] += 1) {
+                                        block_pos[0] = 0;
+                                        while (block_pos[0] < chunk_w) : (block_pos[0] += 1) {
+                                            var index: u8 = 0;
 
-                                        const isInitChunk100 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 0, 0 });
-                                        const isInitChunk010 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 1, 0 });
-                                        const isInitChunk001 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 0, 1 });
-                                        const isInitChunk110 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 1, 0 });
-                                        const isInitChunk011 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 1, 1 });
-                                        const isInitChunk101 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 0, 1 });
-                                        const isInitChunk111 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 1, 1 });
+                                            const isInitChunk100 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 0, 0 });
+                                            const isInitChunk010 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 1, 0 });
+                                            const isInitChunk001 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 0, 1 });
+                                            const isInitChunk110 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 1, 0 });
+                                            const isInitChunk011 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 0, 1, 1 });
+                                            const isInitChunk101 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 0, 1 });
+                                            const isInitChunk111 = terra.isInitChunk(chunk_pos + terra.Chunk.Pos{ 1, 1, 1 });
 
-                                        if ((block_pos[0] < chunk_w - 1 and block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1) or
-                                            (block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1 and isInitChunk100) or
-                                            (block_pos[0] < chunk_w - 1 and block_pos[2] < chunk_w - 1 and isInitChunk010) or
-                                            (block_pos[0] < chunk_w - 1 and block_pos[1] < chunk_w - 1 and isInitChunk001) or
-                                            (block_pos[2] < chunk_w - 1 and isInitChunk100 and isInitChunk010 and isInitChunk110) or
-                                            (block_pos[1] < chunk_w - 1 and isInitChunk100 and isInitChunk001 and isInitChunk101) or
-                                            (block_pos[0] < chunk_w - 1 and isInitChunk010 and isInitChunk001 and isInitChunk011) or
-                                            (isInitChunk100 and isInitChunk010 and isInitChunk001 and isInitChunk110 and isInitChunk011 and isInitChunk101 and isInitChunk111))
-                                        {
-                                            const absolute_block_pos = chunk_pos * terra.Chunk.Pos{ chunk_w, chunk_w, chunk_w } + block_pos;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 0, 0 }).id > 0)) << 3;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 0, 0 }).id > 0)) << 2;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 1, 0 }).id > 0)) << 1;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 1, 0 }).id > 0)) << 0;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 0, 1 }).id > 0)) << 7;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 0, 1 }).id > 0)) << 6;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 1, 1 }).id > 0)) << 5;
-                                            index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 1, 1 }).id > 0)) << 4;
-                                        }
+                                            if ((block_pos[0] < chunk_w - 1 and block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1) or
+                                                (block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1 and isInitChunk100) or
+                                                (block_pos[0] < chunk_w - 1 and block_pos[2] < chunk_w - 1 and isInitChunk010) or
+                                                (block_pos[0] < chunk_w - 1 and block_pos[1] < chunk_w - 1 and isInitChunk001) or
+                                                (block_pos[2] < chunk_w - 1 and isInitChunk100 and isInitChunk010 and isInitChunk110) or
+                                                (block_pos[1] < chunk_w - 1 and isInitChunk100 and isInitChunk001 and isInitChunk101) or
+                                                (block_pos[0] < chunk_w - 1 and isInitChunk010 and isInitChunk001 and isInitChunk011) or
+                                                (isInitChunk100 and isInitChunk010 and isInitChunk001 and isInitChunk110 and isInitChunk011 and isInitChunk101 and isInitChunk111))
+                                            {
+                                                const absolute_block_pos = chunk_pos * terra.Chunk.Pos{ chunk_w, chunk_w, chunk_w } + block_pos;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 0, 0 }).id > 0)) << 3;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 0, 0 }).id > 0)) << 2;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 1, 0 }).id > 0)) << 1;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 1, 0 }).id > 0)) << 0;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 0, 1 }).id > 0)) << 7;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 0, 1 }).id > 0)) << 6;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 1, 1, 1 }).id > 0)) << 5;
+                                                index |= @as(u8, @intFromBool(terra.getBlock(absolute_block_pos + terra.Block.Pos{ 0, 1, 1 }).id > 0)) << 4;
+                                            }
 
-                                        if (index == 0) continue;
-                                        var i: usize = 0;
-                                        while (mct.vertex[index][i] < 12) : (i += 3) {
-                                            const v1 = mct.edge[mct.vertex[index][i + 0]];
-                                            const v2 = mct.edge[mct.vertex[index][i + 1]];
-                                            const v3 = mct.edge[mct.vertex[index][i + 2]];
-                                            const n = [3]i8{
-                                                mct.normal[index][i + 0],
-                                                mct.normal[index][i + 1],
-                                                mct.normal[index][i + 2],
-                                            };
+                                            if (index == 0) continue;
+                                            var i: usize = 0;
+                                            while (mct.vertex[index][i] < 12) : (i += 3) {
+                                                const v1 = mct.edge[mct.vertex[index][i + 0]];
+                                                const v2 = mct.edge[mct.vertex[index][i + 1]];
+                                                const v3 = mct.edge[mct.vertex[index][i + 2]];
+                                                const n = [3]i8{
+                                                    mct.normal[index][i + 0],
+                                                    mct.normal[index][i + 1],
+                                                    mct.normal[index][i + 2],
+                                                };
 
-                                            s.vertex_buffer_data[len * 3 + 0] = v1[0] + @as(f32, @floatFromInt(block_pos[0]));
-                                            s.vertex_buffer_data[len * 3 + 1] = v1[1] + @as(f32, @floatFromInt(block_pos[1]));
-                                            s.vertex_buffer_data[len * 3 + 2] = v1[2] + @as(f32, @floatFromInt(block_pos[2]));
-                                            s.vertex_buffer_data[len * 3 + 3] = v2[0] + @as(f32, @floatFromInt(block_pos[0]));
-                                            s.vertex_buffer_data[len * 3 + 4] = v2[1] + @as(f32, @floatFromInt(block_pos[1]));
-                                            s.vertex_buffer_data[len * 3 + 5] = v2[2] + @as(f32, @floatFromInt(block_pos[2]));
-                                            s.vertex_buffer_data[len * 3 + 6] = v3[0] + @as(f32, @floatFromInt(block_pos[0]));
-                                            s.vertex_buffer_data[len * 3 + 7] = v3[1] + @as(f32, @floatFromInt(block_pos[1]));
-                                            s.vertex_buffer_data[len * 3 + 8] = v3[2] + @as(f32, @floatFromInt(block_pos[2]));
+                                                s.vertex_buffer_data[len * 3 + 0] = v1[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                                s.vertex_buffer_data[len * 3 + 1] = v1[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                                s.vertex_buffer_data[len * 3 + 2] = v1[2] + @as(f32, @floatFromInt(block_pos[2]));
+                                                s.vertex_buffer_data[len * 3 + 3] = v2[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                                s.vertex_buffer_data[len * 3 + 4] = v2[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                                s.vertex_buffer_data[len * 3 + 5] = v2[2] + @as(f32, @floatFromInt(block_pos[2]));
+                                                s.vertex_buffer_data[len * 3 + 6] = v3[0] + @as(f32, @floatFromInt(block_pos[0]));
+                                                s.vertex_buffer_data[len * 3 + 7] = v3[1] + @as(f32, @floatFromInt(block_pos[1]));
+                                                s.vertex_buffer_data[len * 3 + 8] = v3[2] + @as(f32, @floatFromInt(block_pos[2]));
 
-                                            s.normal_buffer_data[len * 3 + 0] = n[0];
-                                            s.normal_buffer_data[len * 3 + 1] = n[1];
-                                            s.normal_buffer_data[len * 3 + 2] = n[2];
-                                            s.normal_buffer_data[len * 3 + 3] = n[0];
-                                            s.normal_buffer_data[len * 3 + 4] = n[1];
-                                            s.normal_buffer_data[len * 3 + 5] = n[2];
-                                            s.normal_buffer_data[len * 3 + 6] = n[0];
-                                            s.normal_buffer_data[len * 3 + 7] = n[1];
-                                            s.normal_buffer_data[len * 3 + 8] = n[2];
+                                                s.normal_buffer_data[len * 3 + 0] = n[0];
+                                                s.normal_buffer_data[len * 3 + 1] = n[1];
+                                                s.normal_buffer_data[len * 3 + 2] = n[2];
+                                                s.normal_buffer_data[len * 3 + 3] = n[0];
+                                                s.normal_buffer_data[len * 3 + 4] = n[1];
+                                                s.normal_buffer_data[len * 3 + 5] = n[2];
+                                                s.normal_buffer_data[len * 3 + 6] = n[0];
+                                                s.normal_buffer_data[len * 3 + 7] = n[1];
+                                                s.normal_buffer_data[len * 3 + 8] = n[2];
 
-                                            len += 3;
+                                                len += 3;
+                                            }
                                         }
                                     }
                                 }
+
+                                data.terra.chunk.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
+                                    .name = "world terra chunk vertex",
+                                    .target = .vbo,
+                                    .datatype = .f32,
+                                    .vertsize = vertex_size,
+                                    .usage = .static_draw,
+                                });
+                                data.terra.chunk.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.vertex_buffer_data[0 .. len * 3]));
+
+                                data.terra.chunk.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
+                                    .name = "world terra chunk normal",
+                                    .target = .vbo,
+                                    .datatype = .i8,
+                                    .vertsize = normal_size,
+                                    .usage = .static_draw,
+                                });
+                                data.terra.chunk.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.normal_buffer_data[0 .. len * 3]));
+
+                                data.terra.chunk.meshes[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Mesh.init(.{
+                                    .name = "world terra chunk mesh",
+                                    .buffers = &.{
+                                        data.terra.chunk.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
+                                        data.terra.chunk.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
+                                    },
+                                    .vertcnt = @intCast(len),
+                                    .drawmode = .triangles,
+                                });
+                                data.terra.chunk.meshes[terra.chunkIndexFromChunkPos(chunk_pos)].?.draw();
                             }
-
-                            data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
-                                .name = "terra_chunk_vertex",
-                                .target = .vbo,
-                                .datatype = .f32,
-                                .vertsize = vertex_size,
-                                .usage = .static_draw,
-                            });
-                            data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.vertex_buffer_data[0 .. len * 3]));
-
-                            data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Buffer.init(.{
-                                .name = "terra_chunk_normal",
-                                .target = .vbo,
-                                .datatype = .i8,
-                                .vertsize = normal_size,
-                                .usage = .static_draw,
-                            });
-                            data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?.data(std.mem.sliceAsBytes(s.normal_buffer_data[0 .. len * 3]));
-
-                            data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)] = try gfx.Mesh.init(.{
-                                .name = "terra_chunk",
-                                .buffers = &.{
-                                    data.terra.vertex_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
-                                    data.terra.normal_buffers[terra.chunkIndexFromChunkPos(chunk_pos)].?,
-                                },
-                                .vertcnt = @intCast(len),
-                                .drawmode = .triangles,
-                            });
-                            data.terra.meshes[terra.chunkIndexFromChunkPos(chunk_pos)].?.draw();
                         }
                     }
                 }

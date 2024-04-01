@@ -105,6 +105,10 @@ pub fn main() !void {
                             gui.menus.items[menus.main.id].show = !gui.menus.items[menus.main.id].show;
                             gui.menus.items[menus.settings.id].show = false;
                         }
+                        if (id == .space) {
+                            world.entity.bullets.setPos(0, .{ 64.0, 64.0, 64.0, 1.0 });
+                            world.entity.bullets.setDir(0, .{ 0.0, 0.0, -3.0, 0.0 });
+                        }
                         if (id == .f3) {
                             config.debug.show_info = !config.debug.show_info;
                             //world.shape.lines.items[x_axis].show = config.debug.show_info;
