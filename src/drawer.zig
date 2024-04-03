@@ -221,11 +221,12 @@ fn drawShape() void {
 }
 
 fn drawShapeLine() void {
+    _data.shape.line.vertex_buffer.subdata(0, shape.getLinesVertexBytes());
+    _data.shape.line.color_buffer.subdata(0, shape.getLinesColorBytes());
     _data.shape.line.program.use();
     _data.shape.line.uniform.model.set(zm.identity());
     _data.shape.line.uniform.view.set(camera.view);
     _data.shape.line.uniform.proj.set(camera.proj);
-    _data.shape.line.mesh.vertcnt = shape.getLinesMaxCnt() * 2;
     _data.shape.line.mesh.draw();
 }
 

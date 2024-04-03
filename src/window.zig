@@ -51,7 +51,7 @@ pub fn init(info: struct {
 
     gl_context = try sdl.gl.createContext(handle);
     try sdl.gl.makeCurrent(handle, gl_context);
-    try sdl.gl.setSwapInterval(1);
+    try sdl.gl.setSwapInterval(0);
 
     try zopengl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 

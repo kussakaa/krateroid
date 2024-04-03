@@ -64,7 +64,8 @@ pub fn main() !void {
     defer shape.deinit();
 
     // X
-    _ = shape.initLine(0, .{
+    const x_axis = 0;
+    _ = shape.initLine(x_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -72,7 +73,8 @@ pub fn main() !void {
     });
 
     // Y
-    _ = shape.initLine(1, .{
+    const y_axis = 1;
+    _ = shape.initLine(y_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -80,7 +82,8 @@ pub fn main() !void {
     });
 
     // Z
-    _ = shape.initLine(3, .{
+    const z_axis = 2;
+    _ = shape.initLine(z_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -242,9 +245,6 @@ pub fn main() !void {
                         if (switched.id == menus.settings.switcher.show_info) {
                             config.debug.show_info = switched.data;
                             gui.menus.items[menus.info.id].show = config.debug.show_info;
-                            //                            world.shape.lines.items[x_axis].show = config.debug.show_info;
-                            //                            world.shape.lines.items[y_axis].show = config.debug.show_info;
-                            //                            world.shape.lines.items[z_axis].show = config.debug.show_info;
                         } else if (switched.id == menus.settings.switcher.show_grid) {
                             config.debug.show_grid = switched.data;
                         }
@@ -271,6 +271,10 @@ pub fn main() !void {
         }
 
         world.update();
+
+        shape.showLine(x_axis, config.debug.show_info);
+        shape.showLine(y_axis, config.debug.show_info);
+        shape.showLine(z_axis, config.debug.show_info);
 
         try menus.update();
         camera.update();

@@ -233,16 +233,16 @@ fn initShapeLine() !void {
         .target = .vbo,
         .datatype = .f32,
         .vertsize = 4,
-        .usage = .static_draw,
+        .usage = .dynamic_draw,
     });
     shape.line.vertex_buffer.data(vertex_bytes);
 
     shape.line.color_buffer = try gfx.Buffer.init(.{
-        .name = "shape line vertex",
+        .name = "shape line color",
         .target = .vbo,
         .datatype = .f32,
         .vertsize = 4,
-        .usage = .static_draw,
+        .usage = .dynamic_draw,
     });
     shape.line.color_buffer.data(color_bytes);
 

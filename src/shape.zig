@@ -37,7 +37,12 @@ pub fn initLine(id: LineId, info: struct {
     _lines.color[id * 2 + 1] = info.c2;
 }
 
-pub inline fn getLinesMaxCnt() u32 {
+pub inline fn showLine(id: LineId, show: bool) void {
+    _lines.color[id * 2 + 0][3] = @floatFromInt(@intFromBool(show));
+    _lines.color[id * 2 + 1][3] = @floatFromInt(@intFromBool(show));
+}
+
+pub inline fn getLinesMaxCnt() comptime_int {
     return _lines.max_cnt;
 }
 

@@ -239,7 +239,11 @@ test "world.blockPosFromBlockId and world.blockIdFromBlockPos" {
 
 // PROJECTILES
 
-pub fn initProjectiles() void {}
+pub fn initProjectiles() void {
+    @memset(_projectiles.pos[0..], zm.f32x4s(0.0));
+    @memset(_projectiles.dir[0..], zm.f32x4s(0.0));
+}
+
 pub fn deinitProjectiles() void {}
 pub fn updateProjectiles() void {}
 
