@@ -30,7 +30,8 @@ pub const Block = enum(u8) {
 
 pub const ChunkId = usize;
 pub const ChunkPos = @Vector(3, u32);
-pub const ChunkBlocks = struct { data: [chunk_v]Block };
+pub const ChunkBlocks = struct { data: ChunkBlocksData };
+pub const ChunkBlocksData = [chunk_v]Block;
 
 // STATE
 
@@ -105,7 +106,7 @@ pub fn deinitChunk(id: ChunkId) void {
 
 pub fn genChunk(id: ChunkId) void {
     const pos = chunkPosFromChunkId(id);
-    var blocks = &_chunks.block[id].data;
+    var blocks = getChunkBlocksDataPtr(id);
 
     const value_gen = Noise{
         .seed = _seed,
@@ -142,28 +143,35 @@ pub fn genChunk(id: ChunkId) void {
     }
 }
 
-pub fn getTerraW() comptime_int {
+pub inline fn getTerraW() comptime_int {
     return terra_w;
 }
 
-pub fn getTerraH() comptime_int {
+pub inline fn getTerraH() comptime_int {
     return terra_h;
 }
 
-pub fn getTerraV() comptime_int {
+pub inline fn getTerraV() comptime_int {
     return terra_v;
 }
 
-pub fn getChunkW() comptime_int {
+pub inline fn getChunkW() comptime_int {
     return chunk_w;
 }
 
-pub fn getChunkV() comptime_int {
+pub inline fn getChunkV() comptime_int {
     return chunk_v;
 }
 
 pub inline fn isInitChunk(id: ChunkId) bool {
     return if (id < terra_v) _chunks.init[id] else false;
+}
+
+pub inline fn isInitChunkFromPos(pos: ChunkPos) bool {
+    return if (pos[0] < terra_w and pos[1] < terra_w and pos[2] < terra_h)
+        _chunks.init[chunkIdFromChunkPos(pos)]
+    else
+        false;
 }
 
 pub inline fn getBlock(pos: BlockPos) Block {
@@ -176,6 +184,10 @@ pub inline fn setBlock(pos: BlockPos, block: Block) void {
     const chunk_id = chunkIdFromChunkPos(chunkPosFromBlockPos(pos));
     const block_id = blockIdFromBlockPos(pos % BlockPos{ chunk_w, chunk_w, chunk_w });
     _chunks.block[chunk_id].?.data[block_id] = block;
+}
+
+pub inline fn getChunkBlocksDataPtr(id: ChunkId) *ChunkBlocksData {
+    return &_chunks.block[id].data;
 }
 
 pub inline fn chunkPosFromChunkId(id: ChunkId) ChunkPos {

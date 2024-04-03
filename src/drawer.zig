@@ -105,13 +105,13 @@ fn drawWorldChunk() !void {
                             while (block_pos[0] < chunk_w) : (block_pos[0] += 1) {
                                 var id: u8 = 0;
 
-                                const isInitChunk100 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 1, 0, 0 }));
-                                const isInitChunk010 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 0, 1, 0 }));
-                                const isInitChunk001 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 0, 0, 1 }));
-                                const isInitChunk110 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 1, 1, 0 }));
-                                const isInitChunk011 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 0, 1, 1 }));
-                                const isInitChunk101 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 1, 0, 1 }));
-                                const isInitChunk111 = world.isInitChunk(world.chunkIdFromChunkPos(chunk_pos + world.ChunkPos{ 1, 1, 1 }));
+                                const isInitChunk100 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 1, 0, 0 });
+                                const isInitChunk010 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 0, 1, 0 });
+                                const isInitChunk001 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 0, 0, 1 });
+                                const isInitChunk110 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 1, 1, 0 });
+                                const isInitChunk011 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 0, 1, 1 });
+                                const isInitChunk101 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 1, 0, 1 });
+                                const isInitChunk111 = world.isInitChunkFromPos(chunk_pos + world.ChunkPos{ 1, 1, 1 });
 
                                 if ((block_pos[0] < chunk_w - 1 and block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1) or
                                     (block_pos[1] < chunk_w - 1 and block_pos[2] < chunk_w - 1 and isInitChunk100) or
