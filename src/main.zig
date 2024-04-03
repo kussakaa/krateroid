@@ -16,6 +16,7 @@ const input = @import("input.zig");
 const gfx = @import("gfx.zig");
 const camera = @import("camera.zig");
 const world = @import("world.zig");
+const shape = @import("shape.zig");
 const gui = @import("gui.zig");
 const menus = @import("menus.zig");
 const drawer = @import("drawer.zig");
@@ -55,12 +56,15 @@ pub fn main() !void {
 
     try world.init(.{
         .allocator = allocator,
-        .terra = .{ .seed = 32478287 },
+        .seed = 6969,
     });
     defer world.deinit();
 
+    shape.init();
+    defer shape.deinit();
+
     // X
-    _ = world.shape.lines.add(.{
+    _ = shape.initLine(0, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -68,7 +72,7 @@ pub fn main() !void {
     });
 
     // Y
-    _ = world.shape.lines.add(.{
+    _ = shape.initLine(1, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -76,7 +80,7 @@ pub fn main() !void {
     });
 
     // Z
-    _ = world.shape.lines.add(.{
+    _ = shape.initLine(3, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -106,8 +110,8 @@ pub fn main() !void {
                             gui.menus.items[menus.settings.id].show = false;
                         }
                         if (id == .space) {
-                            world.entity.bullets.setPos(0, .{ 64.0, 64.0, 64.0, 1.0 });
-                            world.entity.bullets.setDir(0, .{ 0.0, 0.0, -3.0, 0.0 });
+                            //                            world.entity.bullets.setPos(0, .{ 64.0, 64.0, 64.0, 1.0 });
+                            //                            world.entity.bullets.setDir(0, .{ 0.0, 0.0, -3.0, 0.0 });
                         }
                         if (id == .f3) {
                             config.debug.show_info = !config.debug.show_info;
