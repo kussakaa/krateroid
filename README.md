@@ -14,19 +14,20 @@ Strategic 3d game with huge world and destructible terrain
   * [ ] Shadows
   * [ ] Blur?
   * [ ] SSAO?
-* [ ] World 
-  * [ ] Terrain
-    * [X] Texturing 
-    * [X] Materials 
-    * [ ] Beautiful generation
-    * [X] Many chunks
-  * [ ] Entities
-    * [ ] Actors
-    * [ ] Vehicles
-  * [ ] Shapes
-    * [X] Lines
-    * [ ] Quads
-    * [ ] Spheres
+* [ ] Terrain
+  * [X] Texturing 
+  * [X] Materials 
+  * [ ] Beautiful generation
+  * [X] Many chunks
+  * [ ] Block physics
+* [ ] Explosions
+* [ ] Actors
+* [ ] Projectiles
+* [ ] Vehicles
+* [ ] Shapes
+  * [X] Lines
+  * [ ] Quads
+  * [ ] Spheres
 * [ ] GUI
   * [X] Texts
   * [X] Buttons
