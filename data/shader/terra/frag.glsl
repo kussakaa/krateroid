@@ -9,9 +9,9 @@ in vec3 v_light;
 
 // TEXTURES
 
-layout(binding = 0) uniform sampler2D dirt;
-layout(binding = 1) uniform sampler2D sand;
-layout(binding = 2) uniform sampler2D stone;
+layout(binding = 0) uniform sampler2D stone;
+layout(binding = 1) uniform sampler2D dirt;
+layout(binding = 2) uniform sampler2D sand;
 
 layout(location = 0) out vec4 f_color;
 
@@ -60,11 +60,11 @@ vec3 triplanar(sampler2D t) {
 void main() {
 //  float noise = clamp(noise(v_vertex) + 0.5, 0.9, 1.0);
 
+  vec3 tstone = triplanar(stone);
   vec3 tdirt = triplanar(dirt);
   vec3 tsand = triplanar(sand);
-  vec3 tstone = triplanar(stone);
 
-  vec3 t = mix(tdirt, tsand, v_texture);
+  vec3 t = mix(tstone, tdirt, v_texture);
 
   f_color = vec4(v_light * t, 1.0);
 }

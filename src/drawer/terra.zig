@@ -34,9 +34,9 @@ const _data = struct {
     };
 
     const texture = struct {
+        var stone: gfx.Texture = undefined;
         var dirt: gfx.Texture = undefined;
         var sand: gfx.Texture = undefined;
-        var stone: gfx.Texture = undefined;
     };
 };
 
@@ -58,9 +58,9 @@ pub fn init(allocator: Allocator) !void {
     _data.uniform.chunk.width = try gfx.Uniform.init(_data.program, "chunk.width");
     _data.uniform.chunk.pos = try gfx.Uniform.init(_data.program, "chunk.pos");
 
+    _data.texture.stone = try gfx.Texture.init(allocator, "terra/stone.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
     _data.texture.dirt = try gfx.Texture.init(allocator, "terra/dirt.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
     _data.texture.sand = try gfx.Texture.init(allocator, "terra/sand.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
-    _data.texture.stone = try gfx.Texture.init(allocator, "terra/stone.png", .{ .min_filter = .nearest_mipmap_nearest, .mipmap = true });
 }
 
 pub fn deinit() void {
@@ -102,9 +102,9 @@ pub fn draw() !void {
 
     _data.uniform.chunk.width.set(@as(f32, @floatFromInt(terra.chunk_w)));
 
-    _data.texture.dirt.bind(0);
-    _data.texture.sand.bind(1);
-    _data.texture.stone.bind(2);
+    _data.texture.stone.bind(0);
+    _data.texture.dirt.bind(1);
+    _data.texture.sand.bind(2);
 
     var chunk_pos = terra.ChunkPos{ 0, 0, 0 };
     while (chunk_pos[2] < terra.h) : (chunk_pos[2] += 1) {

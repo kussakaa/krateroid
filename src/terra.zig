@@ -21,9 +21,9 @@ pub const BlockId = usize;
 pub const BlockPos = @Vector(3, u32);
 pub const Block = enum(u8) {
     air = 0,
+    stone,
     dirt,
     sand,
-    stone,
 };
 
 pub const ChunkId = usize;
@@ -102,11 +102,13 @@ pub fn genChunk(id: ChunkId) void {
                     @as(f32, @floatFromInt(y + pos[1] * chunk_w)) * 3.0,
                 );
 
-                const n = (value + 1.0) * 5.0 + (cellular + 1.0) * 20.0 + 10.0;
+                const noise_stone = (value + 1.0) * 5.0 + (cellular + 1.0) * 20.0 + 10.0;
+                const noise_dirt = (value + 1.0) * 3.0 + (cellular + 1.0) * 5.0 + 20.0;
+
                 const block: Block =
-                    if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < n)
-                    .sand
-                else if ((z + pos[2] * chunk_w) < 20)
+                    if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < noise_stone)
+                    .stone
+                else if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < noise_dirt)
                     .dirt
                 else
                     .air;
