@@ -42,14 +42,14 @@ pub inline fn showLine(id: LineId, show: bool) void {
     _lines.color[id * 2 + 1][3] = @floatFromInt(@intFromBool(show));
 }
 
-pub inline fn getLinesMaxCnt() comptime_int {
+pub inline fn linesMaxCnt() comptime_int {
     return _lines.max_cnt;
 }
 
-pub inline fn getLinesVertexBytes() []const u8 {
+pub inline fn linesVertexBytes() []const u8 {
     return std.mem.sliceAsBytes(_lines.vertex[0..]);
 }
 
-pub inline fn getLinesColorBytes() []const u8 {
+pub inline fn linesColorBytes() []const u8 {
     return std.mem.sliceAsBytes(_lines.color[0..]);
 }

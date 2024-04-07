@@ -1,4 +1,5 @@
 const std = @import("std");
+const builtin = @import("builtin");
 const W = std.unicode.utf8ToUtf16LeStringLiteral;
 const gui = @import("gui.zig");
 const config = @import("config.zig");
@@ -166,7 +167,7 @@ pub fn init() !void {
     info.id = try gui.menu.init(.{
         .show = config.debug.show_info,
     });
-    _ = try gui.text.init(W("krateroid 0.0.1"), .{
+    _ = try gui.text.init(W("krateroid 0.1.0"), .{
         .menu = info.id,
         .pos = .{ 2, 1 },
     });
@@ -177,11 +178,6 @@ pub fn init() !void {
     _ = try gui.text.init(&info.fps_str_buffer, .{
         .menu = info.id,
         .pos = .{ 16, 9 },
-    });
-    _ = try gui.text.init(W("https://github.com/kussakaa/krateroid"), .{
-        .menu = info.id,
-        .pos = .{ 2, -8 },
-        .alignment = .{ .v = .bottom },
     });
 }
 

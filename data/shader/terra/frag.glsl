@@ -1,16 +1,25 @@
 #version 460 core
 
+//ATTRIBUTES
+
 in vec3 v_vertex;
 in vec3 v_normal;
+in float v_texture;
 in vec3 v_light;
 
+// TEXTURES
+
+layout(binding = 0) uniform sampler2D dirt;
+layout(binding = 1) uniform sampler2D sand;
+layout(binding = 2) uniform sampler2D stone;
+
 layout(location = 0) out vec4 f_color;
+
+// NOISE FUNC
 
 float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
 vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
-
-uniform sampler2D texture0;
 
 float noise(vec3 p) {
   vec3 a = floor(p);
@@ -34,13 +43,28 @@ float noise(vec3 p) {
   return o4.y * d.y + o4.x * (1.0 - d.y);
 }
 
-void main() {
-  float noise = clamp(noise(v_vertex) + 0.5, 0.9, 1.0);
+// TRIPLANAR
+
+vec3 triplanar(sampler2D t) {
   vec3 v = v_vertex;
   vec3 n = normalize(max(abs(v_normal), 0.00001));
   n /= vec3(n.x + n.y + n.z);
-  vec3 t = vec3(texture(texture0, v.xy * (1.0 / 8.0)) * n.z +
-		texture(texture0, v.xz * (1.0 / 8.0)) * n.y +
-		texture(texture0, v.yz * (1.0 / 8.0)) * n.x);
+  return vec3(texture(t, v.xy * (1.0 / 8.0)) * n.z +
+              texture(t, v.xz * (1.0 / 8.0)) * n.y +
+              texture(t, v.yz * (1.0 / 8.0)) * n.x);
+  
+}
+
+// MAIN
+
+void main() {
+//  float noise = clamp(noise(v_vertex) + 0.5, 0.9, 1.0);
+
+  vec3 tdirt = triplanar(dirt);
+  vec3 tsand = triplanar(sand);
+  vec3 tstone = triplanar(stone);
+
+  vec3 t = mix(tdirt, tsand, v_texture);
+
   f_color = vec4(v_light * t, 1.0);
 }

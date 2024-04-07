@@ -106,7 +106,7 @@ pub fn deinit(self: Self) void {
     gl.deleteTextures(1, &self.id);
 }
 
-pub fn use(self: Self) void {
-    gl.activeTexture(gl.TEXTURE0);
+pub fn bind(self: Self, binding: gl.Enum) void {
+    gl.activeTexture(gl.TEXTURE0 + binding);
     gl.bindTexture(gl.TEXTURE_2D, self.id);
 }

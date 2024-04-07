@@ -15,8 +15,9 @@ const window = @import("window.zig");
 const input = @import("input.zig");
 const gfx = @import("gfx.zig");
 const camera = @import("camera.zig");
-const world = @import("world.zig");
+const terra = @import("terra.zig");
 const shape = @import("shape.zig");
+const projectile = @import("projectile.zig");
 const gui = @import("gui.zig");
 const menus = @import("menus.zig");
 const drawer = @import("drawer.zig");
@@ -54,11 +55,14 @@ pub fn main() !void {
     camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
     camera.scale = 50.0;
 
-    try world.init(.{
+    try terra.init(.{
         .allocator = allocator,
         .seed = 6969,
     });
-    defer world.deinit();
+    defer terra.deinit();
+
+    projectile.init();
+    defer projectile.deinit();
 
     shape.init();
     defer shape.deinit();
@@ -98,7 +102,7 @@ pub fn main() !void {
     gfx.init(.{ .allocator = allocator });
     defer gfx.deinit();
 
-    try drawer.init(.{ .allocator = allocator });
+    try drawer.init(allocator);
     defer drawer.deinit();
 
     loop: while (true) {
@@ -269,8 +273,6 @@ pub fn main() !void {
                 },
             }
         }
-
-        world.update();
 
         shape.showLine(x_axis, config.debug.show_info);
         shape.showLine(y_axis, config.debug.show_info);
