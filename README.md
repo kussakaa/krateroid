@@ -16,15 +16,15 @@ Strategic 3d game with huge world and destructible terrain
   * [ ] SSAO?
 * [ ] World 
   * [ ] Terrain
-    * [ ] Texturing 
-    * [ ] Materials 
+    * [X] Texturing 
+    * [X] Materials 
     * [ ] Beautiful generation
     * [X] Many chunks
   * [ ] Entities
     * [ ] Actors
     * [ ] Vehicles
   * [ ] Shapes
-    * [ ] Lines
+    * [X] Lines
     * [ ] Quads
     * [ ] Spheres
 * [ ] GUI
