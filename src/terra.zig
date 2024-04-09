@@ -37,7 +37,8 @@ var _allocator: Allocator = undefined;
 var _seed: i32 = 0;
 
 const _chunks = struct {
-    var init: [v]bool = undefined;
+    var init: [v]bool = [1]bool{false} ** v;
+    var update: [v]u32 = [1]u32{0} ** v;
     var block: [v]*ChunkBlocks = undefined;
 };
 
@@ -47,7 +48,6 @@ pub fn init(info: struct {
 }) !void {
     _allocator = info.allocator;
     _seed = info.seed;
-    @memset(_chunks.init[0..], false);
     for (0..v) |i| {
         try initChunk(i);
         genChunk(i);
@@ -92,31 +92,62 @@ pub fn genChunk(id: ChunkId) void {
         while (y < chunk_w) : (y += 1) {
             var x: u32 = 0;
             while (x < chunk_w) : (x += 1) {
-                const value: f32 = value_gen.noise2(
-                    @as(f32, @floatFromInt(x + pos[0] * chunk_w)) * 3.0,
-                    @as(f32, @floatFromInt(y + pos[1] * chunk_w)) * 3.0,
-                );
+                const xf = @as(f32, @floatFromInt(x + pos[0] * chunk_w));
+                const yf = @as(f32, @floatFromInt(y + pos[1] * chunk_w));
+                //                const zf = @as(f32, @floatFromInt(z + pos[2] * chunk_w));
 
-                const cellular: f32 = cellular_gen.noise2(
-                    @as(f32, @floatFromInt(x + pos[0] * chunk_w)) * 3.0,
-                    @as(f32, @floatFromInt(y + pos[1] * chunk_w)) * 3.0,
-                );
+                const noise_stone: f32 = value_gen.noise2(
+                    xf * 5,
+                    yf * 5,
+                ) * 12 + cellular_gen.noise2(
+                    xf * 5,
+                    yf * 5,
+                ) * 12 + 25;
 
-                const noise_stone = (value + 1.0) * 5.0 + (cellular + 1.0) * 20.0 + 10.0;
-                const noise_dirt = (value + 1.0) * 3.0 + (cellular + 1.0) * 5.0 + 20.0;
-                const noise_sand = (value + 1.0) * 4.0 + (cellular + 1.0) * 0.0 + 20.0;
+                const noise_dirt: f32 = value_gen.noise2(
+                    xf * 5,
+                    yf * 5,
+                ) * 3 + cellular_gen.noise2(
+                    xf * 3,
+                    yf * 3,
+                ) * 2 + 20;
 
-                const block: Block =
-                    if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < noise_stone)
+                const noise_sand: f32 = cellular_gen.noise2(
+                    xf * 6,
+                    yf * 6,
+                ) * 3 + cellular_gen.noise2(
+                    xf * 9,
+                    yf * 9,
+                ) * 3 + 23;
+
+                const blockzf = @as(f32, @floatFromInt(z + pos[2] * chunk_w));
+                const block: Block = if (blockzf < noise_stone)
                     .stone
-                else if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < noise_dirt)
+                else if (blockzf < noise_dirt)
                     .dirt
-                else if (@as(f32, @floatFromInt(z + pos[2] * chunk_w)) < noise_sand)
+                else if (blockzf < noise_sand)
                     .sand
                 else
                     .air;
 
                 blocks[blockIdFromBlockPos(.{ x, y, z })] = block;
+            }
+        }
+    }
+}
+
+pub fn updateChunk(id: ChunkId) void {
+    const pos = chunkPosFromChunkId(id);
+    const blocks = getChunkBlocksDataPtr(id);
+
+    var z: u32 = 0;
+    while (z < chunk_w) : (z += 1) {
+        var y: u32 = 0;
+        while (y < chunk_w) : (y += 1) {
+            var x: u32 = 0;
+            while (x < chunk_w) : (x += 1) {
+                _ = pos;
+                _ = blocks;
             }
         }
     }

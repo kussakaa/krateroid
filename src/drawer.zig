@@ -26,14 +26,13 @@ pub fn init(allocator: Allocator) !void {
 
     try terra.init(allocator);
     //  try projectile.init(allocator);
-    //  try shape.init(allocator);
     try shape.init(allocator);
     try gui.init(allocator);
 }
 
 pub fn deinit() void {
     terra.deinit();
-    //    projectile.deinit();
+    //projectile.deinit();
     shape.deinit();
     gui.deinit();
 }
@@ -45,7 +44,7 @@ pub fn draw() !void {
     gl.enable(gl.DEPTH_TEST);
     gl.polygonMode(gl.FRONT_AND_BACK, if (config.debug.show_grid) gl.LINE else gl.FILL);
     try terra.draw();
-    //  projectile.draw();
+    //projectile.draw();
 
     gl.disable(gl.DEPTH_TEST);
     shape.draw();

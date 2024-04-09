@@ -70,14 +70,11 @@ void main() {
   float dirtH = dirtV + dirtT.r;
   float sandH = sandV + sandT.r;
   
-  vec3 t = vec3(0.0);
+  vec3 t = vec3(1.0);
 
-  if (stoneH > dirtH && stoneH > sandH)
-    t = stoneT;
-  if (dirtH > sandH && dirtH > stoneH)
-    t = dirtT;
-  if (sandH > dirtH && sandH > stoneH)
-    t = sandT;
+  if (stoneH > dirtH && stoneH > sandH) t = stoneT;
+  if (dirtH > sandH && dirtH > stoneH) t = dirtT;
+  if (sandH > dirtH && sandH > stoneH) t = sandT;
 
   f_color = vec4(v_light * t, 1.0);
 }
