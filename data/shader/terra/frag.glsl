@@ -1,11 +1,14 @@
 #version 460 core
 
-//ATTRIBUTES
+// ATTRIBUTES
 
 in vec3 v_vertex;
 in vec3 v_normal;
-in float v_texture;
 in vec3 v_light;
+
+in float stoneV;
+in float dirtV;
+in float sandV;
 
 // TEXTURES
 
@@ -17,9 +20,9 @@ layout(location = 0) out vec4 f_color;
 
 // NOISE FUNC
 
-float mod289(float x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
-vec4 mod289(vec4 x){return x - floor(x * (1.0 / 289.0)) * 289.0;}
-vec4 perm(vec4 x){return mod289(((x * 34.0) + 1.0) * x);}
+float mod289(float x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 mod289(vec4 x) { return x - floor(x * (1.0 / 289.0)) * 289.0; }
+vec4 perm(vec4 x) { return mod289(((x * 34.0) + 1.0) * x); }
 
 float noise(vec3 p) {
   vec3 a = floor(p);
@@ -52,19 +55,29 @@ vec3 triplanar(sampler2D t) {
   return vec3(texture(t, v.xy * (1.0 / 8.0)) * n.z +
               texture(t, v.xz * (1.0 / 8.0)) * n.y +
               texture(t, v.yz * (1.0 / 8.0)) * n.x);
-  
 }
 
 // MAIN
 
 void main() {
-//  float noise = clamp(noise(v_vertex) + 0.5, 0.9, 1.0);
+  //  float noise = clamp(noise(v_vertex) + 0.5, 0.9, 1.0);
 
-  vec3 tstone = triplanar(stone);
-  vec3 tdirt = triplanar(dirt);
-  vec3 tsand = triplanar(sand);
+  vec3 stoneT = triplanar(stone);
+  vec3 dirtT = triplanar(dirt);
+  vec3 sandT = triplanar(sand);
 
-  vec3 t = mix(tstone, tdirt, v_texture);
+  float stoneH = stoneV + stoneT.r;
+  float dirtH = dirtV + dirtT.r;
+  float sandH = sandV + sandT.r;
+  
+  vec3 t = vec3(0.0);
+
+  if (stoneH > dirtH && stoneH > sandH)
+    t = stoneT;
+  if (dirtH > sandH && dirtH > stoneH)
+    t = dirtT;
+  if (sandH > dirtH && sandH > stoneH)
+    t = sandT;
 
   f_color = vec4(v_light * t, 1.0);
 }
