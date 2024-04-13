@@ -12,27 +12,24 @@ const Self = @This();
 id: Id,
 name: []const u8,
 
-pub fn init(allocator: Allocator, name: []const u8) !Self {
+pub fn init(comptime name: []const u8) !Self {
     const id = gl.createProgram();
 
-    const prefix = "data/shader/";
-
-    const vert_path = try std.mem.concatWithSentinel(allocator, u8, &.{ prefix, name, "/vert.glsl" }, 0);
-    defer allocator.free(vert_path);
-    const vert = try Shader.init(allocator, vert_path, .vert);
+    const vert = try Shader.init(name, .vert);
     defer vert.deinit();
-
     gl.attachShader(id, vert.id);
     defer gl.detachShader(id, vert.id);
 
-    const frag_path = try std.mem.concatWithSentinel(allocator, u8, &.{ prefix, name, "/frag.glsl" }, 0);
-    defer allocator.free(frag_path);
-    const frag = try Shader.init(allocator, frag_path, .frag);
+    const frag = try Shader.init(name, .frag);
     defer frag.deinit();
     gl.attachShader(id, frag.id);
     defer gl.detachShader(id, frag.id);
 
     gl.linkProgram(id);
+
+    const s = struct {
+        var buffer = [1]u8{0} ** 4096;
+    };
 
     // error catching
     var succes: gl.Int = 1;
@@ -40,10 +37,9 @@ pub fn init(allocator: Allocator, name: []const u8) !Self {
     if (succes <= 0) {
         var info_log_len: gl.Int = 0;
         gl.getProgramiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
-        const info_log = try allocator.alloc(u8, @intCast(info_log_len));
-        defer allocator.free(info_log);
-        gl.getProgramInfoLog(id, info_log_len, null, info_log.ptr);
-        log.err("program {s} failed linkage: {s}", .{ name, info_log });
+        const len: usize = @intCast(info_log_len);
+        gl.getProgramInfoLog(id, info_log_len, null, s.buffer[0..len].ptr);
+        log.err("program {s} failed linkage: {s}", .{ name, s.buffer[0..len] });
         return error.ShaderProgramLinkage;
     }
 

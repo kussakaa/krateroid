@@ -9,9 +9,9 @@ const Allocator = std.mem.Allocator;
 
 // CONSTS
 
+pub const v = w * w * h;
 pub const w = 4;
 pub const h = 2;
-pub const v = w * w * h;
 pub const chunk_w = 32;
 pub const chunk_v = chunk_w * chunk_w * chunk_w;
 

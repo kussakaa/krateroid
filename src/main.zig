@@ -22,15 +22,11 @@ const gui = @import("gui.zig");
 const menus = @import("menus.zig");
 const drawer = @import("drawer.zig");
 
-const GeneralPurposeAllocator = std.heap.GeneralPurposeAllocator(.{});
-var gpa: GeneralPurposeAllocator = undefined;
-var allocator: std.mem.Allocator = undefined;
-
 pub fn main() !void {
     std.debug.print("\n", .{});
 
-    gpa = GeneralPurposeAllocator{};
-    allocator = gpa.allocator();
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator: std.mem.Allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
     audio.init(allocator);
@@ -116,15 +112,9 @@ pub fn main() !void {
                             gui.menus.items[menus.main.id].show = !gui.menus.items[menus.main.id].show;
                             gui.menus.items[menus.settings.id].show = false;
                         }
-                        if (id == .space) {
-                            //                            world.entity.bullets.setPos(0, .{ 64.0, 64.0, 64.0, 1.0 });
-                            //                            world.entity.bullets.setDir(0, .{ 0.0, 0.0, -3.0, 0.0 });
-                        }
+                        if (id == .space) {}
                         if (id == .f3) {
                             config.debug.show_info = !config.debug.show_info;
-                            //world.shape.lines.items[x_axis].show = config.debug.show_info;
-                            //world.shape.lines.items[y_axis].show = config.debug.show_info;
-                            //world.shape.lines.items[z_axis].show = config.debug.show_info;
                         }
                         if (id == .f5) {
                             config.debug.show_grid = !config.debug.show_grid;
@@ -172,12 +162,6 @@ pub fn main() !void {
                                 0.0,
                                 0.0,
                             };
-                            //                           world.shape.lines.items[x_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            //                           world.shape.lines.items[x_axis].p2 = camera.pos + Vec{ 1.0, 0.0, 0.0, 1.0 };
-                            //                           world.shape.lines.items[y_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            //                           world.shape.lines.items[y_axis].p2 = camera.pos + Vec{ 0.0, 1.0, 0.0, 1.0 };
-                            //                           world.shape.lines.items[z_axis].p1 = camera.pos + Vec{ 0.0, 0.0, 0.0, 1.0 };
-                            //                           world.shape.lines.items[z_axis].p2 = camera.pos + Vec{ 0.0, 0.0, 1.0, 1.0 };
                         }
 
                         if (is_camera_rotate and !gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {

@@ -67,7 +67,7 @@ pub fn init(allocator: Allocator) !void {
         .vertcnt = 4,
         .drawmode = .triangle_strip,
     });
-    _data.rect.program = try gfx.Program.init(allocator, "gui/rect");
+    _data.rect.program = try gfx.Program.init("gui/rect");
     _data.rect.uniform.vpsize = try gfx.Uniform.init(_data.rect.program, "vpsize");
     _data.rect.uniform.scale = try gfx.Uniform.init(_data.rect.program, "scale");
     _data.rect.uniform.rect = try gfx.Uniform.init(_data.rect.program, "rect");
@@ -81,7 +81,7 @@ pub fn init(allocator: Allocator) !void {
 
     _data.slider.texture = try gfx.Texture.init(allocator, "gui/slider.png", .{});
 
-    _data.text.program = try gfx.Program.init(allocator, "gui/text");
+    _data.text.program = try gfx.Program.init("gui/text");
     _data.text.uniform.color = try gfx.Uniform.init(_data.text.program, "color");
     _data.text.uniform.pos = try gfx.Uniform.init(_data.text.program, "pos");
     _data.text.uniform.scale = try gfx.Uniform.init(_data.text.program, "scale");

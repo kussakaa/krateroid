@@ -16,14 +16,25 @@ const Self = @This();
 id: Id,
 
 pub fn init(
-    allocator: Allocator,
-    path: []const u8,
-    shadertype: Type,
+    comptime name: []const u8,
+    comptime shader_type: Type,
 ) !Self {
-    const data = try std.fs.cwd().readFileAlloc(allocator, path, 100_000_000);
-    defer allocator.free(data);
-    const id = gl.createShader(@intFromEnum(shadertype));
-    gl.shaderSource(id, 1, &data.ptr, @ptrCast(&.{@as(gl.Int, @intCast(data.len))}));
+    const id = gl.createShader(@intFromEnum(shader_type));
+
+    const prefix = "data/shader/";
+    const postfix = comptime switch (shader_type) {
+        .vert => "/vert.glsl",
+        .frag => "/frag.glsl",
+    };
+
+    const s = struct {
+        /// buffer for shader data and log loading without allocator
+        var buffer = [1]u8{0} ** 100_000_000;
+    };
+
+    const data = try std.fs.cwd().readFile(prefix ++ name ++ postfix, s.buffer[0..]);
+
+    gl.shaderSource(id, 1, &data.ptr, @alignCast(@ptrCast(&.{@as(gl.Int, @intCast(data.len))})));
     gl.compileShader(id);
 
     // error catching
@@ -32,10 +43,9 @@ pub fn init(
     if (succes == 0) {
         var info_log_len: gl.Int = 0;
         gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
-        const info_log = try allocator.alloc(u8, @intCast(info_log_len));
-        defer allocator.free(info_log);
-        gl.getShaderInfoLog(id, info_log_len, null, info_log.ptr);
-        log.err("shader {s} failed compilation: \n{s}\n", .{ path, info_log });
+        const len: usize = @intCast(info_log_len);
+        gl.getShaderInfoLog(id, info_log_len, null, s.buffer[0..len].ptr);
+        log.err("shader {s} failed compilation: \n{s}\n", .{ name, s.buffer[0..len] });
         return error.ShaderCompilation;
     }
 

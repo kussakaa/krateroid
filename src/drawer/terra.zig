@@ -43,7 +43,7 @@ const _data = struct {
 pub fn init(allocator: Allocator) !void {
     @memset(_data.meshes[0..], null);
 
-    _data.program = try gfx.Program.init(allocator, "terra");
+    _data.program = try gfx.Program.init("terra");
 
     _data.uniform.model = try gfx.Uniform.init(_data.program, "model");
     _data.uniform.view = try gfx.Uniform.init(_data.program, "view");

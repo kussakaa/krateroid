@@ -5,8 +5,6 @@ const gfx = @import("../gfx.zig");
 const shape = @import("../shape.zig");
 const camera = @import("../camera.zig");
 
-const Allocator = std.mem.Allocator;
-
 const _data = struct {
     const line = struct {
         var vertex_buffer: gfx.Buffer = undefined;
@@ -22,7 +20,7 @@ const _data = struct {
     };
 };
 
-pub fn init(allocator: Allocator) !void {
+pub fn init() !void {
     _data.line.vertex_buffer = try gfx.Buffer.init(.{
         .name = "shape line vertex",
         .target = .vbo,
@@ -48,7 +46,7 @@ pub fn init(allocator: Allocator) !void {
         .drawmode = .lines,
     });
 
-    _data.program = try gfx.Program.init(allocator, "shape");
+    _data.program = try gfx.Program.init("shape");
     _data.uniform.model = try gfx.Uniform.init(_data.program, "model");
     _data.uniform.view = try gfx.Uniform.init(_data.program, "view");
     _data.uniform.proj = try gfx.Uniform.init(_data.program, "proj");

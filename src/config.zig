@@ -8,6 +8,8 @@ pub const debug = struct {
     pub var show_grid: bool = false;
 };
 
+pub const window = struct {};
+
 pub const audio = struct {
     pub var volume: f32 = 0.3;
 };
@@ -18,7 +20,7 @@ pub const drawer = struct {
     };
     pub const light = struct {
         pub var color: Color = .{ 0.9, 0.9, 0.7, 1.0 };
-        pub var direction: Vec = .{ 1.0, 0.0, 1.0, 1.0 };
+        pub var direction: Vec = .{ 1.0, 1.0, 1.0, 1.0 };
         pub var ambient: f32 = 0.5;
         pub var diffuse: f32 = 0.4;
         pub var specular: f32 = 0.1;

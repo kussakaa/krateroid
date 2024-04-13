@@ -26,7 +26,7 @@ pub fn init(allocator: Allocator) !void {
 
     try terra.init(allocator);
     //  try projectile.init(allocator);
-    try shape.init(allocator);
+    try shape.init();
     try gui.init(allocator);
 }
 
