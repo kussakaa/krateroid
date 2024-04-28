@@ -186,37 +186,10 @@ const Event = union(enum) {
     },
 };
 
-pub const events = struct {
-    var items: [16]Event = undefined;
-    var current: usize = 0;
-    var current_event: usize = 0;
-
-    fn push(event: Event) void {
-        items[current_event] = event;
-        if (current_event < items.len - 1) {
-            current_event += 1;
-        } else {
-            current_event = 0;
-        }
-    }
-
-    fn pop() Event {
-        if (current != current_event) {
-            const e = items[current];
-            if (current < items.len - 1) {
-                current += 1;
-            } else {
-                current = 0;
-            }
-            return e;
-        } else {
-            return .none;
-        }
-    }
-};
+pub var events = @import("util/fixed_queue.zig").FixedQueue(16, Event, Event.none){};
 
 pub fn pollEvent() Event {
-    return events.pop();
+    return events.pull();
 }
 
 pub const menu = struct {

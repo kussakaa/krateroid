@@ -154,7 +154,7 @@ pub fn init() !void {
     });
     _ = try gui.text.init(&settings.slider.volume_str_buffer, .{
         .menu = settings.id,
-        .pos = .{ 71, -8 },
+        .pos = .{ 70, -8 },
         .alignment = .{ .v = .center, .h = .center },
     });
     settings.slider.volume = try gui.slider.init(.{
