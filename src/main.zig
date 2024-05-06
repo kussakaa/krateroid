@@ -17,7 +17,6 @@ const gfx = @import("gfx.zig");
 const camera = @import("camera.zig");
 const terra = @import("terra.zig");
 const shape = @import("shape.zig");
-const projectile = @import("projectile.zig");
 const gui = @import("gui.zig");
 const menus = @import("menus.zig");
 const drawer = @import("drawer.zig");
@@ -57,15 +56,12 @@ pub fn main() !void {
     });
     defer terra.deinit();
 
-    projectile.init();
-    defer projectile.deinit();
-
     shape.init();
     defer shape.deinit();
 
     // X
     const x_axis = 0;
-    _ = shape.initLine(x_axis, .{
+    _ = shape.lines.add(x_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
         .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
@@ -74,7 +70,7 @@ pub fn main() !void {
 
     // Y
     const y_axis = 1;
-    _ = shape.initLine(y_axis, .{
+    _ = shape.lines.add(y_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
         .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
@@ -83,7 +79,7 @@ pub fn main() !void {
 
     // Z
     const z_axis = 2;
-    _ = shape.initLine(z_axis, .{
+    _ = shape.lines.add(z_axis, .{
         .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
         .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
         .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
@@ -258,9 +254,9 @@ pub fn main() !void {
             }
         }
 
-        shape.showLine(x_axis, config.debug.show_info);
-        shape.showLine(y_axis, config.debug.show_info);
-        shape.showLine(z_axis, config.debug.show_info);
+        shape.lines.show(x_axis, config.debug.show_info);
+        shape.lines.show(y_axis, config.debug.show_info);
+        shape.lines.show(z_axis, config.debug.show_info);
 
         try menus.update();
         camera.update();

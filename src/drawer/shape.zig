@@ -28,7 +28,7 @@ pub fn init() !void {
         .vertsize = 4,
         .usage = .dynamic_draw,
     });
-    _data.line.vertex_buffer.data(shape.linesVertexBytes());
+    _data.line.vertex_buffer.data(shape.lines.vertexBytes());
 
     _data.line.color_buffer = try gfx.Buffer.init(.{
         .name = "shape line color",
@@ -37,12 +37,12 @@ pub fn init() !void {
         .vertsize = 4,
         .usage = .dynamic_draw,
     });
-    _data.line.color_buffer.data(shape.linesColorBytes());
+    _data.line.color_buffer.data(shape.lines.colorBytes());
 
     _data.line.mesh = try gfx.Mesh.init(.{
         .name = "shape line mesh",
         .buffers = &.{ _data.line.vertex_buffer, _data.line.color_buffer },
-        .vertcnt = shape.linesMaxCnt() * 2,
+        .vertcnt = shape.lines.max_cnt * 2,
         .drawmode = .lines,
     });
 
@@ -65,7 +65,7 @@ pub fn draw() void {
     _data.uniform.view.set(camera.view);
     _data.uniform.proj.set(camera.proj);
 
-    _data.line.vertex_buffer.subdata(0, shape.linesVertexBytes());
-    _data.line.color_buffer.subdata(0, shape.linesColorBytes());
+    _data.line.vertex_buffer.subdata(0, shape.lines.vertexBytes());
+    _data.line.color_buffer.subdata(0, shape.lines.colorBytes());
     _data.line.mesh.draw();
 }
