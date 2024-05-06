@@ -52,7 +52,7 @@ pub fn main() !void {
 
     try terra.init(.{
         .allocator = allocator,
-        .seed = 6969,
+        .seed = config.terra.seed,
     });
     defer terra.deinit();
 
@@ -99,9 +99,10 @@ pub fn main() !void {
 
     loop: while (true) {
         inputproc: while (true) {
-            switch (input.pollEvent()) {
+            switch (input.events.pull()) {
                 .none => break :inputproc,
                 .quit => break :loop,
+
                 .key => |k| switch (k) {
                     .pressed => |id| {
                         if (id == .escape) {
@@ -121,6 +122,7 @@ pub fn main() !void {
                     },
                     .unpressed => |_| {},
                 },
+
                 .mouse => |m| switch (m) {
                     .pressed => |id| {
                         if (id == 1) {
@@ -175,27 +177,24 @@ pub fn main() !void {
                         gui.cursor.pos = pos;
                         gui.update();
                     },
+
                     .scrolled => |scroll| {
                         if (!gui.menus.items[menus.main.id].show and !gui.menus.items[menus.settings.id].show) {
                             camera.scale = camera.scale * (1.0 - @as(f32, @floatFromInt(scroll)) * 0.1);
                         }
                     },
                 },
+
                 .window => |w| switch (w) {
                     .resized => |s| {
                         window.resize(s);
                     },
                 },
-                //else => {},
             }
         }
 
         guiproc: while (true) {
-            const e = gui.pollEvent();
-
-            //if (e != .none) log.info("gui event: {}", .{e});
-
-            switch (e) {
+            switch (gui.events.pull()) {
                 .none => break :guiproc,
 
                 .button => |item| switch (item) {

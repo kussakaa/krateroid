@@ -26,3 +26,7 @@ pub const drawer = struct {
         pub var specular: f32 = 0.1;
     };
 };
+
+pub const terra = struct {
+    pub const seed = 1000;
+};

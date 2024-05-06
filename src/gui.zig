@@ -188,10 +188,6 @@ const Event = union(enum) {
 
 pub var events = @import("util/fixed_queue.zig").FixedQueue(16, Event, Event.none){};
 
-pub fn pollEvent() Event {
-    return events.pull();
-}
-
 pub const menu = struct {
     pub fn init(info: struct {
         show: bool = true,
