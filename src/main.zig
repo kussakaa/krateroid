@@ -59,33 +59,6 @@ pub fn main() !void {
     shape.init();
     defer shape.deinit();
 
-    // X
-    const x_axis = 0;
-    _ = shape.lines.add(x_axis, .{
-        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .v2 = .{ 32.0, 0.0, 0.0, 1.0 },
-        .c1 = .{ 1.0, 0.5, 0.5, 1.0 },
-        .c2 = .{ 1.0, 0.5, 0.5, 1.0 },
-    });
-
-    // Y
-    const y_axis = 1;
-    _ = shape.lines.add(y_axis, .{
-        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .v2 = .{ 0.0, 32.0, 0.0, 1.0 },
-        .c1 = .{ 0.5, 1.0, 0.5, 1.0 },
-        .c2 = .{ 0.5, 1.0, 0.5, 1.0 },
-    });
-
-    // Z
-    const z_axis = 2;
-    _ = shape.lines.add(z_axis, .{
-        .v1 = .{ 0.0, 0.0, 0.0, 1.0 },
-        .v2 = .{ 0.0, 0.0, 32.0, 1.0 },
-        .c1 = .{ 0.5, 0.5, 1.0, 1.0 },
-        .c2 = .{ 0.5, 0.5, 1.0, 1.0 },
-    });
-
     try gui.init(.{ .allocator = allocator, .scale = 3 });
     defer gui.deinit();
 
@@ -253,14 +226,12 @@ pub fn main() !void {
             }
         }
 
-        shape.lines.show(x_axis, config.debug.show_info);
-        shape.lines.show(y_axis, config.debug.show_info);
-        shape.lines.show(z_axis, config.debug.show_info);
-
+        shape.update();
         try menus.update();
         camera.update();
 
         try drawer.draw();
+
         window.swap();
     }
 }
