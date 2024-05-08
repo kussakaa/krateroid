@@ -19,12 +19,7 @@ pub const chunk_v = chunk_w * chunk_w * chunk_w;
 
 pub const BlockId = usize;
 pub const BlockPos = @Vector(3, u32);
-pub const Block = enum(u8) {
-    air = 0,
-    stone = 1,
-    dirt = 2,
-    sand = 3,
-};
+pub const Block = @import("terra/chunk.zig").Block;
 
 pub const ChunkId = usize;
 pub const ChunkPos = @Vector(3, u32);

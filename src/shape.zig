@@ -1,11 +1,12 @@
 const config = @import("config.zig");
 
+pub const line = @import("shape/line.zig");
 pub const lines = @import("shape/lines.zig");
 
 const axis = struct {
-    const x = 0;
-    const y = 1;
-    const z = 2;
+    const x: line.Id = 0;
+    const y: line.Id = 1;
+    const z: line.Id = 2;
 };
 
 pub fn init() void {
