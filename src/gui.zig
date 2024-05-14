@@ -186,7 +186,7 @@ const Event = union(enum) {
     },
 };
 
-pub var events = @import("util/fixed_queue.zig").FixedQueue(16, Event, Event.none){};
+pub var events = @import("util").FixedQueue(16, Event, Event.none){};
 
 pub const menu = struct {
     pub fn init(info: struct {
