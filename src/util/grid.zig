@@ -37,7 +37,11 @@ pub fn Grid(
         }
 
         //pub inline fn posFromId(id: Id) Pos {
-        //    return .{ id % size[0], (id / size[0]) % size[1], id / size[0] / size[1] };
+        //    return .{
+        //        @rem(id, size[0]),
+        //        @rem(@divTrunc(id, size[0]), size[1]),
+        //        @divTrunc(@divTrunc(id, size[0]), size[1]),
+        //    };
         //}
     };
 }

@@ -25,11 +25,9 @@ pub fn build(b: *std.Build) !void {
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
     const zsdl = b.dependency("zsdl", .{});
-    const zsdl_path = zsdl.path("").getPath(b);
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
-    try @import("zsdl").addLibraryPathsTo(exe, zsdl_path);
+    @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
-    try @import("zsdl").install_sdl2(&exe.step, target.result, .bin, zsdl_path);
 
     const zstbi = b.dependency("zstbi", .{});
     exe.root_module.addImport("zstbi", zstbi.module("root"));

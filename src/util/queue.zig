@@ -1,4 +1,4 @@
-pub fn FixedQueue(comptime len: usize, comptime T: type, comptime zero: T) type {
+pub fn Queue(comptime len: usize, comptime T: type, comptime zero: T) type {
     return struct {
         const Self = @This();
 
