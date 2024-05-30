@@ -50,10 +50,7 @@ pub fn main() !void {
     camera.rot = .{ -pi / 6.0, 0.0, 0.0, 1.0 };
     camera.scale = 50.0;
 
-    try terra.init(.{
-        .allocator = allocator,
-        .seed = config.terra.seed,
-    });
+    try terra.init(allocator, 696969);
     defer terra.deinit();
 
     shape.init();

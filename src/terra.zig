@@ -1,223 +1,181 @@
 const std = @import("std");
 const log = std.log.scoped(.terra);
-const testing = std.testing;
-const zm = @import("zmath");
-const znoise = @import("znoise");
 
-const Noise = znoise.FnlGenerator;
 const Allocator = std.mem.Allocator;
 
-// CONSTS
+const znoise = @import("znoise");
+const Noise = znoise.FnlGenerator;
 
-pub const v = w * w * h;
-pub const w = 4;
-pub const h = 2;
-pub const chunk_w = 32;
-pub const chunk_v = chunk_w * chunk_w * chunk_w;
+pub const Seed = i32;
 
-// TYPES
-
-pub const BlockId = usize;
-pub const BlockPos = @Vector(3, u32);
-pub const Block = @import("terra/chunk.zig").Block;
-
-pub const ChunkId = usize;
-pub const ChunkPos = @Vector(3, u32);
-pub const ChunkBlocks = struct { data: ChunkBlocksData };
-pub const ChunkBlocksData = [chunk_v]Block;
-
-// STATE
-
-var _allocator: Allocator = undefined;
-var _seed: i32 = 0;
-
-const _chunks = struct {
-    var init: [v]bool = [1]bool{false} ** v;
-    var update: [v]u32 = [1]u32{0} ** v;
-    var block: [v]*ChunkBlocks = undefined;
+pub const Block = enum(u8) {
+    air = 0,
+    stone = 1,
+    dirt = 2,
+    sand = 3,
 };
 
-pub fn init(info: struct {
-    allocator: Allocator = std.heap.page_allocator,
-    seed: i32 = 0,
-}) !void {
-    _allocator = info.allocator;
-    _seed = info.seed;
-    for (0..v) |i| {
-        try initChunk(i);
-        genChunk(i);
+pub const Chunk = struct {
+    pub const w = 16;
+    pub const h = 64;
+    pub const s = @Vector(3, u8){ w, w, h };
+    pub const v = w * w * h;
+
+    data: [v]Block,
+
+    pub fn create(
+        allocator: Allocator,
+        info: union(enum) {
+            fill: struct { block: Block },
+            generate: struct { pos: @Vector(2, u32), seed: Seed },
+        },
+    ) !*Chunk {
+        const result = try allocator.create(Chunk);
+        switch (info) {
+            .fill => |fill| @memset(result.data[0..], fill.block),
+            .generate => |generate| {
+                const value_gen = Noise{
+                    .seed = generate.seed,
+                    .noise_type = .value,
+                };
+
+                const cellular_gen = Noise{
+                    .seed = generate.seed,
+                    .noise_type = .cellular,
+                };
+
+                var z: u32 = 0;
+                while (z < h) : (z += 1) {
+                    var y: u32 = 0;
+                    while (y < w) : (y += 1) {
+                        var x: u32 = 0;
+                        while (x < w) : (x += 1) {
+                            const xf = @as(f32, @floatFromInt(x + generate.pos[0] * w));
+                            const yf = @as(f32, @floatFromInt(y + generate.pos[1] * w));
+                            const zf = @as(f32, @floatFromInt(z));
+
+                            const noise_stone: f32 = value_gen.noise2(
+                                xf * 5,
+                                yf * 5,
+                            ) * 12 + cellular_gen.noise2(
+                                xf * 5,
+                                yf * 5,
+                            ) * 12 + 25;
+
+                            const noise_dirt: f32 = value_gen.noise2(
+                                xf * 5,
+                                yf * 5,
+                            ) * 3 + cellular_gen.noise2(
+                                xf * 3,
+                                yf * 3,
+                            ) * 2 + 20;
+
+                            const noise_sand: f32 = cellular_gen.noise2(
+                                xf * 6,
+                                yf * 6,
+                            ) * 3 + cellular_gen.noise2(
+                                xf * 9,
+                                yf * 9,
+                            ) * 3 + 23;
+
+                            const block: Block = if (zf < noise_stone)
+                                .stone
+                            else if (zf < noise_dirt)
+                                .dirt
+                            else if (zf < noise_sand)
+                                .sand
+                            else
+                                .air;
+
+                            result.set(.{ x, y, z }, block);
+                        }
+                    }
+                }
+            },
+        }
+        return result;
     }
+
+    pub fn destroy(self: *Chunk, allocator: Allocator) void {
+        allocator.destroy(self);
+    }
+
+    pub inline fn get(self: *Chunk, pos: @Vector(3, u32)) Block {
+        return self.data[pos[0] + pos[1] * w + pos[2] * w * w];
+    }
+
+    pub inline fn set(self: *Chunk, pos: @Vector(3, u32), block: Block) void {
+        self.data[pos[0] + pos[1] * w + pos[2] * w * w] = block;
+    }
+};
+
+pub const Chunks = struct {
+    pub const w = 512;
+    pub const v = w * w;
+    pub const s = @Vector(2, u32){ w, w };
+
+    data: [v]*Chunk,
+    null_chunk: *Chunk,
+    seed: Seed,
+    allocator: Allocator,
+
+    pub fn init(allocator: Allocator, seed: Seed) !Chunks {
+        var result: Chunks = undefined;
+
+        result.null_chunk = try Chunk.create(allocator, .{ .fill = .{ .block = .air } });
+        @memset(result.data[0..], result.null_chunk);
+        result.seed = seed;
+        result.allocator = allocator;
+
+        return result;
+    }
+
+    pub fn deinit(self: *Chunks) void {
+        var y: u32 = 0;
+        while (y < 8) : (y += 1) {
+            var x: u32 = 0;
+            while (x < 8) : (x += 1) {
+                const chunk = self.get(.{ x, y });
+                if (chunk != self.null_chunk) chunk.destroy(self.allocator);
+            }
+        }
+        self.null_chunk.destroy(self.allocator);
+    }
+
+    pub inline fn get(self: *Chunks, pos: @Vector(2, u32)) *Chunk {
+        return self.data[pos[0] + pos[1] * w];
+    }
+
+    pub inline fn set(self: *Chunks, pos: @Vector(2, u32), chunk: *Chunk) void {
+        self.data[pos[0] + pos[1] * w] = chunk;
+    }
+};
+
+pub var chunks: Chunks = undefined;
+
+pub fn init(allocator: Allocator, seed: Seed) !void {
+    log.info("init", .{});
+
+    chunks = try Chunks.init(allocator, seed);
+
+    var y: u32 = 0;
+    while (y < 8) : (y += 1) {
+        var x: u32 = 0;
+        while (x < 8) : (x += 1) {
+            chunks.set(.{ x, y }, try Chunk.create(
+                allocator,
+                .{ .generate = .{ .pos = .{ x, y }, .seed = chunks.seed } },
+            ));
+        }
+    }
+
+    log.info("init succes", .{});
 }
 
 pub fn deinit() void {
-    for (_chunks.init[0..], 0..) |chunk_init, i| if (chunk_init) deinitChunk(i);
+    chunks.deinit();
 }
 
-pub fn update() void {}
-
-fn initChunks() !void {}
-
-pub fn initChunk(id: ChunkId) !void {
-    _chunks.init[id] = true;
-    _chunks.block[id] = try _allocator.create(ChunkBlocks);
-}
-
-pub fn deinitChunk(id: ChunkId) void {
-    _chunks.init[id] = false;
-    _allocator.destroy(_chunks.block[id]);
-}
-
-pub fn genChunk(id: ChunkId) void {
-    const pos = chunkPosFromChunkId(id);
-    var blocks = getChunkBlocksDataPtr(id);
-
-    const value_gen = Noise{
-        .seed = _seed,
-        .noise_type = .value,
-    };
-
-    const cellular_gen = Noise{
-        .seed = _seed,
-        .noise_type = .cellular,
-    };
-
-    var z: u32 = 0;
-    while (z < chunk_w) : (z += 1) {
-        var y: u32 = 0;
-        while (y < chunk_w) : (y += 1) {
-            var x: u32 = 0;
-            while (x < chunk_w) : (x += 1) {
-                const xf = @as(f32, @floatFromInt(x + pos[0] * chunk_w));
-                const yf = @as(f32, @floatFromInt(y + pos[1] * chunk_w));
-                //                const zf = @as(f32, @floatFromInt(z + pos[2] * chunk_w));
-
-                const noise_stone: f32 = value_gen.noise2(
-                    xf * 5,
-                    yf * 5,
-                ) * 12 + cellular_gen.noise2(
-                    xf * 5,
-                    yf * 5,
-                ) * 12 + 25;
-
-                const noise_dirt: f32 = value_gen.noise2(
-                    xf * 5,
-                    yf * 5,
-                ) * 3 + cellular_gen.noise2(
-                    xf * 3,
-                    yf * 3,
-                ) * 2 + 20;
-
-                const noise_sand: f32 = cellular_gen.noise2(
-                    xf * 6,
-                    yf * 6,
-                ) * 3 + cellular_gen.noise2(
-                    xf * 9,
-                    yf * 9,
-                ) * 3 + 23;
-
-                const blockzf = @as(f32, @floatFromInt(z + pos[2] * chunk_w));
-                const block: Block = if (blockzf < noise_stone)
-                    .stone
-                else if (blockzf < noise_dirt)
-                    .dirt
-                else if (blockzf < noise_sand)
-                    .sand
-                else
-                    .air;
-
-                blocks[blockIdFromBlockPos(.{ x, y, z })] = block;
-            }
-        }
-    }
-}
-
-pub fn updateChunk(id: ChunkId) void {
-    const pos = chunkPosFromChunkId(id);
-    const blocks = getChunkBlocksDataPtr(id);
-
-    var z: u32 = 0;
-    while (z < chunk_w) : (z += 1) {
-        var y: u32 = 0;
-        while (y < chunk_w) : (y += 1) {
-            var x: u32 = 0;
-            while (x < chunk_w) : (x += 1) {
-                _ = pos;
-                _ = blocks;
-            }
-        }
-    }
-}
-
-pub inline fn isInitChunk(id: ChunkId) bool {
-    return if (id < v) _chunks.init[id] else false;
-}
-
-pub inline fn isInitChunkFromPos(pos: ChunkPos) bool {
-    return if (pos[0] < w and pos[1] < w and pos[2] < h)
-        _chunks.init[chunkIdFromChunkPos(pos)]
-    else
-        false;
-}
-
-pub inline fn getBlock(pos: BlockPos) Block {
-    const chunk_id = chunkIdFromChunkPos(chunkPosFromBlockPos(pos));
-    const block_id = blockIdFromBlockPos(pos % BlockPos{ chunk_w, chunk_w, chunk_w });
-    return _chunks.block[chunk_id].data[block_id];
-}
-
-pub inline fn setBlock(pos: BlockPos, block: Block) void {
-    const chunk_id = chunkIdFromChunkPos(chunkPosFromBlockPos(pos));
-    const block_id = blockIdFromBlockPos(pos % BlockPos{ chunk_w, chunk_w, chunk_w });
-    _chunks.block[chunk_id].?.data[block_id] = block;
-}
-
-pub inline fn getChunkBlocksDataPtr(id: ChunkId) *ChunkBlocksData {
-    return &_chunks.block[id].data;
-}
-
-pub inline fn chunkPosFromChunkId(id: ChunkId) ChunkPos {
-    const idu32: u32 = @intCast(id);
-    return .{
-        @rem(idu32, w),
-        @rem(@divTrunc(idu32, w), w),
-        @divTrunc(@divTrunc(idu32, w), w),
-    };
-}
-
-pub inline fn chunkIdFromChunkPos(pos: ChunkPos) usize {
-    return pos[0] + pos[1] * w + pos[2] * w * w;
-}
-
-test "world.chunkPosFromChunkId and world.chunkIdFromChunkPos" {
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 0, 0, 0 })), ChunkPos{ 0, 0, 0 });
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 3, 0, 0 })), ChunkPos{ 3, 0, 0 });
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 2, 0, 0 })), ChunkPos{ 2, 0, 0 });
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 2, 1, 3 })), ChunkPos{ 2, 1, 3 });
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 2, 2, 2 })), ChunkPos{ 2, 2, 2 });
-    try std.testing.expectEqual(chunkPosFromChunkId(chunkIdFromChunkPos(.{ 3, 3, 3 })), ChunkPos{ 3, 3, 3 });
-}
-
-pub inline fn chunkPosFromBlockPos(pos: BlockPos) BlockPos {
-    return @divTrunc(pos, ChunkPos{ chunk_w, chunk_w, chunk_w });
-}
-
-pub inline fn blockIdFromBlockPos(pos: BlockPos) usize {
-    return pos[0] + pos[1] * chunk_w + pos[2] * chunk_w * chunk_w;
-}
-
-pub inline fn blockPosFromBlockId(id: ChunkId) ChunkPos {
-    return .{
-        id % chunk_w,
-        (id / chunk_w) % chunk_w,
-        (id / chunk_w) / chunk_w,
-    };
-}
-
-test "world.blockPosFromBlockId and world.blockIdFromBlockPos" {
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 0, 0, 0 })), BlockPos{ 0, 0, 0 });
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 13, 0, 0 })), BlockPos{ 13, 0, 0 });
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 0, 31, 0 })), BlockPos{ 0, 31, 0 });
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 0, 0, 16 })), BlockPos{ 0, 0, 16 });
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 10, 22, 10 })), BlockPos{ 10, 22, 10 });
-    try std.testing.expectEqual(blockPosFromBlockId(blockIdFromBlockPos(.{ 31, 31, 31 })), BlockPos{ 31, 31, 31 });
+pub inline fn getBlock(pos: @Vector(3, u32)) Block {
+    return chunks.get(.{ pos[0] / Chunk.w, pos[1] / Chunk.w }).get(pos % Chunk.s);
 }

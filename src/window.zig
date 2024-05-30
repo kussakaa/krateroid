@@ -56,11 +56,10 @@ pub fn init(info: struct {
     try zopengl.loadCoreProfile(sdl.gl.getProcAddress, 3, 3);
 
     gl.viewport(0, 0, size[0], size[1]);
-    log.debug("init window {s} {}", .{ title, size });
+    log.info("init window {s} {}", .{ title, size });
 }
 
 pub fn deinit() void {
-    log.debug("deinit window {s} {}", .{ title, size });
     handle.destroy();
     sdl.gl.deleteContext(gl_context);
 }
