@@ -1,12 +1,14 @@
 const std = @import("std");
 const log = std.log.scoped(.terra);
 
+const gfx = @import("gfx");
+
+const Camera = @import("Camera.zig");
+
 const Allocator = std.mem.Allocator;
 
 const znoise = @import("znoise");
 const Noise = znoise.FnlGenerator;
-
-pub const Seed = i32;
 
 pub const Block = enum(u8) {
     air = 0,
@@ -21,18 +23,20 @@ pub const Chunk = struct {
     pub const s = @Vector(3, u8){ w, w, h };
     pub const v = w * w * h;
 
-    data: [v]Block,
+    const Self = @This();
+
+    blocks: [v]Block,
 
     pub fn create(
         allocator: Allocator,
         info: union(enum) {
             fill: struct { block: Block },
-            generate: struct { pos: @Vector(2, u32), seed: Seed },
+            generate: struct { pos: @Vector(2, u32), seed: i32 },
         },
-    ) !*Chunk {
+    ) Allocator.Error!*Self {
         const result = try allocator.create(Chunk);
         switch (info) {
-            .fill => |fill| @memset(result.data[0..], fill.block),
+            .fill => |fill| @memset(result.blocks[0..], fill.block),
             .generate => |generate| {
                 const value_gen = Noise{
                     .seed = generate.seed,
@@ -87,7 +91,7 @@ pub const Chunk = struct {
                             else
                                 .air;
 
-                            result.set(.{ x, y, z }, block);
+                            result.setBlock(.{ x, y, z }, block);
                         }
                     }
                 }
@@ -96,86 +100,115 @@ pub const Chunk = struct {
         return result;
     }
 
-    pub fn destroy(self: *Chunk, allocator: Allocator) void {
+    pub fn destroy(self: *Self, allocator: Allocator) void {
         allocator.destroy(self);
     }
 
-    pub inline fn get(self: *Chunk, pos: @Vector(3, u32)) Block {
-        return self.data[pos[0] + pos[1] * w + pos[2] * w * w];
+    pub inline fn getBlock(self: *Self, pos: @Vector(3, u32)) Block {
+        return self.blocks[pos[0] + pos[1] * w + pos[2] * w * w];
     }
 
-    pub inline fn set(self: *Chunk, pos: @Vector(3, u32), block: Block) void {
-        self.data[pos[0] + pos[1] * w + pos[2] * w * w] = block;
+    pub inline fn setBlock(self: *Self, pos: @Vector(3, u32), block: Block) void {
+        self.blocks[pos[0] + pos[1] * w + pos[2] * w * w] = block;
     }
 };
 
-pub const Chunks = struct {
+pub const Map = struct {
     pub const w = 512;
     pub const v = w * w;
     pub const s = @Vector(2, u32){ w, w };
 
-    data: [v]*Chunk,
-    null_chunk: *Chunk,
-    seed: Seed,
+    pub const Config = struct {
+        seed: i32 = 6969,
+    };
+
+    const Self = @This();
+
+    chunks: [v]*Chunk,
+    zero: *Chunk,
+    config: Config,
     allocator: Allocator,
 
-    pub fn init(allocator: Allocator, seed: Seed) !Chunks {
-        var result: Chunks = undefined;
+    pub fn create(allocator: Allocator, config: Config) Allocator.Error!*Self {
+        var result: *Self = try allocator.create(Self);
 
-        result.null_chunk = try Chunk.create(allocator, .{ .fill = .{ .block = .air } });
-        @memset(result.data[0..], result.null_chunk);
-        result.seed = seed;
         result.allocator = allocator;
+        result.config = config;
+        result.zero = try Chunk.create(allocator, .{ .fill = .{ .block = .air } });
+        @memset(result.chunks[0..], result.zero);
 
         return result;
     }
 
-    pub fn deinit(self: *Chunks) void {
+    pub fn destroy(self: *Self) void {
+        for (self.chunks[0..]) |chunk|
+            if (chunk != self.zero) chunk.destroy(self.allocator);
+
+        self.zero.destroy(self.allocator);
+    }
+
+    pub fn generate(self: *Self) Allocator.Error!void {
         var y: u32 = 0;
         while (y < 8) : (y += 1) {
             var x: u32 = 0;
             while (x < 8) : (x += 1) {
-                const chunk = self.get(.{ x, y });
-                if (chunk != self.null_chunk) chunk.destroy(self.allocator);
+                self.setChunk(.{ x, y }, try Chunk.create(self.allocator, .{
+                    .generate = .{
+                        .pos = .{ x, y },
+                        .seed = self.config.seed,
+                    },
+                }));
             }
         }
-        self.null_chunk.destroy(self.allocator);
     }
 
-    pub inline fn get(self: *Chunks, pos: @Vector(2, u32)) *Chunk {
-        return self.data[pos[0] + pos[1] * w];
+    pub inline fn getChunk(self: *Self, pos: @Vector(2, u32)) *Chunk {
+        return self.chunks[pos[0] + pos[1] * w];
     }
 
-    pub inline fn set(self: *Chunks, pos: @Vector(2, u32), chunk: *Chunk) void {
-        self.data[pos[0] + pos[1] * w] = chunk;
+    pub inline fn setChunk(self: *Self, pos: @Vector(2, u32), chunk: *Chunk) void {
+        self.chunks[pos[0] + pos[1] * w] = chunk;
+    }
+
+    pub inline fn getBlock(self: *Self, pos: @Vector(3, u32)) Block {
+        return self.getChunk(.{ pos[0] / Chunk.w, pos[1] / Chunk.w }).getBlock(pos % Chunk.s);
+    }
+
+    pub inline fn setBlock(self: *Self, pos: @Vector(3, u32), block: Block) void {
+        self.getChunk(.{ pos[0] / Chunk.w, pos[1] / Chunk.w }).setBlock(pos % Chunk.s, block);
     }
 };
 
-pub var chunks: Chunks = undefined;
+pub const Drawer = struct {
+    const Self = @This();
 
-pub fn init(allocator: Allocator, seed: Seed) !void {
-    log.info("init", .{});
+    camera: *Camera,
+    map: *Map,
 
-    chunks = try Chunks.init(allocator, seed);
+    chunks: struct {
+        meshes: [Map.v]?*gfx.Mesh = [1]?*gfx.Mesh{null} ** Map.v,
+        buffers: struct {
+            vertex: [Map.v]*gfx.Buffer,
+            normal: [Map.v]*gfx.Buffer,
+        },
+    },
 
-    var y: u32 = 0;
-    while (y < 8) : (y += 1) {
-        var x: u32 = 0;
-        while (x < 8) : (x += 1) {
-            chunks.set(.{ x, y }, try Chunk.create(
-                allocator,
-                .{ .generate = .{ .pos = .{ x, y }, .seed = chunks.seed } },
-            ));
-        }
+    pub fn create(
+        allocator: Allocator,
+        info: struct {
+            camera: *Camera,
+            map: *Map,
+        },
+    ) Allocator.Error!*Self {
+        const result = try allocator.create(Self);
+
+        result.camera = info.camera;
+        result.map = info.map;
+
+        return result;
     }
 
-    log.info("init succes", .{});
-}
+    pub fn draw() !void {}
 
-pub fn deinit() void {
-    chunks.deinit();
-}
-
-pub inline fn getBlock(pos: @Vector(3, u32)) Block {
-    return chunks.get(.{ pos[0] / Chunk.w, pos[1] / Chunk.w }).get(pos % Chunk.s);
-}
+    pub fn destroy() void {}
+};
