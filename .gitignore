@@ -26,7 +26,7 @@ flycheck_*.el
 ### zig ###
 
 .zig-cache/
-.zig-out/
+zig-out/
 build/
 build-*/
 docs/
