@@ -28,6 +28,7 @@ pub fn build(b: *std.Build) !void {
     exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
     @import("zsdl").addLibraryPathsTo(exe);
     @import("zsdl").link_SDL2(exe);
+    @import("zsdl").install_sdl2(&exe.step, target.result, .bin);
 
     const zstbi = b.dependency("zstbi", .{});
     exe.root_module.addImport("zstbi", zstbi.module("root"));
@@ -47,7 +48,7 @@ pub fn build(b: *std.Build) !void {
     run_step.dependOn(&run_cmd.step);
 
     const unit_tests = b.addTest(.{
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = b.path("src/main.zig"),
         .target = target,
         .optimize = optimize,
     });
