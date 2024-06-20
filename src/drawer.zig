@@ -3,8 +3,6 @@ const log = std.log.scoped(.drawer);
 const zm = @import("zmath");
 const gl = @import("zopengl").bindings;
 
-const terra = @import("drawer/terra.zig");
-//const projectile = @import("drawer/projectile.zig");
 const shape = @import("drawer/shape.zig");
 const gui = @import("drawer/gui.zig");
 
@@ -24,13 +22,11 @@ pub fn init(allocator: Allocator) !void {
     gl.cullFace(gl.FRONT);
     gl.frontFace(gl.CW);
 
-    try terra.init(allocator);
     try shape.init();
     try gui.init(allocator);
 }
 
 pub fn deinit() void {
-    terra.deinit();
     shape.deinit();
     gui.deinit();
 }
@@ -41,7 +37,6 @@ pub fn draw() !void {
 
     gl.enable(gl.DEPTH_TEST);
     gl.polygonMode(gl.FRONT_AND_BACK, if (config.debug.show_grid) gl.LINE else gl.FILL);
-    try terra.draw();
 
     gl.disable(gl.DEPTH_TEST);
     shape.draw();

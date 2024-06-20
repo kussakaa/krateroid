@@ -24,11 +24,14 @@ pub fn build(b: *std.Build) !void {
     const zopengl = b.dependency("zopengl", .{});
     exe.root_module.addImport("zopengl", zopengl.module("root"));
 
-    const zsdl = b.dependency("zsdl", .{});
-    exe.root_module.addImport("zsdl2", zsdl.module("zsdl2"));
-    @import("zsdl").addLibraryPathsTo(exe);
-    @import("zsdl").link_SDL2(exe);
-    @import("zsdl").install_sdl2(&exe.step, target.result, .bin);
+    const zglfw = b.dependency("zglfw", .{});
+    exe.root_module.addImport("zglfw", zglfw.module("root"));
+    exe.linkLibrary(zglfw.artifact("glfw"));
+    @import("system_sdk").addLibraryPathsTo(exe);
+
+    const zgui = b.dependency("zgui", .{ .target = target, .backend = .glfw_opengl3 });
+    exe.root_module.addImport("zgui", zgui.module("root"));
+    exe.linkLibrary(zgui.artifact("imgui"));
 
     const zstbi = b.dependency("zstbi", .{});
     exe.root_module.addImport("zstbi", zstbi.module("root"));

@@ -15,7 +15,8 @@
         .zmath = .{ .path = "deps/zig-gamedev/libs/zmath" },
         .znoise = .{ .path = "deps/zig-gamedev/libs/znoise" },
         .zopengl = .{ .path = "deps/zig-gamedev/libs/zopengl" },
-        .zsdl = .{ .path = "deps/zig-gamedev/libs/zsdl" },
+        .zglfw = .{ .path = "deps/zig-gamedev/libs/zglfw" },
         .zstbi = .{ .path = "deps/zig-gamedev/libs/zstbi" },
+        .zgui = .{ .path = "deps/zig-gamedev/libs/zgui" },
     },
 }
