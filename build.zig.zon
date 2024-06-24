@@ -1,14 +1,7 @@
 .{
     .name = "krateroid",
     .version = "0.1.0",
-    .paths = .{
-        "build.zig",
-        "build.zig.zon",
-        "deps",
-        "src",
-        "README.md",
-        "LICENSE",
-    },
+
     .dependencies = .{
         .system_sdk = .{ .path = "deps/zig-gamedev/libs/system-sdk" },
         .zaudio = .{ .path = "deps/zig-gamedev/libs/zaudio" },
@@ -18,5 +11,12 @@
         .zglfw = .{ .path = "deps/zig-gamedev/libs/zglfw" },
         .zstbi = .{ .path = "deps/zig-gamedev/libs/zstbi" },
         .zgui = .{ .path = "deps/zig-gamedev/libs/zgui" },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "deps",
+        "src",
     },
 }

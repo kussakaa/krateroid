@@ -1,25 +1,24 @@
 const std = @import("std");
+const log = std.log;
 const zm = @import("zmath");
-
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 const gl = zopengl.bindings;
 const zgui = @import("zgui");
 
 const World = @import("World.zig");
+const Drawer = @import("Drawer.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator: std.mem.Allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    var world = World.init(allocator);
-    defer world.deinit();
-
-    try world.generate(.{
-        .seed = 6969,
-        .width = 8,
+    var world = try World.init(.{
+        .allocator = allocator,
+        .width = 4,
     });
+    defer world.deinit();
 
     try glfw.init();
     defer glfw.terminate();
@@ -40,6 +39,17 @@ pub fn main() !void {
     glfw.swapInterval(1);
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+
+    var camera = Drawer.Camera.init(.{});
+
+    var drawer = try Drawer.init(.{
+        .allocator = allocator,
+        .window = window,
+        .camera = &camera,
+        .world = &world,
+    });
+
+    defer drawer.deinit();
 
     zgui.init(allocator);
     defer zgui.deinit();
