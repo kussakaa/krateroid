@@ -7,6 +7,7 @@ const gl = zopengl.bindings;
 const zgui = @import("zgui");
 
 const World = @import("World.zig");
+const Camera = @import("Camera.zig");
 const Drawer = @import("Drawer.zig");
 
 pub fn main() !void {
@@ -40,7 +41,10 @@ pub fn main() !void {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    var camera = Drawer.Camera.init(.{});
+    var camera = Camera.init(.{
+        .ratio = 1.0,
+        .scale = 1.0,
+    });
 
     var drawer = try Drawer.init(.{
         .allocator = allocator,
@@ -66,6 +70,9 @@ pub fn main() !void {
             break :loop;
 
         glfw.pollEvents();
+
+        camera.update();
+
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
@@ -76,6 +83,14 @@ pub fn main() !void {
         if (zgui.begin("Debug", .{})) {
             _ = zgui.checkbox("show fps", .{ .v = &show_fps });
             _ = zgui.checkbox("show grid", .{ .v = &show_grid });
+        }
+        zgui.end();
+
+        if (zgui.begin("Camera", .{})) {
+            _ = zgui.sliderFloat4("pos", .{ .v = &camera.pos, .min = 0.0, .max = 32.0 });
+            _ = zgui.sliderFloat4("rot", .{ .v = &camera.rot, .min = 0.0, .max = std.math.pi * 2 });
+            _ = zgui.sliderFloat("scale", .{ .v = &camera.scale, .min = 0.1, .max = 32.0 });
+            _ = zgui.sliderFloat("ratio", .{ .v = &camera.ratio, .min = 0.5, .max = 2.0 });
         }
         zgui.end();
 

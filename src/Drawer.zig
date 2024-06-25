@@ -1,5 +1,5 @@
 allocator: mem.Allocator,
-window: *glfw.Window,
+window: *Window,
 camera: *Camera,
 world: *World,
 
@@ -25,9 +25,8 @@ pub fn deinit(self: *Drawer) void {
 
 const Drawer = @This();
 
-pub const Camera = @import("Drawer/Camera.zig");
-pub const Window = *glfw.Window;
-
+const Camera = @import("Camera.zig");
+const Window = glfw.Window;
 const World = @import("World.zig");
 
 const std = @import("std");
