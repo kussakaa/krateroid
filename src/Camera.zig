@@ -33,6 +33,10 @@ pub fn init(config: Config) Camera {
     return result;
 }
 
+pub fn deinit(self: *Camera) void {
+    self.* = undefined;
+}
+
 pub fn update(self: *Camera) void {
     self.view = zm.identity();
     self.view = zm.mul(self.view, zm.translationV(-self.pos));

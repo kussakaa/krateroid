@@ -8,6 +8,7 @@ const zgui = @import("zgui");
 
 const World = @import("World.zig");
 const Camera = @import("Camera.zig");
+const Window = @import("Window.zig");
 const Drawer = @import("Drawer.zig");
 
 pub fn main() !void {
@@ -24,33 +25,20 @@ pub fn main() !void {
     try glfw.init();
     defer glfw.terminate();
 
-    const gl_major = 3;
-    const gl_minor = 3;
-    glfw.windowHintTyped(.context_version_major, gl_major);
-    glfw.windowHintTyped(.context_version_minor, gl_minor);
-    glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
-    glfw.windowHintTyped(.opengl_forward_compat, false);
-    glfw.windowHintTyped(.client_api, .opengl_api);
-    glfw.windowHintTyped(.doublebuffer, true);
-
-    const window = try glfw.Window.create(1200, 900, "krateroid", null);
-    defer window.destroy();
-
-    glfw.makeContextCurrent(window);
-    glfw.swapInterval(1);
-
-    try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
+    var window = try Window.init(.{
+        .title = "krateroid",
+        .size = .{ 1200, 800 },
+    });
+    defer window.deinit();
 
     var camera = Camera.init(.{
         .ratio = 1.0,
         .scale = 1.0,
     });
+    defer camera.deinit();
 
     var drawer = try Drawer.init(.{
         .allocator = allocator,
-        .window = window,
-        .camera = &camera,
-        .world = &world,
     });
 
     defer drawer.deinit();
@@ -58,15 +46,15 @@ pub fn main() !void {
     zgui.init(allocator);
     defer zgui.deinit();
 
-    zgui.backend.init(window);
+    zgui.backend.init(window.handle);
     defer zgui.backend.deinit();
 
     var show_fps = false;
     var show_grid = false;
 
     loop: while (true) {
-        if (window.shouldClose() or
-            window.getKey(.escape) == .press)
+        if (window.handle.shouldClose() or
+            window.handle.getKey(.escape) == .press)
             break :loop;
 
         glfw.pollEvents();
@@ -76,7 +64,7 @@ pub fn main() !void {
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-        const fb_size = window.getFramebufferSize();
+        const fb_size = window.handle.getFramebufferSize();
         gl.viewport(0, 0, fb_size[0], fb_size[1]);
         zgui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
@@ -95,6 +83,6 @@ pub fn main() !void {
         zgui.end();
 
         zgui.backend.draw();
-        window.swapBuffers();
+        window.handle.swapBuffers();
     }
 }

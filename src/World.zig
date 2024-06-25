@@ -66,21 +66,21 @@ pub fn deinit(self: *World) void {
     self.* = undefined;
 }
 
-pub inline fn getChunk(world: *World, pos: @Vector(2, i32)) ?*Chunk {
-    return if (pos[1] >= world.width or pos[0] >= world.width or pos[0] < 0 or pos[1] < 0)
+pub inline fn getChunk(self: *World, pos: @Vector(2, i32)) ?*Chunk {
+    return if (pos[1] >= self.width or pos[0] >= self.width or pos[0] < 0 or pos[1] < 0)
         null
     else
-        world.chunks[@intCast(pos[0] + pos[1] * world.width)];
+        self.chunks[@intCast(pos[0] + pos[1] * self.width)];
 }
 
-pub inline fn getTile(world: *World, pos: Pos) Tile {
-    const chunk = world.getChunk(@divTrunc(pos, Chunk.s));
+pub inline fn getTile(self: *World, pos: Pos) Tile {
+    const chunk = self.getChunk(@divTrunc(pos, Chunk.s));
     if (chunk == null) return .{ .m = .border };
     return chunk.?.getTile(@rem(pos, Chunk.s));
 }
 
-pub inline fn setTile(world: *World, pos: Pos, tile: Tile) void {
-    const chunk = world.getChunk(@divTrunc(pos, Chunk.s));
+pub inline fn setTile(self: *World, pos: Pos, tile: Tile) void {
+    const chunk = self.getChunk(@divTrunc(pos, Chunk.s));
     if (chunk == null) return;
     chunk.?.setTile(@rem(pos, Chunk.s), tile);
 }
@@ -117,7 +117,7 @@ const World = @This();
 const Pos = @Vector(2, i32);
 const std = @import("std");
 const mem = std.mem;
-const log = std.log.scoped(.world);
+const log = std.log.scoped(.self);
 const assert = std.debug.assert;
 const znoise = @import("znoise");
 const Noise = znoise.FnlGenerator;
