@@ -9,7 +9,7 @@ pub const Config = struct {
 };
 
 pub fn init(config: Config) anyerror!World {
-    log.info("init", .{});
+    log.info("Initialization", .{});
 
     assert(config.width > 0);
 
@@ -57,7 +57,7 @@ pub fn init(config: Config) anyerror!World {
         }
     }
 
-    log.info("init succes", .{});
+    log.info("Initialization completed", .{});
 
     return world;
 }

@@ -1,14 +1,3 @@
-const std = @import("std");
-const log = std.log.scoped(.gfx);
-const gl = @import("zopengl").bindings;
-
-const Allocator = std.mem.Allocator;
-const Shader = @import("Shader.zig");
-
-pub const Id = gl.Uint;
-
-const Self = @This();
-
 id: Id,
 name: []const u8,
 
@@ -39,11 +28,11 @@ pub fn init(comptime name: []const u8) !Self {
         gl.getProgramiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
         const len: usize = @intCast(info_log_len);
         gl.getProgramInfoLog(id, info_log_len, null, s.buffer[0..len].ptr);
-        log.err("program {s} failed linkage: {s}", .{ name, s.buffer[0..len] });
+        log.err("Failed {s} linkage: {s}", .{ name, s.buffer[0..len] });
         return error.ShaderProgramLinkage;
     }
 
-    log.debug("init program {s}", .{name});
+    log.debug("Initialization completed {s} {}", .{ name, id });
     return .{ .id = id, .name = name };
 }
 
@@ -54,3 +43,14 @@ pub fn deinit(self: Self) void {
 pub fn use(self: Self) void {
     gl.useProgram(self.id);
 }
+
+const Self = @This();
+
+pub const Id = gl.Uint;
+
+const Allocator = std.mem.Allocator;
+const Shader = @import("Shader.zig");
+
+const std = @import("std");
+const log = std.log.scoped(.Gfx_Program);
+const gl = @import("zopengl").bindings;

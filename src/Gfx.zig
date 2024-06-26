@@ -8,7 +8,7 @@ const Config = struct {
 };
 
 pub fn init(config: Config) anyerror!Gfx {
-    log.info("init", .{});
+    log.info("Initialization", .{});
 
     try glfw.init();
 
@@ -21,7 +21,7 @@ pub fn init(config: Config) anyerror!Gfx {
 
     const camera = Camera.init(config.camera);
 
-    log.info("init succes", .{});
+    log.info("Initialization competed", .{});
 
     return .{
         .window = window,
@@ -70,10 +70,17 @@ pub fn draw(self: *Gfx) bool {
     return true;
 }
 
+const Gfx = @This();
+
 pub const Window = @import("Gfx/Window.zig");
 pub const Camera = @import("Gfx/Camera.zig");
+pub const Buffer = @import("Gfx/Buffer.zig");
+pub const Mesh = @import("Gfx/Mesh.zig");
+pub const Shader = @import("Gfx/Shader.zig");
+pub const Program = @import("Gfx/Program.zig");
+pub const Uniform = @import("Gfx/Uniform.zig");
+pub const Texture = @import("Gfx/Texture.zig");
 
-const Gfx = @This();
 const Allocator = std.mem.Allocator;
 
 const std = @import("std");

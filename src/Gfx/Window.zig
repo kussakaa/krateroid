@@ -6,6 +6,8 @@ pub const Config = struct {
 };
 
 pub fn init(config: Config) !Window {
+    log.info("Initialization", .{});
+
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
@@ -25,6 +27,8 @@ pub fn init(config: Config) !Window {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
+    log.info("Initialization completed", .{});
+
     return .{ .handle = handle };
 }
 
@@ -41,4 +45,4 @@ const gl_major = 3;
 const gl_minor = 3;
 
 const std = @import("std");
-const log = std.log.scoped(.Gfx.Window);
+const log = std.log.scoped(.Gfx_Window);

@@ -1,12 +1,11 @@
 const std = @import("std");
-const log = std.log;
-
-const zm = @import("zmath");
+const log = std.log.scoped(.MAIN);
 
 const World = @import("World.zig");
 const Gfx = @import("Gfx.zig");
 
 pub fn main() !void {
+    log.info("Starting...", .{});
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     const allocator: std.mem.Allocator = gpa.allocator();
     defer _ = gpa.deinit();

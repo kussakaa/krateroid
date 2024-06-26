@@ -20,6 +20,8 @@ pub const Config = struct {
 };
 
 pub fn init(config: Config) Camera {
+    log.info("Initialization", .{});
+
     var result = Camera{
         .pos = config.pos,
         .rot = config.rot,
@@ -30,6 +32,9 @@ pub fn init(config: Config) Camera {
     };
 
     result.update();
+
+    log.info("Initialization completed", .{});
+
     return result;
 }
 
@@ -54,3 +59,7 @@ pub fn update(self: *Camera) void {
 
 const Camera = @This();
 const zm = @import("zmath");
+
+const std = @import("std");
+const log = std.log.scoped(.Gfx_Camera);
+const pi = std.math.pi;
