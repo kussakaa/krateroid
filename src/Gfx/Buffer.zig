@@ -5,29 +5,22 @@ datatype: DataType,
 vertsize: VertSize,
 usage: Usage,
 
-pub fn init(info: struct {
-    name: []const u8,
-    target: Target,
-    datatype: DataType = .f32,
-    vertsize: VertSize = 3,
-    usage: Usage = .static_draw,
-}) !Buffer {
-    var id: gl.Uint = 0;
+pub fn init(config: Config) !Buffer {
+    var id: Id = 0;
     gl.genBuffers(1, &id);
-    log.debug("Initialization completed {s} {} ", .{ info.name, id });
+    log.debug("Initialization completed {s} {} ", .{ config.name, id });
     return .{
         .id = id,
-        .name = info.name,
-        .target = info.target,
-        .datatype = info.datatype,
-        .vertsize = info.vertsize,
-        .usage = info.usage,
+        .name = config.name,
+        .target = config.target,
+        .datatype = config.datatype,
+        .vertsize = config.vertsize,
+        .usage = config.usage,
     };
 }
 
-pub fn deinit(self: *Buffer) void {
+pub fn deinit(self: Buffer) void {
     gl.deleteBuffers(1, &self.id);
-    self.* = undefined;
 }
 
 pub fn data(self: Buffer, bytes: []const u8) void {
@@ -53,6 +46,14 @@ pub fn subdata(self: Buffer, offset: usize, bytes: []const u8) void {
 const Buffer = @This();
 
 pub const Id = gl.Uint;
+
+pub const Config = struct {
+    name: []const u8,
+    target: Target,
+    datatype: DataType = .f32,
+    vertsize: VertSize = 3,
+    usage: Usage = .static_draw,
+};
 
 pub const Target = enum(gl.Enum) {
     vbo = gl.ARRAY_BUFFER,

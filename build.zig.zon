@@ -11,6 +11,7 @@
         .zglfw = .{ .path = "deps/zig-gamedev/libs/zglfw" },
         .zstbi = .{ .path = "deps/zig-gamedev/libs/zstbi" },
         .zgui = .{ .path = "deps/zig-gamedev/libs/zgui" },
+        .terminal = .{ .path = "deps/terminal/" },
     },
 
     .paths = .{

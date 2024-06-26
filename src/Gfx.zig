@@ -1,12 +1,6 @@
 window: Window,
 camera: Camera,
 
-const Config = struct {
-    allocator: Allocator,
-    window: Window.Config,
-    camera: Camera.Config,
-};
-
 pub fn init(config: Config) anyerror!Gfx {
     log.info("Initialization", .{});
 
@@ -21,7 +15,17 @@ pub fn init(config: Config) anyerror!Gfx {
 
     const camera = Camera.init(config.camera);
 
-    log.info("Initialization competed", .{});
+    const program = try Program.init(.{
+        .allocator = config.allocator,
+        .name = "world",
+    });
+    defer program.deinit();
+
+    log.info("Initialization {s}{s}competed{s}", .{
+        TermColor(null).bold(),
+        TermColor(.fg).bit(2),
+        TermColor(null).reset(),
+    });
 
     return .{
         .window = window,
@@ -72,6 +76,12 @@ pub fn draw(self: *Gfx) bool {
 
 const Gfx = @This();
 
+pub const Config = struct {
+    allocator: Allocator,
+    window: Window.Config,
+    camera: Camera.Config,
+};
+
 pub const Window = @import("Gfx/Window.zig");
 pub const Camera = @import("Gfx/Camera.zig");
 pub const Buffer = @import("Gfx/Buffer.zig");
@@ -83,8 +93,8 @@ pub const Texture = @import("Gfx/Texture.zig");
 
 const Allocator = std.mem.Allocator;
 
-const std = @import("std");
-const log = std.log.scoped(.Gfx);
+const TermColor = @import("terminal").Color;
+
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 const gl = zopengl.bindings;
@@ -92,3 +102,6 @@ const gl_major = 3;
 const gl_minor = 3;
 const stb = @import("zstbi");
 const imgui = @import("zgui");
+
+const std = @import("std");
+const log = std.log.scoped(.Gfx);

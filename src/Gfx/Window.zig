@@ -1,10 +1,5 @@
 handle: *glfw.Window,
 
-pub const Config = struct {
-    title: [:0]const u8 = "window",
-    size: @Vector(2, i32) = .{ 800, 600 },
-};
-
 pub fn init(config: Config) !Window {
     log.info("Initialization", .{});
 
@@ -27,7 +22,11 @@ pub fn init(config: Config) !Window {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    log.info("Initialization completed", .{});
+    log.info("Initialization {s}{s}competed{s}", .{
+        TermColor(null).bold(),
+        TermColor(.fg).bit(2),
+        TermColor(null).reset(),
+    });
 
     return .{ .handle = handle };
 }
@@ -39,10 +38,17 @@ pub fn deinit(self: *Window) void {
 
 const Window = @This();
 
+pub const Config = struct {
+    title: [:0]const u8 = "window",
+    size: @Vector(2, i32) = .{ 800, 600 },
+};
+
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
 const gl_major = 3;
 const gl_minor = 3;
+
+const TermColor = @import("terminal").Color;
 
 const std = @import("std");
 const log = std.log.scoped(.Gfx_Window);

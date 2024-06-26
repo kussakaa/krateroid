@@ -1,38 +1,20 @@
-const std = @import("std");
-const log = std.log.scoped(.gfx);
-
-const Allocator = std.mem.Allocator;
-
-const gl = @import("zopengl").bindings;
-
-pub const Type = enum(u32) {
-    vert = gl.VERTEX_SHADER,
-    frag = gl.FRAGMENT_SHADER,
-};
-
-const Id = gl.Uint;
-const Self = @This();
-
 id: Id,
 
-pub fn init(
-    comptime name: []const u8,
-    comptime shader_type: Type,
-) !Self {
-    const id = gl.createShader(@intFromEnum(shader_type));
+pub fn init(config: Config) anyerror!Shader {
+    const allocator = config.allocator;
+
+    const id = gl.createShader(@intFromEnum(config.shader_type));
 
     const prefix = "data/shader/";
-    const postfix = comptime switch (shader_type) {
+    const postfix = switch (config.shader_type) {
         .vert => "/vert.glsl",
         .frag => "/frag.glsl",
     };
+    const path = try std.mem.concat(allocator, u8, &.{ prefix, config.name, postfix });
+    defer allocator.free(path);
 
-    const s = struct {
-        /// buffer for shader data and log loading without allocator
-        var buffer = [1]u8{0} ** 100_000_000;
-    };
-
-    const data = try std.fs.cwd().readFile(prefix ++ name ++ postfix, s.buffer[0..]);
+    const data = try cwd.readFileAlloc(allocator, path, 100_000_000);
+    defer allocator.free(data);
 
     gl.shaderSource(id, 1, &data.ptr, @alignCast(@ptrCast(&.{@as(gl.Int, @intCast(data.len))})));
     gl.compileShader(id);
@@ -43,15 +25,42 @@ pub fn init(
     if (succes == 0) {
         var info_log_len: gl.Int = 0;
         gl.getShaderiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
-        const len: usize = @intCast(info_log_len);
-        gl.getShaderInfoLog(id, info_log_len, null, s.buffer[0..len].ptr);
-        log.err("shader {s} failed compilation: \n{s}\n", .{ name, s.buffer[0..len] });
-        return error.ShaderCompilation;
+        const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
+        defer allocator.free(info_log_data);
+        gl.getShaderInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
+        log.err("Failed {s} compilation: \n{s}\n", .{ config.name, info_log_data[0..] });
+        return Error.Compilation;
     }
 
     return .{ .id = id };
 }
 
-pub fn deinit(self: Self) void {
+pub fn deinit(self: Shader) void {
     gl.deleteShader(self.id);
 }
+
+const Shader = @This();
+
+const Config = struct {
+    allocator: Allocator = std.heap.page_allocator,
+    name: []const u8,
+    shader_type: Type,
+};
+
+pub const Error = error{
+    Compilation,
+};
+
+pub const Type = enum(u32) {
+    vert = gl.VERTEX_SHADER,
+    frag = gl.FRAGMENT_SHADER,
+};
+
+const Id = gl.Uint;
+const Allocator = std.mem.Allocator;
+
+const gl = @import("zopengl").bindings;
+
+const std = @import("std");
+const cwd = std.fs.cwd();
+const log = std.log.scoped(.Gfx_Shader);

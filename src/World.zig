@@ -57,7 +57,11 @@ pub fn init(config: Config) anyerror!World {
         }
     }
 
-    log.info("Initialization completed", .{});
+    log.info("Initialization {s}{s}competed{s}", .{
+        TermColor(null).bold(),
+        TermColor(.fg).bit(2),
+        TermColor(null).reset(),
+    });
 
     return world;
 }
@@ -120,6 +124,8 @@ const Chunk = struct {
 const World = @This();
 const Pos = @Vector(2, i32);
 const Allocator = std.mem.Allocator;
+
+const TermColor = @import("terminal").Color;
 
 const std = @import("std");
 const log = std.log.scoped(.World);

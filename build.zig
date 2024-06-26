@@ -11,9 +11,6 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
     });
 
-    const util_mod = b.createModule(.{ .root_source_file = b.path("src/util.zig") });
-    exe.root_module.addImport("util", util_mod);
-
     const zmath = b.dependency("zmath", .{});
     exe.root_module.addImport("zmath", zmath.module("root"));
 
@@ -40,6 +37,9 @@ pub fn build(b: *std.Build) !void {
     const zaudio = b.dependency("zaudio", .{});
     exe.root_module.addImport("zaudio", zaudio.module("root"));
     exe.linkLibrary(zaudio.artifact("miniaudio"));
+
+    const terminal = b.dependency("terminal", .{});
+    exe.root_module.addImport("terminal", terminal.module("terminal"));
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);
