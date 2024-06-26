@@ -1,6 +1,6 @@
 handle: *glfw.Window,
 
-const Config = struct {
+pub const Config = struct {
     title: [:0]const u8 = "window",
     size: @Vector(2, i32) = .{ 800, 600 },
 };
@@ -37,6 +37,8 @@ const Window = @This();
 
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
-const gl = zopengl.bindings;
 const gl_major = 3;
 const gl_minor = 3;
+
+const std = @import("std");
+const log = std.log.scoped(.Gfx.Window);

@@ -1,8 +1,16 @@
-allocator: mem.Allocator,
+allocator: Allocator,
 width: i32,
 chunks: []?*Chunk,
 
-pub fn init(config: Config) mem.Allocator.Error!World {
+pub const Config = struct {
+    allocator: Allocator,
+    width: i32 = 4,
+    seed: i32 = 6969,
+};
+
+pub fn init(config: Config) anyerror!World {
+    log.info("init", .{});
+
     assert(config.width > 0);
 
     var world = World{
@@ -49,14 +57,10 @@ pub fn init(config: Config) mem.Allocator.Error!World {
         }
     }
 
+    log.info("init succes", .{});
+
     return world;
 }
-
-const Config = struct {
-    allocator: mem.Allocator,
-    width: i32 = 4,
-    seed: i32 = 6969,
-};
 
 pub fn deinit(self: *World) void {
     assert(self.width != 0);
@@ -115,9 +119,10 @@ const Chunk = struct {
 
 const World = @This();
 const Pos = @Vector(2, i32);
+const Allocator = std.mem.Allocator;
+
 const std = @import("std");
-const mem = std.mem;
-const log = std.log.scoped(.self);
+const log = std.log.scoped(.World);
 const assert = std.debug.assert;
 const znoise = @import("znoise");
 const Noise = znoise.FnlGenerator;

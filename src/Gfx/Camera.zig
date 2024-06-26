@@ -12,7 +12,7 @@ pub const back = zm.f32x4(0.0, -1.0, 0.0, 0.0);
 pub const up = zm.f32x4(0.0, 0.0, 1.0, 0.0);
 pub const down = zm.f32x4(0.0, 0.0, -1.0, 0.0);
 
-const Config = struct {
+pub const Config = struct {
     pos: zm.Vec = .{ 0.0, 0.0, 0.0, 1.0 },
     rot: zm.Vec = .{ 0.0, 0.0, 0.0, 1.0 },
     scale: f32 = 1.0,
