@@ -18,4 +18,4 @@ zig build run
 
 ## CREDITS
 - Developers of [zig-gamedev](https://github.com/michal-z/zig-gamedev) for their cool library 
-- Developer of [terminal](https://github.com/Mostik/terminal.git deps/terminal/) for his simple library for terminal colors
+- Developer of [terminal](https://github.com/Mostik/terminal.git) for his simple library for terminal colors
