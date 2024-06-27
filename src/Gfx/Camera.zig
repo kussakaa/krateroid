@@ -20,8 +20,6 @@ pub const Config = struct {
 };
 
 pub fn init(config: Config) Camera {
-    log.info("Initialization", .{});
-
     var result = Camera{
         .pos = config.pos,
         .rot = config.rot,
@@ -32,12 +30,6 @@ pub fn init(config: Config) Camera {
     };
 
     result.update();
-
-    log.info("Initialization {s}{s}competed{s}", .{
-        TermColor(null).bold(),
-        TermColor(.fg).bit(2),
-        TermColor(null).reset(),
-    });
 
     return result;
 }
@@ -64,8 +56,5 @@ pub fn update(self: *Camera) void {
 const Camera = @This();
 const zm = @import("zmath");
 
-const TermColor = @import("terminal").Color;
-
 const std = @import("std");
-const log = std.log.scoped(.Gfx_Camera);
 const pi = std.math.pi;

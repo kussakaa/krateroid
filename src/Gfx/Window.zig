@@ -1,8 +1,6 @@
 handle: *glfw.Window,
 
 pub fn init(config: Config) !Window {
-    log.info("Initialization", .{});
-
     glfw.windowHintTyped(.context_version_major, gl_major);
     glfw.windowHintTyped(.context_version_minor, gl_minor);
     glfw.windowHintTyped(.opengl_profile, .opengl_core_profile);
@@ -22,11 +20,7 @@ pub fn init(config: Config) !Window {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    log.info("Initialization {s}{s}competed{s}", .{
-        TermColor(null).bold(),
-        TermColor(.fg).bit(2),
-        TermColor(null).reset(),
-    });
+    log.succes("Initialization GFX Window", .{});
 
     return .{ .handle = handle };
 }
@@ -48,7 +42,5 @@ const zopengl = @import("zopengl");
 const gl_major = 3;
 const gl_minor = 3;
 
-const TermColor = @import("terminal").Color;
-
 const std = @import("std");
-const log = std.log.scoped(.Gfx_Window);
+const log = @import("../log.zig");

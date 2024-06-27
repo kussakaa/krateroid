@@ -2,6 +2,7 @@ id: Id,
 
 pub fn init(config: Config) anyerror!Shader {
     const allocator = config.allocator;
+    const name = config.name;
 
     const id = gl.createShader(@intFromEnum(config.shader_type));
 
@@ -10,7 +11,7 @@ pub fn init(config: Config) anyerror!Shader {
         .vert => "/vert.glsl",
         .frag => "/frag.glsl",
     };
-    const path = try std.mem.concat(allocator, u8, &.{ prefix, config.name, postfix });
+    const path = try std.mem.concat(allocator, u8, &.{ prefix, name, postfix });
     defer allocator.free(path);
 
     const data = try cwd.readFileAlloc(allocator, path, 100_000_000);
@@ -28,7 +29,7 @@ pub fn init(config: Config) anyerror!Shader {
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         defer allocator.free(info_log_data);
         gl.getShaderInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.err("Failed {s} compilation: \n{s}\n", .{ config.name, info_log_data[0..] });
+        log.failed("Initialization GFX Shader name:{s} id:{} log:\n{s}", .{ name, id, info_log_data[0..] });
         return Error.Compilation;
     }
 
@@ -63,4 +64,4 @@ const gl = @import("zopengl").bindings;
 
 const std = @import("std");
 const cwd = std.fs.cwd();
-const log = std.log.scoped(.Gfx_Shader);
+const log = @import("../log.zig");

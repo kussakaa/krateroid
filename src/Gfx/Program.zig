@@ -1,7 +1,7 @@
 id: Id,
 name: []const u8,
 
-pub fn init(config: Config) !Self {
+pub fn init(config: Config) anyerror!Self {
     const allocator = config.allocator;
     const name = config.name;
 
@@ -35,21 +35,11 @@ pub fn init(config: Config) !Self {
         gl.getProgramiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         gl.getProgramInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.err("Failed {s} linkage: {s}", .{ name, info_log_data[0..] });
-        return error.ShaderProgramLinkage;
+        log.failed("Initialization GFX Program name:{s} id: {} {s}", .{ name, id, info_log_data[0..] });
+        return Error.Linkage;
     }
 
-    log.info("Initialization {s}{s}competed{s} {s}name:{s}{s} {s}id:{s}{}", .{
-        TermColor(null).bold(),
-        TermColor(.fg).bit(2),
-        TermColor(null).reset(),
-        TermColor(.fg).bit(4),
-        TermColor(.fg).reset(),
-        name,
-        TermColor(.fg).bit(4),
-        TermColor(null).reset(),
-        id,
-    });
+    log.succes("Initialization GFX Program name:{s} id:{}", .{ name, id });
 
     return .{ .id = id, .name = name };
 }
@@ -70,11 +60,11 @@ pub const Config = struct {
     name: []const u8,
 };
 
+pub const Error = error{Linkage};
+
 const Allocator = std.mem.Allocator;
 const Shader = @import("Shader.zig");
 
-const TermColor = @import("terminal").Color;
-
 const std = @import("std");
-const log = std.log.scoped(.Gfx_Program);
+const log = @import("../log.zig");
 const gl = @import("zopengl").bindings;

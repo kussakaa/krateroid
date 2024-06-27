@@ -2,8 +2,6 @@ window: Window,
 camera: Camera,
 
 pub fn init(config: Config) anyerror!Gfx {
-    log.info("Initialization", .{});
-
     try glfw.init();
 
     const window = try Window.init(config.window);
@@ -21,11 +19,7 @@ pub fn init(config: Config) anyerror!Gfx {
     });
     defer program.deinit();
 
-    log.info("Initialization {s}{s}competed{s}", .{
-        TermColor(null).bold(),
-        TermColor(.fg).bit(2),
-        TermColor(null).reset(),
-    });
+    log.succes("Initialization GFX", .{});
 
     return .{
         .window = window,
@@ -104,4 +98,4 @@ const stb = @import("zstbi");
 const imgui = @import("zgui");
 
 const std = @import("std");
-const log = std.log.scoped(.Gfx);
+const log = @import("log.zig");

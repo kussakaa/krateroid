@@ -9,8 +9,6 @@ pub const Config = struct {
 };
 
 pub fn init(config: Config) anyerror!World {
-    log.info("Initialization", .{});
-
     assert(config.width > 0);
 
     var world = World{
@@ -57,11 +55,7 @@ pub fn init(config: Config) anyerror!World {
         }
     }
 
-    log.info("Initialization {s}{s}competed{s}", .{
-        TermColor(null).bold(),
-        TermColor(.fg).bit(2),
-        TermColor(null).reset(),
-    });
+    log.succes("Initialization World", .{});
 
     return world;
 }
@@ -125,10 +119,8 @@ const World = @This();
 const Pos = @Vector(2, i32);
 const Allocator = std.mem.Allocator;
 
-const TermColor = @import("terminal").Color;
-
 const std = @import("std");
-const log = std.log.scoped(.World);
+const log = @import("log.zig");
 const assert = std.debug.assert;
 const znoise = @import("znoise");
 const Noise = znoise.FnlGenerator;
