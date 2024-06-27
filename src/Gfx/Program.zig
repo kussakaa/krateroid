@@ -1,14 +1,11 @@
 id: Id,
 name: []const u8,
 
-pub fn init(config: Config) anyerror!Self {
-    const allocator = config.allocator;
+pub fn init(allocator: Allocator, config: Config) anyerror!Self {
     const name = config.name;
-
     const id = gl.createProgram();
 
-    const vert = try Shader.init(.{
-        .allocator = allocator,
+    const vert = try Shader.init(allocator, .{
         .name = name,
         .shader_type = .vert,
     });
@@ -16,8 +13,7 @@ pub fn init(config: Config) anyerror!Self {
     gl.attachShader(id, vert.id);
     defer gl.detachShader(id, vert.id);
 
-    const frag = try Shader.init(.{
-        .allocator = allocator,
+    const frag = try Shader.init(allocator, .{
         .name = name,
         .shader_type = .frag,
     });
@@ -35,11 +31,11 @@ pub fn init(config: Config) anyerror!Self {
         gl.getProgramiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         gl.getProgramInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.failed("Initialization GFX Program name:{s} id: {} {s}", .{ name, id, info_log_data[0..] });
+        log.failed("Initialized GFX Program name:{s} id: {}\n{s}", .{ name, id, info_log_data[0..] });
         return Error.Linkage;
     }
 
-    log.succes("Initialization GFX Program name:{s} id:{}", .{ name, id });
+    log.succes("Initialized GFX Program name:{s} id:{}", .{ name, id });
 
     return .{ .id = id, .name = name };
 }
@@ -56,7 +52,6 @@ const Self = @This();
 
 pub const Id = gl.Uint;
 pub const Config = struct {
-    allocator: Allocator = std.heap.page_allocator,
     name: []const u8,
 };
 
@@ -66,5 +61,5 @@ const Allocator = std.mem.Allocator;
 const Shader = @import("Shader.zig");
 
 const std = @import("std");
-const log = @import("../log.zig");
+const log = @import("log");
 const gl = @import("zopengl").bindings;

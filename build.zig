@@ -38,8 +38,10 @@ pub fn build(b: *std.Build) !void {
     exe.root_module.addImport("zaudio", zaudio.module("root"));
     exe.linkLibrary(zaudio.artifact("miniaudio"));
 
+    const log = b.createModule(.{ .root_source_file = b.path("src/log.zig") });
     const terminal = b.dependency("terminal", .{});
-    exe.root_module.addImport("terminal", terminal.module("terminal"));
+    log.addImport("terminal", terminal.module("terminal"));
+    exe.root_module.addImport("log", log);
 
     b.installArtifact(exe);
     const run_cmd = b.addRunArtifact(exe);

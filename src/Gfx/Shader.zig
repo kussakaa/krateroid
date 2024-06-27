@@ -1,9 +1,7 @@
 id: Id,
 
-pub fn init(config: Config) anyerror!Shader {
-    const allocator = config.allocator;
+pub fn init(allocator: Allocator, config: Config) anyerror!Shader {
     const name = config.name;
-
     const id = gl.createShader(@intFromEnum(config.shader_type));
 
     const prefix = "data/shader/";
@@ -29,7 +27,7 @@ pub fn init(config: Config) anyerror!Shader {
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         defer allocator.free(info_log_data);
         gl.getShaderInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.failed("Initialization GFX Shader name:{s} id:{} log:\n{s}", .{ name, id, info_log_data[0..] });
+        log.failed("Initialized GFX Shader name:{s} id:{} log:\n{s}", .{ name, id, info_log_data[0..] });
         return Error.Compilation;
     }
 
@@ -43,7 +41,6 @@ pub fn deinit(self: Shader) void {
 const Shader = @This();
 
 const Config = struct {
-    allocator: Allocator = std.heap.page_allocator,
     name: []const u8,
     shader_type: Type,
 };
@@ -60,8 +57,7 @@ pub const Type = enum(u32) {
 const Id = gl.Uint;
 const Allocator = std.mem.Allocator;
 
-const gl = @import("zopengl").bindings;
-
 const std = @import("std");
 const cwd = std.fs.cwd();
-const log = @import("../log.zig");
+const log = @import("log");
+const gl = @import("zopengl").bindings;

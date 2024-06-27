@@ -1,43 +1,46 @@
 window: Window,
+input: Input,
 camera: Camera,
 
-pub fn init(config: Config) anyerror!Gfx {
+pub fn init(allocator: Allocator, config: Config) anyerror!Gfx {
     try glfw.init();
 
     const window = try Window.init(config.window);
-
-    imgui.init(config.allocator);
-    imgui.backend.init(window.handle);
-
-    stb.init(config.allocator);
-
+    const input = try Input.init(allocator, config.input);
     const camera = Camera.init(config.camera);
 
-    const program = try Program.init(.{
-        .allocator = config.allocator,
+    const program = try Program.init(allocator, .{
         .name = "world",
     });
     defer program.deinit();
 
-    log.succes("Initialization GFX", .{});
+    imgui.init(allocator);
+    imgui.backend.init(window.handle);
+
+    stb.init(allocator);
+
+    log.succes("Initialized GFX", .{});
 
     return .{
         .window = window,
+        .input = input,
         .camera = camera,
     };
 }
 
-pub fn deinit(self: *Gfx) void {
+pub fn deinit(self: Gfx) void {
     stb.deinit();
+
     imgui.backend.deinit();
     imgui.deinit();
+
+    self.input.deinit();
     self.window.deinit();
     glfw.terminate();
-    self.* = undefined;
 }
 
 pub fn update(self: *Gfx) bool {
-    glfw.pollEvents();
+    self.input.update();
     if (self.window.handle.shouldClose() or
         self.window.handle.getKey(.escape) == .press)
         return false;
@@ -71,12 +74,13 @@ pub fn draw(self: *Gfx) bool {
 const Gfx = @This();
 
 pub const Config = struct {
-    allocator: Allocator,
     window: Window.Config,
+    input: Input.Config,
     camera: Camera.Config,
 };
 
 pub const Window = @import("Gfx/Window.zig");
+pub const Input = @import("Gfx/Input.zig");
 pub const Camera = @import("Gfx/Camera.zig");
 pub const Buffer = @import("Gfx/Buffer.zig");
 pub const Mesh = @import("Gfx/Mesh.zig");
@@ -98,4 +102,4 @@ const stb = @import("zstbi");
 const imgui = @import("zgui");
 
 const std = @import("std");
-const log = @import("log.zig");
+const log = @import("log");

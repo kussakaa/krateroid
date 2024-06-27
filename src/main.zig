@@ -9,15 +9,14 @@ pub fn main() !void {
     const allocator: std.mem.Allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    var world = try World.init(.{
-        .allocator = allocator,
+    var world = try World.init(allocator, .{
         .width = 4,
     });
     defer world.deinit();
 
-    var gfx = try Gfx.init(.{
-        .allocator = allocator,
+    var gfx = try Gfx.init(allocator, .{
         .window = .{ .title = "krateroid", .size = .{ 1200, 900 } },
+        .input = .{},
         .camera = .{ .ratio = 1.0, .scale = 1.0 },
     });
     defer gfx.deinit();

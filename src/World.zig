@@ -2,19 +2,13 @@ allocator: Allocator,
 width: i32,
 chunks: []?*Chunk,
 
-pub const Config = struct {
-    allocator: Allocator,
-    width: i32 = 4,
-    seed: i32 = 6969,
-};
-
-pub fn init(config: Config) anyerror!World {
+pub fn init(allocator: Allocator, config: Config) anyerror!World {
     assert(config.width > 0);
 
     var world = World{
-        .allocator = config.allocator,
+        .allocator = allocator,
         .width = config.width,
-        .chunks = try config.allocator.alloc(?*Chunk, @intCast(config.width * config.width)),
+        .chunks = try allocator.alloc(?*Chunk, @intCast(config.width * config.width)),
     };
 
     @memset(world.chunks[0..], null);
@@ -55,17 +49,15 @@ pub fn init(config: Config) anyerror!World {
         }
     }
 
-    log.succes("Initialization World", .{});
+    log.succes("Initialized World", .{});
 
     return world;
 }
 
-pub fn deinit(self: *World) void {
+pub fn deinit(self: World) void {
     assert(self.width != 0);
     self.allocator.destroy(self.chunks[0].?);
     self.allocator.free(self.chunks);
-    self.width = 0;
-    self.* = undefined;
 }
 
 pub inline fn getChunk(self: *World, pos: @Vector(2, i32)) ?*Chunk {
@@ -115,12 +107,17 @@ const Chunk = struct {
     }
 };
 
+pub const Config = struct {
+    width: i32 = 4,
+    seed: i32 = 6969,
+};
+
 const World = @This();
 const Pos = @Vector(2, i32);
 const Allocator = std.mem.Allocator;
 
 const std = @import("std");
-const log = @import("log.zig");
+const log = @import("log");
 const assert = std.debug.assert;
 const znoise = @import("znoise");
 const Noise = znoise.FnlGenerator;

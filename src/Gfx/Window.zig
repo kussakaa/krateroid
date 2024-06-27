@@ -20,14 +20,13 @@ pub fn init(config: Config) !Window {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    log.succes("Initialization GFX Window", .{});
+    log.succes("Initialized GFX Window", .{});
 
     return .{ .handle = handle };
 }
 
-pub fn deinit(self: *Window) void {
+pub fn deinit(self: Window) void {
     self.handle.destroy();
-    self.* = undefined;
 }
 
 const Window = @This();
@@ -43,4 +42,4 @@ const gl_major = 3;
 const gl_minor = 3;
 
 const std = @import("std");
-const log = @import("../log.zig");
+const log = @import("log");
