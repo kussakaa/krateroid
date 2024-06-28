@@ -2,11 +2,13 @@ window: Window,
 input: Input,
 camera: Camera,
 
+var show_imgui = false;
+
 pub fn init(allocator: Allocator, config: Config) anyerror!Gfx {
     try glfw.init();
 
     const window = try Window.init(config.window);
-    const input = try Input.init(allocator, config.input);
+    const input = try Input.init(allocator, window, config.input);
     const camera = Camera.init(config.camera);
 
     const program = try Program.init(allocator, .{
@@ -42,8 +44,11 @@ pub fn deinit(self: Gfx) void {
 pub fn update(self: *Gfx) bool {
     self.input.update();
     if (self.window.handle.shouldClose() or
-        self.window.handle.getKey(.escape) == .press)
+        self.input.isJustPressed(.escape))
         return false;
+
+    if (self.input.isJustPressed(.F3))
+        show_imgui = !show_imgui;
 
     self.camera.update();
     return true;
@@ -57,13 +62,16 @@ pub fn draw(self: *Gfx) bool {
     gl.viewport(0, 0, fb_size[0], fb_size[1]);
     imgui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
-    if (imgui.begin("Camera", .{})) {
-        _ = imgui.sliderFloat4("pos", .{ .v = &self.camera.pos, .min = 0.0, .max = 32.0 });
-        _ = imgui.sliderFloat4("rot", .{ .v = &self.camera.rot, .min = 0.0, .max = std.math.pi * 2 });
-        _ = imgui.sliderFloat("scale", .{ .v = &self.camera.scale, .min = 0.1, .max = 32.0 });
-        _ = imgui.sliderFloat("ratio", .{ .v = &self.camera.ratio, .min = 0.5, .max = 2.0 });
+    if (show_imgui) {
+        if (imgui.begin("Camera", .{})) {
+            _ = imgui.sliderFloat4("pos", .{ .v = &self.camera.pos, .min = 0.0, .max = 32.0 });
+            _ = imgui.sliderFloat4("rot", .{ .v = &self.camera.rot, .min = 0.0, .max = std.math.pi * 2 });
+            _ = imgui.sliderFloat("scale", .{ .v = &self.camera.scale, .min = 0.1, .max = 32.0 });
+            _ = imgui.sliderFloat("ratio", .{ .v = &self.camera.ratio, .min = 0.5, .max = 2.0 });
+        }
+
+        imgui.end();
     }
-    imgui.end();
 
     imgui.backend.draw();
     self.window.handle.swapBuffers();

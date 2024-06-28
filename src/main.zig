@@ -21,5 +21,7 @@ pub fn main() !void {
     });
     defer gfx.deinit();
 
+    gfx.window.handle.setUserPointer(&gfx.input);
+
     while (gfx.update() and gfx.draw()) {}
 }
