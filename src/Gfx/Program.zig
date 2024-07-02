@@ -31,11 +31,11 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Self {
         gl.getProgramiv(id, gl.INFO_LOG_LENGTH, &info_log_len);
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         gl.getProgramInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.failed("Initialized GFX Program name:{s} id: {}\n{s}", .{ name, id, info_log_data[0..] });
+        log.failed(.init, "GFX Program name:{s} id: {}\n{s}", .{ name, id, info_log_data[0..] });
         return Error.Linkage;
     }
 
-    log.succes("Initialized GFX Program name:{s} id:{}", .{ name, id });
+    log.succes(.init, "GFX Program name:{s}, id:{}", .{ name, id });
 
     return .{ .id = id, .name = name };
 }
@@ -62,4 +62,5 @@ const Shader = @import("Shader.zig");
 
 const std = @import("std");
 const log = @import("log");
+
 const gl = @import("zopengl").bindings;

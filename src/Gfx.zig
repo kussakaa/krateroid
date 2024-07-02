@@ -2,7 +2,13 @@ window: Window,
 input: Input,
 camera: Camera,
 
-var show_imgui = false;
+show_imgui: bool = false,
+
+pub const Config = struct {
+    window: Window.Config,
+    input: Input.Config,
+    camera: Camera.Config,
+};
 
 pub fn init(allocator: Allocator, config: Config) anyerror!Gfx {
     try glfw.init();
@@ -21,7 +27,7 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Gfx {
 
     stb.init(allocator);
 
-    log.succes("Initialized GFX", .{});
+    log.succes(.init, "GFX", .{});
 
     return .{
         .window = window,
@@ -48,7 +54,7 @@ pub fn update(self: *Gfx) bool {
         return false;
 
     if (self.input.isJustPressed(.F3))
-        show_imgui = !show_imgui;
+        self.show_imgui = !self.show_imgui;
 
     self.camera.update();
     return true;
@@ -59,17 +65,15 @@ pub fn draw(self: *Gfx) bool {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     const fb_size = self.window.handle.getFramebufferSize();
-    gl.viewport(0, 0, fb_size[0], fb_size[1]);
     imgui.backend.newFrame(@intCast(fb_size[0]), @intCast(fb_size[1]));
 
-    if (show_imgui) {
+    if (self.show_imgui) {
         if (imgui.begin("Camera", .{})) {
             _ = imgui.sliderFloat4("pos", .{ .v = &self.camera.pos, .min = 0.0, .max = 32.0 });
             _ = imgui.sliderFloat4("rot", .{ .v = &self.camera.rot, .min = 0.0, .max = std.math.pi * 2 });
             _ = imgui.sliderFloat("scale", .{ .v = &self.camera.scale, .min = 0.1, .max = 32.0 });
             _ = imgui.sliderFloat("ratio", .{ .v = &self.camera.ratio, .min = 0.5, .max = 2.0 });
         }
-
         imgui.end();
     }
 
@@ -78,14 +82,6 @@ pub fn draw(self: *Gfx) bool {
 
     return true;
 }
-
-const Gfx = @This();
-
-pub const Config = struct {
-    window: Window.Config,
-    input: Input.Config,
-    camera: Camera.Config,
-};
 
 pub const Window = @import("Gfx/Window.zig");
 pub const Input = @import("Gfx/Input.zig");
@@ -97,9 +93,8 @@ pub const Program = @import("Gfx/Program.zig");
 pub const Uniform = @import("Gfx/Uniform.zig");
 pub const Texture = @import("Gfx/Texture.zig");
 
+const Gfx = @This();
 const Allocator = std.mem.Allocator;
-
-const TermColor = @import("terminal").Color;
 
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");

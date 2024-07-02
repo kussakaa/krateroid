@@ -1,16 +1,18 @@
 const std = @import("std");
-const log = std.log.scoped(.MAIN);
+const log = @import("log");
 
 const World = @import("World.zig");
 const Gfx = @import("Gfx.zig");
 
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    const allocator: std.mem.Allocator = gpa.allocator();
+    const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
     var world = try World.init(allocator, .{
-        .width = 4,
+        .map = .{
+            .size = .{ 4, 4 },
+        },
     });
     defer world.deinit();
 
@@ -21,5 +23,7 @@ pub fn main() !void {
     });
     defer gfx.deinit();
 
-    while (gfx.update() and gfx.draw()) {}
+    log.succes(.init, "MAIN", .{});
+
+    while (world.update() and gfx.update() and gfx.draw()) {}
 }

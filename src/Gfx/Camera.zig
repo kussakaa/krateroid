@@ -30,7 +30,6 @@ pub fn init(config: Config) Camera {
     };
 
     result.update();
-
     return result;
 }
 

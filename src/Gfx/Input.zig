@@ -1,5 +1,5 @@
-allocator: Allocator,
 context: *Context,
+allocator: Allocator,
 
 pub fn init(allocator: Allocator, window: Window, _: Config) anyerror!Input {
     const context = try allocator.create(Context);
@@ -11,7 +11,7 @@ pub fn init(allocator: Allocator, window: Window, _: Config) anyerror!Input {
 
     _ = window.handle.setKeyCallback(keyCallback);
 
-    log.succes("Initialized GFX Input", .{});
+    log.succes(.init, "GFX Input", .{});
 
     return .{
         .allocator = allocator,
@@ -28,17 +28,14 @@ pub fn update(self: *Input) void {
     glfw.pollEvents();
 }
 
-pub fn isPressed(self: Input, key: glfw.Key) bool {
+pub inline fn isPressed(self: Input, key: glfw.Key) bool {
     const key_id: usize = @intCast(@intFromEnum(key));
-    return (self.keys[key_id]);
+    return self.context.keys[key_id];
 }
 
-pub fn isJustPressed(self: Input, key: glfw.Key) bool {
+pub inline fn isJustPressed(self: Input, key: glfw.Key) bool {
     const key_id: usize = @intCast(@intFromEnum(key));
-    return if (self.context.frames[key_id] == self.context.frame)
-        self.context.keys[key_id]
-    else
-        false;
+    return self.context.keys[key_id] and (self.context.frames[key_id] == self.context.frame);
 }
 
 fn keyCallback(window: *glfw.Window, key: glfw.Key, scancode: i32, action: glfw.Action, mods: glfw.Mods) callconv(.C) void {

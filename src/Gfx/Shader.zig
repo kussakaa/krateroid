@@ -27,7 +27,7 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Shader {
         const info_log_data = try allocator.alloc(u8, @intCast(info_log_len));
         defer allocator.free(info_log_data);
         gl.getShaderInfoLog(id, info_log_len, null, info_log_data[0..].ptr);
-        log.failed("Initialized GFX Shader name:{s} id:{} log:\n{s}", .{ name, id, info_log_data[0..] });
+        log.failed(.init, "GFX Shader name:{s} id:{} log:\n{s}", .{ name, id, info_log_data[0..] });
         return Error.Compilation;
     }
 

@@ -1,119 +1,35 @@
+map: *Map,
 allocator: Allocator,
-width: i32,
-chunks: []?*Chunk,
-
-pub fn init(allocator: Allocator, config: Config) anyerror!World {
-    assert(config.width > 0);
-
-    var world = World{
-        .allocator = allocator,
-        .width = config.width,
-        .chunks = try allocator.alloc(?*Chunk, @intCast(config.width * config.width)),
-    };
-
-    @memset(world.chunks[0..], null);
-
-    world.chunks[0] = try world.allocator.create(Chunk);
-
-    const value_gen = Noise{
-        .seed = config.seed,
-        .noise_type = .value,
-    };
-    const cellular_gen = Noise{
-        .seed = config.seed,
-        .noise_type = .cellular,
-    };
-
-    var pos: Pos = .{ 0, 0 };
-    while (pos[1] < Chunk.w * world.width) : (pos[1] += 1) { // BLOCK POS Y
-        pos[0] = 0;
-        while (pos[0] < Chunk.w * world.width) : (pos[0] += 1) { // BLOCK POS X
-
-            const xf = @as(f32, @floatFromInt(pos[0]));
-            const yf = @as(f32, @floatFromInt(pos[1]));
-
-            const noise: f32 = value_gen.noise2(
-                xf * 5,
-                yf * 5,
-            ) * 3 + cellular_gen.noise2(
-                xf * 3,
-                yf * 3,
-            ) * 2 + 20;
-
-            const tile = Tile{
-                .h = @intFromFloat(noise),
-                .m = .dirt,
-            };
-
-            world.setTile(pos, tile);
-        }
-    }
-
-    log.succes("Initialized World", .{});
-
-    return world;
-}
-
-pub fn deinit(self: World) void {
-    assert(self.width != 0);
-    self.allocator.destroy(self.chunks[0].?);
-    self.allocator.free(self.chunks);
-}
-
-pub inline fn getChunk(self: *World, pos: @Vector(2, i32)) ?*Chunk {
-    return if (pos[1] >= self.width or pos[0] >= self.width or pos[0] < 0 or pos[1] < 0)
-        null
-    else
-        self.chunks[@intCast(pos[0] + pos[1] * self.width)];
-}
-
-pub inline fn getTile(self: *World, pos: Pos) Tile {
-    const chunk = self.getChunk(@divTrunc(pos, Chunk.s));
-    if (chunk == null) return .{ .m = .border };
-    return chunk.?.getTile(@rem(pos, Chunk.s));
-}
-
-pub inline fn setTile(self: *World, pos: Pos, tile: Tile) void {
-    const chunk = self.getChunk(@divTrunc(pos, Chunk.s));
-    if (chunk == null) return;
-    chunk.?.setTile(@rem(pos, Chunk.s), tile);
-}
-
-pub const Tile = struct {
-    h: H = 0,
-    m: M,
-
-    const H = u8;
-    const M = enum(u8) {
-        border = 0,
-        dirt,
-        stone,
-    };
-};
-
-const Chunk = struct {
-    tiles: [v]Tile,
-
-    pub const w = 32;
-    pub const s = Pos{ w, w };
-    pub const v = w * w;
-
-    pub inline fn getTile(chunk: *Chunk, pos: Pos) Tile {
-        return chunk.tiles[@intCast(pos[0] + pos[1] * w)];
-    }
-
-    pub inline fn setTile(chunk: *Chunk, pos: Pos, tile: Tile) void {
-        chunk.tiles[@intCast(pos[0] + pos[1] * w)] = tile;
-    }
-};
 
 pub const Config = struct {
-    width: i32 = 4,
-    seed: i32 = 6969,
+    map: Map.Config = .{},
 };
 
-const World = @This();
-const Pos = @Vector(2, i32);
+pub fn init(allocator: Allocator, config: Config) !Self {
+    const map = try allocator.create(Map);
+    map.* = try Map.init(allocator, config.map);
+
+    log.succes(.init, "WORLD", .{});
+
+    return .{
+        .map = map,
+        .allocator = allocator,
+    };
+}
+
+pub fn deinit(self: Self) void {
+    self.map.deinit();
+    self.allocator.destroy(self.map);
+}
+
+pub fn update(self: Self) bool {
+    _ = self;
+    return true;
+}
+
+pub const Map = @import("World/Map.zig");
+
+const Self = @This();
 const Allocator = std.mem.Allocator;
 
 const std = @import("std");

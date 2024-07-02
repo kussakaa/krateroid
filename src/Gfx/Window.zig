@@ -20,13 +20,19 @@ pub fn init(config: Config) !Window {
 
     try zopengl.loadCoreProfile(glfw.getProcAddress, gl_major, gl_minor);
 
-    log.succes("Initialized GFX Window", .{});
+    _ = handle.setSizeCallback(sizeCallback);
+
+    log.succes(.init, "GFX Window", .{});
 
     return .{ .handle = handle };
 }
 
 pub fn deinit(self: Window) void {
     self.handle.destroy();
+}
+
+pub fn sizeCallback(_: *glfw.Window, width: i32, height: i32) callconv(.C) void {
+    gl.viewport(0, 0, width, height);
 }
 
 const Window = @This();
@@ -38,6 +44,7 @@ pub const Config = struct {
 
 const glfw = @import("zglfw");
 const zopengl = @import("zopengl");
+const gl = zopengl.bindings;
 const gl_major = 3;
 const gl_minor = 3;
 
