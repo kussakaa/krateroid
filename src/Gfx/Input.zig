@@ -23,7 +23,7 @@ pub fn deinit(self: Input) void {
     self.allocator.destroy(self.context);
 }
 
-pub fn update(self: *Input) void {
+pub fn update(self: Input) void {
     self.context.frame += 1;
     glfw.pollEvents();
 }
