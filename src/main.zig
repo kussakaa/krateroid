@@ -23,7 +23,7 @@ pub fn main() !void {
     });
     defer gfx.deinit();
 
-    var drawer = try Drawer.init(.{
+    var drawer = try Drawer.init(allocator, .{
         .gfx = gfx,
         .camera = .{},
     });

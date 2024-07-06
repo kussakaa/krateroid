@@ -1,6 +1,10 @@
 id: Id,
 name: []const u8,
 
+pub const Config = struct {
+    name: []const u8,
+};
+
 pub fn init(allocator: Allocator, config: Config) anyerror!Self {
     const name = config.name;
     const id = gl.createProgram();
@@ -51,9 +55,6 @@ pub fn use(self: Self) void {
 const Self = @This();
 
 pub const Id = gl.Uint;
-pub const Config = struct {
-    name: []const u8,
-};
 
 pub const Error = error{Linkage};
 
