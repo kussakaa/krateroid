@@ -1,6 +1,22 @@
-//const std = @import("std");
-//const log = std.log.scoped(.gui);
-//const Allocator = std.mem.Allocator;
+pub fn init(allocator: Allocator, config: Config) !Self {
+    _ = allocator;
+    _ = config;
+    log.succes(.init, "GUI System", .{});
+    return .{};
+}
+
+pub fn deinit(self: Self) void {
+    _ = self;
+}
+
+const Self = @This();
+
+const Allocator = std.mem.Allocator;
+pub const Config = struct {};
+
+const std = @import("std");
+const log = @import("log");
+
 //const Array = std.ArrayListUnmanaged;
 //const window = @import("window.zig");
 //

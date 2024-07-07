@@ -17,7 +17,7 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Self {
 
     stb.init(allocator);
 
-    log.succes(.init, "GFX", .{});
+    log.succes(.init, "GFX System", .{});
 
     return .{
         .window = window,

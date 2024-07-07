@@ -32,6 +32,10 @@ pub fn deinit(self: Self) void {
     self.allocator.free(self.chunks);
 }
 
+pub fn update(self: *Self) void {
+    _ = self;
+}
+
 pub inline fn getChunk(self: *Self, pos: Pos) ?*Chunk {
     if (pos[0] < 0 or pos[1] < 0 or pos[0] >= self.size[0] or pos[1] >= self.size[1])
         return null;

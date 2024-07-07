@@ -1,4 +1,4 @@
-map: *Map,
+map: Map,
 allocator: Allocator,
 
 pub const Config = struct {
@@ -6,24 +6,22 @@ pub const Config = struct {
 };
 
 pub fn init(allocator: Allocator, config: Config) !Self {
-    const map = try allocator.create(Map);
-    map.* = try Map.init(allocator, config.map);
-
-    log.succes(.init, "WORLD", .{});
-
-    return .{
-        .map = map,
+    const self = Self{
+        .map = try Map.init(allocator, config.map),
         .allocator = allocator,
     };
+
+    log.succes(.init, "WORLD System", .{});
+
+    return self;
 }
 
 pub fn deinit(self: Self) void {
     self.map.deinit();
-    self.allocator.destroy(self.map);
 }
 
-pub fn update(self: Self) bool {
-    _ = self;
+pub fn update(self: *Self) bool {
+    self.map.update();
     return true;
 }
 

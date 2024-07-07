@@ -2,6 +2,7 @@ const std = @import("std");
 const log = @import("log");
 
 const World = @import("World.zig");
+const Gui = @import("Gui.zig");
 const Gfx = @import("Gfx.zig");
 const Drawer = @import("Drawer.zig");
 
@@ -10,12 +11,15 @@ pub fn main() !void {
     const allocator = gpa.allocator();
     defer _ = gpa.deinit();
 
-    const world = try World.init(allocator, .{
+    var world = try World.init(allocator, .{
         .map = .{
             .size = .{ 4, 4 },
         },
     });
     defer world.deinit();
+
+    var gui = try Gui.init(allocator, .{});
+    defer gui.deinit();
 
     const gfx = try Gfx.init(allocator, .{
         .window = .{ .title = "krateroid", .size = .{ 1200, 900 } },
@@ -25,11 +29,17 @@ pub fn main() !void {
 
     var drawer = try Drawer.init(allocator, .{
         .gfx = gfx,
-        .camera = .{},
+        .world = .{
+            .ctx = &world,
+            .camera = .{},
+        },
+        .gui = .{
+            .ctx = &gui,
+        },
     });
     defer drawer.deinit();
 
-    log.succes(.init, "MAIN", .{});
+    log.succes(.init, "MAIN System", .{});
 
     while (world.update() and gfx.update() and drawer.draw()) continue;
 }

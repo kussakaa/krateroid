@@ -39,7 +39,7 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Self {
         return Error.Linkage;
     }
 
-    log.succes(.init, "GFX Program name:{s}, id:{}", .{ name, id });
+    log.succes(.init, "GFX Program name:{s} id:{}", .{ name, id });
 
     return .{ .id = id, .name = name };
 }
