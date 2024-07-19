@@ -1,5 +1,4 @@
 map: Map,
-allocator: Allocator,
 
 pub const Config = struct {
     map: Map.Config = .{},
@@ -8,7 +7,6 @@ pub const Config = struct {
 pub fn init(allocator: Allocator, config: Config) !Self {
     const self = Self{
         .map = try Map.init(allocator, config.map),
-        .allocator = allocator,
     };
 
     log.succes(.init, "WORLD System", .{});
