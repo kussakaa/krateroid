@@ -1,8 +1,11 @@
 id: Id,
 name: []const u8,
+uniforms: []const Uniform,
+allocator: Allocator,
 
 pub const Config = struct {
     name: []const u8,
+    uniforms: []const []const u8,
 };
 
 pub fn init(allocator: Allocator, config: Config) anyerror!Self {
@@ -41,10 +44,21 @@ pub fn init(allocator: Allocator, config: Config) anyerror!Self {
 
     log.succes(.init, "GFX Program name:{s} id:{}", .{ name, id });
 
-    return .{ .id = id, .name = name };
+    var uniforms = try allocator.alloc(Uniform, config.uniforms.len);
+    for (0..uniforms.len) |i| {
+        uniforms[i] = try Uniform.init(id, config.uniforms[i]);
+    }
+
+    return .{
+        .id = id,
+        .name = name,
+        .uniforms = uniforms,
+        .allocator = allocator,
+    };
 }
 
 pub fn deinit(self: Self) void {
+    self.allocator.free(self.uniforms);
     gl.deleteProgram(self.id);
 }
 
@@ -55,10 +69,10 @@ pub fn use(self: Self) void {
 const Self = @This();
 
 pub const Id = gl.Uint;
-
 pub const Error = error{Linkage};
 
 const Allocator = std.mem.Allocator;
+const Uniform = @import("Uniform.zig");
 const Shader = @import("Shader.zig");
 
 const std = @import("std");

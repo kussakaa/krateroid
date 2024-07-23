@@ -62,7 +62,6 @@ pub const Buffer = @import("Gfx/Buffer.zig");
 pub const Mesh = @import("Gfx/Mesh.zig");
 pub const Shader = @import("Gfx/Shader.zig");
 pub const Program = @import("Gfx/Program.zig");
-pub const Uniform = @import("Gfx/Uniform.zig");
 pub const Texture = @import("Gfx/Texture.zig");
 
 const Self = @This();

@@ -9,7 +9,7 @@ layout(location = 2) in float a_texture;
 
 struct LightInfo {
   vec4 color;
-  vec4 direction;
+  vec4 dir;
   float ambient;
   float diffuse;
   float specular;
@@ -37,9 +37,8 @@ void main() {
   v_vertex = a_vertex;
   v_normal = normalize(a_normal);
 
-  vec3 n = normalize(
-      (mat4(transpose(inverse(model))) * vec4(normalize(a_normal), 1.0)).xyz);
-  vec3 l = normalize(light.direction.xyz);
+  vec3 n = normalize((mat4(transpose(inverse(model))) * vec4(normalize(a_normal), 1.0)).xyz);
+  vec3 l = normalize(light.dir.xyz);
   float a = light.ambient;
   float nds = max(dot(l, n), 0.0);
   float d = light.diffuse * nds;

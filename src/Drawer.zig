@@ -5,11 +5,6 @@ world: struct {
     ctx: *const World,
     camera: Gfx.Camera,
     program: Gfx.Program,
-    texture: struct {
-        dirt: Gfx.Texture,
-        sand: Gfx.Texture,
-        stone: Gfx.Texture,
-    },
 },
 
 gui: struct {
@@ -21,12 +16,6 @@ pub const Config = struct {
     world: struct {
         ctx: *const World,
         camera: Gfx.Camera.Config,
-        program: []const u8 = "world",
-        texture: struct {
-            dirt: []const u8 = "world/dirt.png",
-            sand: []const u8 = "world/sand.png",
-            stone: []const u8 = "world/stone.png",
-        } = .{},
     },
 
     gui: struct {
@@ -42,12 +31,16 @@ pub fn init(allocator: Allocator, config: Config) !Self {
         .world = .{
             .ctx = config.world.ctx,
             .camera = Gfx.Camera.init(config.world.camera),
-            .program = try Gfx.Program.init(allocator, .{ .name = config.world.program }),
-            .texture = .{
-                .dirt = try Gfx.Texture.init(allocator, .{ .name = config.world.texture.dirt }),
-                .sand = try Gfx.Texture.init(allocator, .{ .name = config.world.texture.sand }),
-                .stone = try Gfx.Texture.init(allocator, .{ .name = config.world.texture.stone }),
-            },
+            .program = try Gfx.Program.init(allocator, .{
+                .name = "world",
+                .uniforms = &.{
+                    "light.color",
+                    "lignt.dir",
+                    "light.ambient",
+                    "light.diffuse",
+                    "light.specular",
+                },
+            }),
         },
         .gui = .{
             .ctx = config.gui.ctx,
@@ -61,9 +54,6 @@ pub fn init(allocator: Allocator, config: Config) !Self {
 
 pub fn deinit(self: Self) void {
     self.world.program.deinit();
-    self.world.texture.dirt.deinit();
-    self.world.texture.sand.deinit();
-    self.world.texture.stone.deinit();
 }
 
 pub fn draw(self: *Self) bool {

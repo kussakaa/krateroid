@@ -1,21 +1,9 @@
-const std = @import("std");
-const log = std.log.scoped(.gfx);
-
-const Program = @import("Program.zig");
-const Texture = @import("Texture.zig");
-
-const gl = @import("zopengl").bindings;
-
-pub const Id = gl.Int;
-const Self = @This();
-
 id: Id,
-name: []const u8,
 
-pub fn init(program: Program, name: []const u8) !Self {
-    const id = gl.getUniformLocation(program.id, name.ptr);
-    log.debug("init uniform {s} in program {s}", .{ name, program.name });
-    return .{ .id = id, .name = name };
+pub fn init(program_id: Program.Id, name: []const u8) !Self {
+    const id = gl.getUniformLocation(program_id, name.ptr);
+    log.succes(.init, "GFX Uniform name:{s} id:{}", .{ name, id });
+    return .{ .id = id };
 }
 
 pub fn set(self: Self, value: anytype) void {
@@ -69,6 +57,17 @@ pub fn set(self: Self, value: anytype) void {
         Texture => {
             gl.uniform1i(self.id, value.id);
         },
-        else => @compileError("gfx.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
+        else => @compileError("Gfx.Uniform.set() not implemented for type: " ++ @typeName(@TypeOf(value))),
     }
 }
+
+pub const Id = gl.Int;
+
+const Self = @This();
+
+const Program = @import("Program.zig");
+const Texture = @import("Texture.zig");
+
+const gl = @import("zopengl").bindings;
+const std = @import("std");
+const log = @import("log");
