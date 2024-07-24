@@ -49,7 +49,7 @@ pub const Id = gl.Uint;
 
 pub const Config = struct {
     name: []const u8,
-    target: Target,
+    target: Target = .vbo,
     datatype: DataType = .f32,
     vertsize: VertSize = 3,
     usage: Usage = .static_draw,

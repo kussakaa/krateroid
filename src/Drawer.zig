@@ -5,13 +5,17 @@ world: struct {
     ctx: *const World,
     camera: Gfx.Camera,
     program: Gfx.Program,
-
     light: struct {
         color: zm.Vec,
-        dir: zm.Vec,
+        direction: zm.Vec,
         ambient: f32,
         diffuse: f32,
         specular: f32,
+    },
+    textures: struct {
+        dirt: Gfx.Texture,
+        sand: Gfx.Texture,
+        stone: Gfx.Texture,
     },
 },
 
@@ -33,6 +37,7 @@ pub const Config = struct {
 
 pub fn init(allocator: Allocator, config: Config) !Self {
     const gfx = config.gfx;
+
     const self = Self{
         .allocator = allocator,
         .gfx = gfx,
@@ -43,7 +48,7 @@ pub fn init(allocator: Allocator, config: Config) !Self {
                 .name = "world",
                 .uniforms = &.{
                     "light.color",
-                    "lignt.dir",
+                    "lignt.direction",
                     "light.ambient",
                     "light.diffuse",
                     "light.specular",
@@ -51,10 +56,15 @@ pub fn init(allocator: Allocator, config: Config) !Self {
             }),
             .light = .{
                 .color = .{ 1.0, 1.0, 1.0, 1.0 },
-                .dir = .{ 0.0, 0.0, 1.0, 1.0 },
+                .direction = .{ 0.0, 0.0, 1.0, 1.0 },
                 .ambient = 0.3,
                 .diffuse = 0.2,
                 .specular = 3,
+            },
+            .textures = .{
+                .dirt = try Gfx.Texture.init(allocator, .{ .name = "world/dirt.png" }),
+                .sand = try Gfx.Texture.init(allocator, .{ .name = "world/sand.png" }),
+                .stone = try Gfx.Texture.init(allocator, .{ .name = "world/stone.png" }),
             },
         },
         .gui = .{
@@ -69,6 +79,9 @@ pub fn init(allocator: Allocator, config: Config) !Self {
 
 pub fn deinit(self: Self) void {
     self.world.program.deinit();
+    self.world.textures.dirt.deinit();
+    self.world.textures.sand.deinit();
+    self.world.textures.stone.deinit();
 }
 
 pub fn draw(self: *Self) bool {
@@ -78,11 +91,12 @@ pub fn draw(self: *Self) bool {
     {
         const world = self.world;
         world.program.use();
-        world.program.uniforms[0].set(world.light.color); // light.color
-        world.program.uniforms[1].set(world.light.dir); // light.dir
-        world.program.uniforms[2].set(world.light.ambient); // light.ambient
-        world.program.uniforms[3].set(world.light.diffuse); // light.diffuse
-        world.program.uniforms[4].set(world.light.specular); // light.specular
+        world.program.uniforms[0].set(world.light.color);
+        world.program.uniforms[1].set(world.light.direction);
+        world.program.uniforms[2].set(world.light.ambient);
+        world.program.uniforms[3].set(world.light.diffuse);
+        world.program.uniforms[4].set(world.light.specular);
+        world.textures.stone.bind(0);
     }
 
     // GUi
@@ -103,7 +117,7 @@ pub fn draw(self: *Self) bool {
 
         if (imgui.treeNode("light")) {
             _ = imgui.sliderFloat4("color", .{ .v = &self.world.light.color, .min = 0.0, .max = 1.0 });
-            _ = imgui.sliderFloat4("direction", .{ .v = &self.world.light.dir, .min = -1.0, .max = 1.0 });
+            _ = imgui.sliderFloat4("direction", .{ .v = &self.world.light.direction, .min = -1.0, .max = 1.0 });
             _ = imgui.sliderFloat("ambient", .{ .v = &self.world.light.ambient, .min = 0.0, .max = 1.0 });
             _ = imgui.sliderFloat("diffuse", .{ .v = &self.world.light.diffuse, .min = 0.0, .max = 1.0 });
             _ = imgui.sliderFloat("specular", .{ .v = &self.world.light.specular, .min = 0.0, .max = 10.0 });
