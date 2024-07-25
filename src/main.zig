@@ -41,5 +41,5 @@ pub fn main() !void {
 
     log.succes(.init, "MAIN System", .{});
 
-    while (world.update() and gfx.update() and drawer.draw()) continue;
+    while (world.update() and gfx.update() and drawer.update() and drawer.draw()) continue;
 }

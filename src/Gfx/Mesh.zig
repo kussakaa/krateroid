@@ -1,43 +1,28 @@
-const std = @import("std");
-const log = std.log.scoped(.gfx);
-
-const gl = @import("zopengl").bindings;
-const Buffer = @import("Buffer.zig");
-
-pub const Id = gl.Uint;
-pub const VertCnt = gl.Sizei;
-
-pub const DrawMode = enum(gl.Enum) {
-    triangles = gl.TRIANGLES,
-    triangle_strip = gl.TRIANGLE_STRIP,
-    lines = gl.LINES,
-    points = gl.POINTS,
-};
-
-const Self = @This();
-
 id: Id,
 name: []const u8,
-vertcnt: VertCnt,
-drawmode: DrawMode,
-ebo: ?*Buffer,
+buffers: []const Buffer,
+ebo: ?Buffer,
 
-pub fn init(info: struct {
+pub const Config = struct {
     name: []const u8,
-    buffers: []const Buffer,
+    buffers: []const Buffer.Config,
     vertcnt: VertCnt,
-    drawmode: DrawMode,
-    ebo: ?*Buffer = null,
-}) !Self {
+    drawmode: DrawMode = .triangles,
+    ebo: ?Buffer.Config = null,
+};
+
+pub fn init(allocator: Allocator, config: Config) !Self {
     var id: Id = undefined;
     gl.genVertexArrays(1, &id);
     gl.bindVertexArray(id);
-    for (info.buffers, 0..) |buffer, i| {
-        gl.bindBuffer(@intFromEnum(buffer.target), buffer.id);
+
+    for (0..config.buffers.len) |i| {
+        const buffer = Buffer.init(config.buffers[i]);
+        gl.bindBuffer(@intFromEnum(config.buffers.target), buffer.id);
         gl.enableVertexAttribArray(@intCast(i));
         gl.vertexAttribPointer(@intCast(i), buffer.vertsize, @intFromEnum(buffer.datatype), gl.FALSE, 0, null);
     }
-    log.debug("init mesh {s} {}", .{ info.name, id });
+
     return .{
         .id = id,
         .name = info.name,
@@ -60,3 +45,20 @@ pub fn draw(self: Self) void {
         gl.drawArrays(@intFromEnum(self.drawmode), 0, self.vertcnt);
     }
 }
+
+const Self = @This();
+const Buffer = @import("Buffer.zig");
+const Allocator = std.mem.Allocator;
+
+pub const Id = gl.Uint;
+pub const VertCnt = gl.Sizei;
+pub const DrawMode = enum(gl.Enum) {
+    triangles = gl.TRIANGLES,
+    triangle_strip = gl.TRIANGLE_STRIP,
+    lines = gl.LINES,
+    points = gl.POINTS,
+};
+
+const gl = @import("zopengl").bindings;
+const std = @import("std");
+const log = @import("log");

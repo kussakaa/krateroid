@@ -58,8 +58,7 @@ pub fn swapBuffers(self: Self) void {
 pub const Window = @import("Gfx/Window.zig");
 pub const Input = @import("Gfx/Input.zig");
 pub const Camera = @import("Gfx/Camera.zig");
-pub const Buffer = @import("Gfx/Buffer.zig");
-pub const Mesh = @import("Gfx/Mesh.zig");
+//pub const Mesh = @import("Gfx/Mesh.zig");
 pub const Shader = @import("Gfx/Shader.zig");
 pub const Program = @import("Gfx/Program.zig");
 pub const Texture = @import("Gfx/Texture.zig");
